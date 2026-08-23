@@ -103,6 +103,15 @@ grep -rn "components:[a-z]*:data" --include=build.gradle.kts .    # only app sho
   | grep -iE "room|retrofit"                                      # should print nothing
 ```
 
+Do not check "no Android in `api`" by grepping for `androidx`. `paging-common` resolves to a
+plain JVM variant that pulls `androidx.annotation-jvm` and `androidx.arch.core`, neither of which
+is Android, so that grep now reports a violation that is not one. The real guarantee is that
+`todayfeed.jvm` never applies the Android plugin, so an `android.*` import in an `api` or
+`domain` module does not compile. Check that, not the group name.
+
+Also: a grep over a Gradle task's output reports zero when the task itself failed. Check the exit
+status, or the answer is "the command broke" wearing the answer "none".
+
 ### Where screens live
 
 Reading is `:components:feed:ui`. Article detail and Saved are `:components:articles:ui`.

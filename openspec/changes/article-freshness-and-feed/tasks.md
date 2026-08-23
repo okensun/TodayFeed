@@ -37,13 +37,13 @@
       decodes a saved copy of a real response body, taken from the API rather than written by hand
 - [x] 1.8 Read `Cache-Control: max-age` off the response and store it with the metadata. Verify: a
       test parses a real header value, and a response without the header yields no stated age
-- [ ] 1.9 Add the `RemoteMediator` with `decide` in `initialize()` and a `REFRESH` branch that
+- [x] 1.9 Add the `RemoteMediator` with `decide` in `initialize()` and a `REFRESH` branch that
       fetches one page and upserts. Verify: a test with a counting fake source shows
       `SKIP_INITIAL_REFRESH` inside the allowance and `LAUNCH_INITIAL_REFRESH` past it, with
       **zero** requests in the first case
-- [ ] 1.10 Build the `Pager` and expose `Flow<PagingData<Article>>` from the repository, mapping
+- [x] 1.10 Build the `Pager` and expose `Flow<PagingData<Article>>` from the repository, mapping
       entities to the `api` model. Verify: a test collects one page of articles
-- [ ] 1.11 Draw it: the feed screen takes the paging flow, delete the placeholder state, bind in
+- [x] 1.11 Draw it: the feed screen takes the paging flow, delete the placeholder state, bind in
       `:app` and delete the in-memory repository. Verify: `assembleDebug` passes, only `:app`
       names a data module, and the app shows real articles on a device
 
@@ -81,10 +81,12 @@
       marker with content present and offline, and none when online
 - [ ] 3.4 Drop the marker when the network returns, from `Connectivity.observe()`. Verify: a test
       moves the fake back to unmetered and shows the marker clears
-- [ ] 3.5 Add `FeedSection` and `ObserveFeedSections` to `:components:feed:domain`, replacing
-      `ObserveFeed`. Verify: `./gradlew :components:feed:domain:dependencies` shows no paging
+- [x] 3.5 Add `FeedSection` and `ObserveFeedSections` to `:components:feed:domain`, replacing
+      `ObserveFeed`. **Pulled into pass 1**: the moment the feed became a paged stream, the old
+      combined list stopped compiling, and leaving it out would have removed the weather card from
+      the screen — a visible regression in the middle of a slice. Verify: `./gradlew :components:feed:domain:dependencies` shows no paging
       artifact, and tests cover the ordering and the missing-source case
-- [ ] 3.6 Draw the sections above the paged articles. Verify: a view test shows a section and
+- [x] 3.6 Draw the sections above the paged articles. **Pulled into pass 1** for the same reason. Verify: a view test shows a section and
       articles together, and that no articles with a section present shows the section rather
       than the empty state
 - [ ] 3.7 Write the freshness section of the README, describing what exists at this point.

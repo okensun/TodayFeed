@@ -20,3 +20,14 @@ sealed interface Decision {
     /** No network and nothing stored. */
     data object NothingToServe : Decision
 }
+
+/**
+ * Whether this decision asks for the network. Only two of the five do, and both callers that need
+ * to know share this rather than each writing their own `when`.
+ */
+val Decision.wantsNetwork: Boolean
+    get() =
+        when (this) {
+            Decision.Fetch, Decision.ServeCacheThenFetch -> true
+            Decision.ServeCache, Decision.ServeCacheStale, Decision.NothingToServe -> false
+        }

@@ -77,6 +77,7 @@ turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine
 room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
 # Paging 3, chosen after a spike. See DECISIONS.md.
 room-paging = { group = "androidx.room", name = "room-paging", version.ref = "room" }
+paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "paging" }
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
 paging-testing = { group = "androidx.paging", name = "paging-testing", version.ref = "paging" }
