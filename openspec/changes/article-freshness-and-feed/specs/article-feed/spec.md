@@ -99,22 +99,16 @@ screen while something is already stored.
 - **WHEN** the feed is opened and nothing is stored
 - **THEN** the loading state is shown until the first articles arrive
 
-### Requirement: A metered connection is treated as more expensive
+### Requirement: A metered connection changes what is downloaded, not how old content may be
 
-The app SHALL tolerate older content before contacting the source when the connection is
-metered, and SHALL tolerate it for longer again when the source cannot be checked cheaply.
+The app SHALL allow content to reach the same age before refreshing whatever the connection. On a
+metered connection it SHALL fetch pictures only for the articles on screen, and SHALL start the
+next page later than it would otherwise.
 
-#### Scenario: Metered connection, content that would be refreshed on wifi
+#### Scenario: The allowance does not depend on the connection
 
-- **WHEN** the feed is opened on a metered connection with content old enough that an
-  unmetered connection would refresh it
-- **THEN** the stored articles are shown
-- **AND** the source is not contacted
-
-#### Scenario: Metered connection, content far past its age
-
-- **WHEN** the content is old enough to exceed even the metered allowance
-- **THEN** the feed is refreshed
+- **WHEN** the same stored content is opened on a metered and on an unmetered connection
+- **THEN** the same decision is taken about whether to refresh
 
 #### Scenario: Metered connection and pictures
 
@@ -127,10 +121,33 @@ metered, and SHALL tolerate it for longer again when the source cannot be checke
 - **WHEN** the reader approaches the end of the list on a metered connection
 - **THEN** the next page is started later than it would be on an unmetered connection
 
-#### Scenario: Refresh a picture already held
+#### Scenario: A picture already held
 
 - **WHEN** an article's picture has already been fetched and the article is shown again
 - **THEN** the picture is not fetched a second time, whatever the connection
+
+### Requirement: A refresh reaches back to what is already stored
+
+When a refresh finds that everything on the first page is new, the app SHALL keep fetching
+further pages until a page contains an article it already holds, up to a limit. It SHALL NOT
+leave a silent gap between the newest articles and what the reader had before.
+
+#### Scenario: Away for a day
+
+- **WHEN** the reader opens the app after a day, and more than one page has been published
+- **THEN** the articles between the newest and what was already stored are also fetched
+- **AND** the list runs continuously from newest to oldest with nothing missing in between
+
+#### Scenario: Up to date
+
+- **WHEN** the reader refreshes and the first page contains an article already stored
+- **THEN** no further page is fetched
+
+#### Scenario: Away for longer than the limit
+
+- **WHEN** more has been published than the limit allows the app to fetch
+- **THEN** the newest articles up to that limit are shown
+- **AND** the reader is not told the list is complete
 
 ### Requirement: Pull to refresh always asks
 

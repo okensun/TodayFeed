@@ -1,103 +1,118 @@
 ## Why
 
-The brief asks for a feed that "stays reasonably fresh without wasting the user's mobile
-data", and for saved items to be readable offline. Those two sentences are the hardest part of
-the assignment, and everything built so far only prepares for them. The feed currently shows a
-fixed list from memory.
+The brief asks for a feed that "stays reasonably fresh without wasting the user's mobile data",
+and for saved items to be readable offline. Those two sentences are the hardest part of the
+assignment, and everything built so far only prepares for them. The feed currently shows a fixed
+list from memory.
 
-This change replaces that with the real thing: articles from the network, stored locally, and
-a policy that decides when it is worth asking for more. The policy is the part the brief
-weighs, so it is built first and on its own, before any network or storage code exists to
-entangle it.
+This change replaces that with the real thing: articles from the network, stored locally, and a
+policy that decides when it is worth asking for more.
 
 ## What Changes
 
 ### The policy, in `:core:freshness`
 
-A plain Kotlin module with no Android on its classpath. It answers two separate questions, and
-keeping them separate is the point:
+A plain Kotlin module with no Android on its classpath. One function whose every input is a
+parameter — what is stored and when, what the source said about its own maximum age, our own
+figure, the connection, and the time — and whose answer needs no further interpretation:
 
-- **When is it worth asking?** A time-to-live per source. Where the server states its own
-  `Cache-Control: max-age`, that wins over ours.
-- **What does asking cost?** Whether the source answers `304 Not Modified` with an empty body.
-
-Both were measured rather than guessed. Spaceflight News states `max-age=600` and cannot be
-revalidated cheaply. That combination is the interesting one: the source that changes fastest
-is also the one where every check costs a full response.
-
-A metered connection lengthens every time-to-live, and lengthens it further for a source that
-cannot be revalidated cheaply. Connectivity arrives as an injected interface, time arrives as
-an injected clock, so the whole thing is a function with no hidden inputs.
-
-The answer is one of four cases rather than a yes or no:
-
-| Case | Meaning |
+| Answer | Meaning |
 |---|---|
 | `ServeCache` | young enough that asking would change nothing |
-| `ServeCacheAndRevalidate` | old, but we have something. Show it now, refresh behind it |
-| `FetchBlocking` | nothing stored yet, so the user has to wait |
-| `ServeStaleOffline` | no network. Show what we have and say it may be old |
+| `ServeCacheThenFetch` | past its allowance, but something is stored. Show that, refresh behind it |
+| `Fetch` | nothing stored, so the reader waits |
+| `ServeCacheStale` | no network, something stored. Show it and say it may be old |
+| `NothingToServe` | no network and nothing stored |
+
+The allowance is the source's own stated maximum age where it gives one, and ours where it does
+not. For this source it is ten minutes, because the server says `max-age=600`.
 
 ### The data layer, in `:components:articles:data`
 
-Retrofit against `https://api.spaceflightnewsapi.net/v4/articles/`, Room as the single source
-of truth, and pagination written by hand. The network writes to Room and the UI only ever
-reads from Room, so what the user sees is always what is stored. Each stored page records when
-it was written, which is what gives the policy an age to work from.
+Retrofit against `https://api.spaceflightnewsapi.net/v4/articles/`, Room as the single source of
+truth, and pagination written by hand. The network writes to Room and the UI only ever reads from
+Room, so what the reader sees is always what is stored, and a failed refresh cannot empty the
+screen.
 
-The repository implements the `ArticleRepository` interface that already exists in
-`:components:articles:api`, so nothing above the data layer changes shape. The in-memory
-implementation is deleted.
+Refresh upserts on the article id and keeps the pages already loaded, so someone five pages in
+who pulls to refresh keeps their place. It also **pages forward until it reaches an article
+already stored**, capped at five pages, because this source publishes twenty to forty articles a
+day and a reader who opens the app daily is more than a page behind every time. Fetching only the
+newest page would have left a day missing in the middle with nothing said.
 
 ### The screens
 
 Real articles instead of placeholders, each with the picture the source provides: a thumbnail on
 the card and a wide one at the top of the detail screen. The four content states become real
-instead of hard-coded. Pull to refresh. The next page starts loading a few articles before the
-reader reaches the end, so the list does not stall. An honest marker when what is shown may be
-old because the device is offline. The detail screen reads its article from the cache, which is
-what will make a saved article readable offline in the next slice.
+instead of hard-coded. Pull to refresh. The next page starts a few articles before the reader
+reaches the end, so the list does not stall. An honest marker when what is shown may be old
+because the device is offline.
 
-Refresh happens only at moments the user can see: the app coming to the foreground, a tab being
+Refresh happens only at moments the reader can see: the app coming to the foreground, a tab being
 shown, a pull to refresh, and approaching the end of the list. No background work of any kind.
 
-A metered connection changes three things, not one: how long the app tolerates old articles,
-whether it fetches pictures for cards the reader has not reached, and how early it starts the
-next page. Those are the three places data is actually spent.
+### What a metered connection changes
+
+Pictures and look-ahead, and nothing else. On a metered connection the app fetches pictures only
+for the articles on screen and starts the next page later. **The allowance does not depend on the
+connection.**
+
+An earlier draft of this plan stretched the allowance on a metered connection and justified it
+first as saving data, then as saving battery. Both were wrong. Ten minutes to forty saves about
+50 KB an hour of reading, which is one thumbnail, so it is not a data measure. And if the reason
+were battery then the signal is wrong, because an unmetered connection also wakes a radio —
+metering is about money. A picture is around 50 KB and a page of text is 17 KB, so the data is in
+the pictures, and that is the only place a metered connection is allowed to change behaviour.
 
 ### Left out on purpose
 
-The weather component, save and unsave, the Saved screen's real contents, the movie component
-and search. They are the next slice or were cut for time. Nothing here touches them.
+The weather component, save and unsave, the Saved screen's real contents, the movie component and
+search. They are the next slice or were cut for time. Nothing here touches them.
 
-**Trade-off, stated plainly.** Pagination is written by hand rather than using Paging 3, which
-is the official answer and would handle the edge cases for us. Paging 3's `RemoteMediator`
-decides when a load happens, and that decision is exactly what this change is about. Keeping it
-in our own code is what makes it a unit test against a fake clock instead of a framework
-behaviour we hope is right. The cost is that the paging state machine, its retry and its
-end-of-list handling are ours to get right.
+## How this will be judged, in numbers
 
-The second trade-off is what the metered connection is allowed to change, and getting this
-honest took a rewrite. Stretching the refresh interval from ten minutes to forty saves about 50
-KB an hour of reading, which is one thumbnail. So the longer interval is not a data measure at
-all — what it saves is radio wakeups, and therefore battery. The data is in the pictures, which
-are around fifty times the text, so that is where a metered connection has to be allowed to
-change behaviour. Both levers stay, described as what they each actually do.
+The fake article source counts requests, so the claims are assertions rather than prose:
 
-The simpler option was one interval and no connection awareness anywhere. Rejected because the
-brief asks about the reader's mobile data, and answering it with a number that saves a thumbnail
-an hour would not survive being priced.
+| Situation | Requests |
+|---|---|
+| a second open inside the allowance | 0 |
+| an open with a warm cache and no network | 0 |
+| scrolling three pages | 3 |
+| a refresh when already up to date | 1 |
+| a refresh after a day away | at most 5 |
 
-Satisfies from the brief: the *paginated feed*, the *freshness policy* including the write-up,
-and *all four UI states handled explicitly* for real rather than in previews. Prepares the
-*saved items readable offline* must-have by making the cache the only thing the UI reads.
+The first draft of this plan had no numbers in it, which is how two bad arguments survived in it
+as long as they did.
+
+## Trade-offs
+
+**Pagination is written by hand rather than using Paging 3.** The first version of this reason was
+that `RemoteMediator` takes the load decision away from us and makes the policy untestable. That
+is false: `RemoteMediator.initialize()` exists so an app can check its own cache before deciding,
+and it is an ordinary class a test can drive.
+
+The two reasons that hold are different. Paging 3 refreshes by invalidating and starting again,
+and the behaviour chosen here is the opposite — keep every loaded page, upsert by id, reach back
+until we meet known content. And `PagingData` is a stream of differences rather than a list, so
+asserting on it needs a differ and `LazyPagingItems` couples the screen to the library; this
+project's screens are stateless composables checked by JVM view tests, which is what the second
+half of the last slice was spent establishing. The cost is that the paging state machine and its
+edge cases are ours to get right, and they are unit tested rather than tested by scrolling.
+
+**The estimate is seven and a half hours against a four hour block**, and that is written into the
+task list rather than smoothed over. The first draft claimed four hours for the same work, which
+was five and a half minutes a task. The response is the shape of the plan rather than optimism:
+five passes, each ending with the app working and better than before, and a stated cut order. The
+earlier version was horizontal — all of the policy, then all of the storage, then all of the
+network — and with that shape, running out of time before the last group leaves an app still
+showing placeholders.
 
 ## Capabilities
 
 ### New Capabilities
 - `article-feed`: reading a paginated list of articles that keeps working without a network,
-  refreshes itself only when that would change what the reader sees, and says so when what is
-  shown may be old.
+  refreshes itself only when that would change what the reader sees, reaches back far enough not
+  to leave a gap, and says so when what is shown may be old.
 
 ### Modified Capabilities
 
@@ -105,16 +120,13 @@ None. `app-shell` describes navigation and the shape of the four states, and nei
 
 ## Impact
 
-- **New**: `:core:freshness` gains the policy and its tests; `:components:articles:data` gains
-  a Retrofit service, Room entities, a DAO, a database and the real repository;
-  `:core:testing` gains a fake connectivity source.
-- **Deleted**: the in-memory article repository, and the placeholder state in the feed and
-  detail view models.
-- **Dependencies added**: none beyond what the version catalog already declares. Retrofit,
-  OkHttp, Room and serialization are already there and reach the data layer through the
-  `todayfeed.data` convention plugin.
-- **Risk**: the paging state machine is the part most likely to take longer than planned. If
-  the timebox runs out, the policy and its tests must already be finished, because that is what
-  the brief weighs. The order in the task list is also the priority order.
-- **User-visible behaviour**: the feed shows real articles, keeps showing them without a
-  network, loads more as the reader scrolls, and admits when it may be out of date.
+- **New**: the policy and its tests in `:core:freshness`; a Retrofit service, two Room tables, a
+  DAO and the real repository in `:components:articles:data`; `FakeConnectivity` and a counting
+  fake source in `:core:testing`; `DataSaver` in `:core:designsystem`; Coil in the catalog.
+- **Deleted**: the in-memory article repository and the placeholder state in the feed and detail
+  view models.
+- **Risk**: the paging state machine, especially a refresh arriving during an append. Requests
+  are serialised behind one mutex.
+- **User-visible behaviour**: the feed shows real articles with pictures, keeps showing them
+  without a network, loads more before the reader reaches the end, reaches back after a day away,
+  and admits when it may be out of date.
