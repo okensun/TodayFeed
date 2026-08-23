@@ -77,3 +77,9 @@ checked. All four candidate APIs were called before being written into the plan,
 confirming which ones answer `304 Not Modified` with an empty body. Every library version
 was resolved from its actual repository. That is how we found that KSP has no release for
 Kotlin 2.4, which quietly rules out the newest Kotlin because Room and Hilt both need KSP.
+
+The same habit caught a worse one. I asked whether CI was running the view tests and the unit
+tests, and rather than answering, we listed the task graph. CI ran `testDebugUnitTest`, and a
+plain Kotlin module has no debug variant, so every JVM module was skipped without a word: 25 of
+33 tests. The build had been green the whole time. The next slice puts the freshness policy in
+a JVM module, so its entire test suite would have been skipped too.

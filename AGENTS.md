@@ -24,9 +24,12 @@ first build.
 
 ```bash
 ./gradlew assembleDebug                                       # build the debug APK
-./gradlew assembleDebug detekt ktlintCheck testDebugUnitTest   # what CI runs
+./gradlew assembleDebug detekt ktlintCheck test                 # what CI runs
 ./gradlew ktlintFormat                                         # fix formatting
 ./gradlew :core:testing:test                                   # one module's tests
+
+# Use `test`, never `testDebugUnitTest`. A plain Kotlin module has no debug variant, so
+# testDebugUnitTest skips every JVM module without saying so.
 ./gradlew installDebug                                         # install on a device
 ```
 
