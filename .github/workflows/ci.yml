@@ -36,8 +36,12 @@ jobs:
 
       # No secrets are configured for this job on purpose. Every data source is keyless,
       # so this run also proves that a fresh copy builds with no setup at all.
+      # `test` and not `testDebugUnitTest`. A plain Kotlin module has no debug variant, so
+      # testDebugUnitTest silently skips every JVM module, which is where the freshness
+      # policy and the feed composition are tested. `test` covers both kinds, and an Android
+      # module has only the debug unit test task under AGP 9, so nothing runs twice.
       - name: Build, check style, run tests
-        run: ./gradlew assembleDebug detekt ktlintCheck testDebugUnitTest --stacktrace
+        run: ./gradlew assembleDebug detekt ktlintCheck test --stacktrace
 
       - name: Upload test reports on failure
         if: failure()
