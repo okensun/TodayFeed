@@ -16,4 +16,6 @@ data object ReadingRoute
 data object SavedRoute
 
 @Serializable
-data class ArticleDetailRoute(val articleId: String)
+data class ArticleDetailRoute(
+    val articleId: String,
+)

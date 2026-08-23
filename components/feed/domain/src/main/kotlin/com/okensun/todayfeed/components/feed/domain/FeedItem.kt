@@ -9,6 +9,11 @@ import com.okensun.todayfeed.components.weather.api.Weather
  * component that owns it, with no per-card mapping layer in between.
  */
 sealed interface FeedItem {
-    data class WeatherHero(val weather: Weather) : FeedItem
-    data class ArticleRow(val article: Article) : FeedItem
+    data class WeatherHero(
+        val weather: Weather,
+    ) : FeedItem
+
+    data class ArticleRow(
+        val article: Article,
+    ) : FeedItem
 }

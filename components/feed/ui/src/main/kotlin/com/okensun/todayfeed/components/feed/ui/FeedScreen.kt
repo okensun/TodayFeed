@@ -6,7 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.okensun.todayfeed.components.articles.ui.ArticleRowCard
 import com.okensun.todayfeed.components.feed.domain.FeedItem
@@ -31,11 +31,12 @@ fun FeedScreen(
     when (val current = state) {
         is ContentState.Loading -> LoadingState(modifier)
         is ContentState.Empty -> EmptyState(title = "Nothing to read yet", modifier = modifier)
-        is ContentState.Error -> ErrorState(
-            message = current.message,
-            onRetry = viewModel::onRetry,
-            modifier = modifier,
-        )
+        is ContentState.Error ->
+            ErrorState(
+                message = current.message,
+                onRetry = viewModel::onRetry,
+                modifier = modifier
+            )
         is ContentState.Offline -> {
             // Bound to a local because Kotlin will not smart cast a public property that
             // belongs to another module. Offline with cached content still shows content.
@@ -46,11 +47,12 @@ fun FeedScreen(
                 FeedList(items = cached, onArticleClick = onArticleClick, modifier = modifier)
             }
         }
-        is ContentState.Content -> FeedList(
-            items = current.value,
-            onArticleClick = onArticleClick,
-            modifier = modifier,
-        )
+        is ContentState.Content ->
+            FeedList(
+                items = current.value,
+                onArticleClick = onArticleClick,
+                modifier = modifier
+            )
     }
 }
 
@@ -64,10 +66,11 @@ private fun FeedList(
         items(items) { item ->
             when (item) {
                 is FeedItem.WeatherHero -> WeatherHeroCard(item.weather)
-                is FeedItem.ArticleRow -> ArticleRowCard(
-                    article = item.article,
-                    onClick = { onArticleClick(item.article.id) },
-                )
+                is FeedItem.ArticleRow ->
+                    ArticleRowCard(
+                        article = item.article,
+                        onClick = { onArticleClick(item.article.id) }
+                    )
             }
         }
     }

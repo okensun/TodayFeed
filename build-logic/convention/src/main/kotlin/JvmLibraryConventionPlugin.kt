@@ -7,6 +7,7 @@ import org.gradle.api.Project
  */
 class JvmLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project): Unit = with(target) {
+        pluginManager.apply("todayfeed.quality")
         pluginManager.apply("org.jetbrains.kotlin.jvm")
         configureKotlinJvm()
         dependencies.add("implementation", library("kotlinx-coroutines-core"))

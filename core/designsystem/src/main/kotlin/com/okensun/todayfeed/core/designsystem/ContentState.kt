@@ -9,14 +9,19 @@ package com.okensun.todayfeed.core.designsystem
  * cached content and admitting it may be old. See DECISIONS.md.
  */
 sealed interface ContentState<out T> {
-
     data object Loading : ContentState<Nothing>
 
     data object Empty : ContentState<Nothing>
 
-    data class Error(val message: String) : ContentState<Nothing>
+    data class Error(
+        val message: String,
+    ) : ContentState<Nothing>
 
-    data class Offline<out T>(val cached: T?) : ContentState<T>
+    data class Offline<out T>(
+        val cached: T?,
+    ) : ContentState<T>
 
-    data class Content<out T>(val value: T) : ContentState<T>
+    data class Content<out T>(
+        val value: T,
+    ) : ContentState<T>
 }

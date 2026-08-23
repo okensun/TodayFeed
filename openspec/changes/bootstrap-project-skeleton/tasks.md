@@ -56,7 +56,7 @@
 - [x] 3.4 Create `:core:testing` with a `FakeClock` and coroutine test rules, used only from
       test code. Verify: `./gradlew :core:freshness:dependencies --configuration
       runtimeClasspath` does not list it
-- [ ] 3.5 Add a unit test that `FakeClock` only moves when told to. Verify: it passes. Every
+- [x] 3.5 Add a unit test that `FakeClock` only moves when told to. Verify: it passes. Every
       freshness test in slice 2 rests on this
 
 ## 4. Component modules
@@ -98,7 +98,7 @@
 - [x] 6.1 Add the `@HiltAndroidApp` application class and the single `@AndroidEntryPoint`
       Compose activity in `:app`. Verify: `assembleDebug` works with Hilt code generation
       and the app starts
-- [ ] 6.2 Define the `@Serializable` route types in `:app`: the two top-level destinations
+- [x] 6.2 Define the `@Serializable` route types in `:app`: the two top-level destinations
       and `ArticleDetail(articleId)`. Verify: a unit test sends `ArticleDetail` through the
       navigation argument encoding and gets the same value back
 - [ ] 6.3 Add the `NavHost` and the two-tab bottom bar, saving and restoring each tab's back
@@ -129,22 +129,22 @@
 
 ## 8. Static analysis, CI and documents
 
-- [ ] 8.1 Add detekt with `config/detekt/detekt.yml` (140 characters, class member ordering,
+- [x] 8.1 Add detekt with `config/detekt/detekt.yml` (140 characters, class member ordering,
       `MagicNumber` in production code only, at most 3 returns, at most 15 functions) and
       ktlint driven by `.editorconfig`. Verify: `./gradlew detekt ktlintCheck` passes on the
       whole project
-- [ ] 8.2 Add `.github/workflows/ci.yml`: JDK 17, Gradle caching, and
+- [x] 8.2 Add `.github/workflows/ci.yml`: JDK 17, Gradle caching, and
       `./gradlew assembleDebug detekt ktlintCheck testDebugUnitTest --stacktrace` on push
       and pull request, with no secrets. Verify: the workflow passes on a pushed branch
-- [ ] 8.3 Write `AGENTS.md`: build commands, the module graph, the dependency rules, the
+- [x] 8.3 Write `AGENTS.md`: build commands, the module graph, the dependency rules, the
       layer conventions, code style, writing style and testing patterns. Verify: someone can
       add a new component using only this file
-- [ ] 8.4 Write `CLAUDE.md` as a short summary that points at `AGENTS.md` and lists only the
+- [x] 8.4 Write `CLAUDE.md` as a short summary that points at `AGENTS.md` and lists only the
       rules a linter cannot catch. Verify: it fits on one screen and does not contradict
       `AGENTS.md`
-- [ ] 8.5 Add `.github/pull_request_template.md` with the agreed sections. Verify: it renders
+- [x] 8.5 Add `.github/pull_request_template.md` with the agreed sections. Verify: it renders
       correctly when opening a pull request
-- [ ] 8.6 Write the `README.md` stub: the one-line run command, a short overview and the
+- [x] 8.6 Write the `README.md` stub: the one-line run command, a short overview and the
       module graph. Verify: a reader who follows only the README can build the project
 
 ## 9. Acceptance

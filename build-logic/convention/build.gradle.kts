@@ -14,6 +14,8 @@ dependencies {
     compileOnly(libs.compose.compiler.gradlePlugin)
     compileOnly(libs.ksp.gradlePlugin)
     compileOnly(libs.hilt.gradlePlugin)
+    compileOnly(libs.detekt.gradlePlugin)
+    compileOnly(libs.ktlint.gradlePlugin)
 }
 
 // One plugin per layer archetype. Each holds its layer's settings AND its dependency
@@ -31,6 +33,10 @@ gradlePlugin {
         register("androidCompose") {
             id = "todayfeed.android.compose"
             implementationClass = "AndroidComposeConventionPlugin"
+        }
+        register("quality") {
+            id = "todayfeed.quality"
+            implementationClass = "QualityConventionPlugin"
         }
         register("hilt") {
             id = "todayfeed.hilt"

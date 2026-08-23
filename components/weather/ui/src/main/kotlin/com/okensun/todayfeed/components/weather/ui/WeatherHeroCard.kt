@@ -18,22 +18,25 @@ import com.okensun.todayfeed.components.weather.api.Weather
  * article row, which is what makes the feed visibly heterogeneous.
  */
 @Composable
-fun WeatherHeroCard(weather: Weather, modifier: Modifier = Modifier) {
+fun WeatherHeroCard(
+    weather: Weather,
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(text = weather.placeName, style = MaterialTheme.typography.labelLarge)
             Text(
                 text = "${weather.temperatureCelsius.toInt()}°",
-                style = MaterialTheme.typography.displayMedium,
+                style = MaterialTheme.typography.displayMedium
             )
             Row {
                 Text(text = weather.condition, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = "  H ${weather.highCelsius.toInt()}°  L ${weather.lowCelsius.toInt()}°",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }

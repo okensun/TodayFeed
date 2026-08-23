@@ -25,7 +25,7 @@ private fun CentredMessage(
     Column(
         modifier = modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         if (body != null) {
@@ -34,7 +34,7 @@ private fun CentredMessage(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 8.dp),
+                modifier = Modifier.padding(top = 8.dp)
             )
         }
         if (action != null) {
@@ -48,39 +48,50 @@ fun LoadingState(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CircularProgressIndicator()
         Text(
             text = "Loading",
             style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(top = 16.dp),
+            modifier = Modifier.padding(top = 16.dp)
         )
     }
 }
 
 @Composable
-fun EmptyState(title: String, body: String? = null, modifier: Modifier = Modifier) {
+fun EmptyState(
+    title: String,
+    body: String? = null,
+    modifier: Modifier = Modifier,
+) {
     CentredMessage(title = title, body = body, modifier = modifier)
 }
 
 @Composable
-fun ErrorState(message: String, onRetry: () -> Unit, modifier: Modifier = Modifier) {
+fun ErrorState(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     CentredMessage(
         title = "Something went wrong",
         body = message,
         modifier = modifier,
-        action = { Button(onClick = onRetry) { Text("Try again") } },
+        action = { Button(onClick = onRetry) { Text("Try again") } }
     )
 }
 
 @Composable
-fun OfflineState(onRetry: () -> Unit, modifier: Modifier = Modifier) {
+fun OfflineState(
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     CentredMessage(
         title = "You are offline",
         body = "Nothing has been saved for this screen yet, so there is nothing to show.",
         modifier = modifier,
-        action = { Button(onClick = onRetry) { Text("Try again") } },
+        action = { Button(onClick = onRetry) { Text("Try again") } }
     )
 }
 

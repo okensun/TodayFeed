@@ -35,30 +35,30 @@ fun TodayFeedApp() {
                     NavigationBarItem(
                         selected = onReading,
                         onClick = { navController.switchTab(ReadingRoute) },
-                        icon = { Text("Reading") },
+                        icon = { Text("Reading") }
                     )
                     NavigationBarItem(
                         selected = onSaved,
                         onClick = { navController.switchTab(SavedRoute) },
-                        icon = { Text("Saved") },
+                        icon = { Text("Saved") }
                     )
                 }
             }
-        },
+        }
     ) { padding ->
         NavHost(
             navController = navController,
             startDestination = ReadingRoute,
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.padding(padding)
         ) {
             composable<ReadingRoute> {
                 FeedScreen(
-                    onArticleClick = { navController.navigate(ArticleDetailRoute(it)) },
+                    onArticleClick = { navController.navigate(ArticleDetailRoute(it)) }
                 )
             }
             composable<SavedRoute> {
                 SavedScreen(
-                    onArticleClick = { navController.navigate(ArticleDetailRoute(it)) },
+                    onArticleClick = { navController.navigate(ArticleDetailRoute(it)) }
                 )
             }
             composable<ArticleDetailRoute> { entry ->

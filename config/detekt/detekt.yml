@@ -1,0 +1,41 @@
+# Built on top of detekt's defaults, so this file only holds what we change.
+# The point of these rules is that mechanical problems are caught by a tool and never
+# appear in a code review comment.
+build:
+  maxIssues: 0
+
+complexity:
+  LongParameterList:
+    # Constructor injection legitimately takes many parameters.
+    ignoreAnnotated: [ 'Inject', 'Provides', 'Composable' ]
+  TooManyFunctions:
+    thresholdInClasses: 15
+    thresholdInFiles: 20
+    ignoreAnnotatedFunctions: [ 'Composable' ]
+
+style:
+  ReturnCount:
+    max: 3
+  # @Preview functions are called by the tooling, not by code, so they read as unused.
+  UnusedPrivateMember:
+    ignoreAnnotated: [ 'Preview', 'Composable' ]
+  MagicNumber:
+    # Numbers are meaningful in tests, in Compose layout code, and in a colour palette.
+    excludes: [ '**/test/**', '**/*.kts', '**/Color.kt' ]
+    ignoreAnnotated: [ 'Composable', 'Preview' ]
+  MaxLineLength:
+    maxLineLength: 140
+  ForbiddenComment:
+    # A TODO with no colon is allowed. TODO: is not, because it never gets done.
+    comments:
+      - reason: 'Use TODO without a colon so it is not mistaken for a tracked task.'
+        value: 'TODO:'
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: [ 'Composable' ]
+
+empty-blocks:
+  EmptyFunctionBlock:
+    ignoreOverridden: true
+

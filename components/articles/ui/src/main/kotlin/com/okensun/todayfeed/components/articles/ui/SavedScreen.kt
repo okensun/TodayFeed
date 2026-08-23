@@ -1,26 +1,16 @@
 package com.okensun.todayfeed.components.articles.ui
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.EmptyState
 import com.okensun.todayfeed.core.designsystem.LoadingState
-import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-
-@HiltViewModel
-class SavedViewModel @Inject constructor() : ViewModel() {
-    private val _state = MutableStateFlow<ContentState<List<Article>>>(ContentState.Empty)
-    val state: StateFlow<ContentState<List<Article>>> = _state.asStateFlow()
-}
 
 @Composable
 fun SavedScreen(
@@ -29,12 +19,19 @@ fun SavedScreen(
     viewModel: SavedViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    when (state) {
+    when (val current = state) {
         is ContentState.Loading -> LoadingState(modifier)
-        else -> EmptyState(
-            title = "Nothing saved yet",
-            body = "Open an article and save it. Saved articles stay readable without a network.",
-            modifier = modifier,
-        )
+        is ContentState.Content ->
+            LazyColumn(modifier = modifier.fillMaxSize()) {
+                items(current.value) { article ->
+                    ArticleRowCard(article = article, onClick = { onArticleClick(article.id) })
+                }
+            }
+        else ->
+            EmptyState(
+                title = "Nothing saved yet",
+                body = "Open an article and save it. Saved articles stay readable without a network.",
+                modifier = modifier
+            )
     }
 }
