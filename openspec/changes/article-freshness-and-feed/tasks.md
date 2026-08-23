@@ -27,15 +27,15 @@
       shows a stated server maximum age replaces our figure
 - [x] 1.4 Check the boundary. Verify: tests at exactly the allowance, one second before and one
       second after, so an off-by-one cannot hide
-- [ ] 1.5 Add `Connectivity` to `:core:freshness` and `FakeConnectivity` to `:core:testing`.
+- [x] 1.5 Add `Connectivity` to `:core:freshness` and `FakeConnectivity` to `:core:testing`.
       Verify: a test moves the fake from unmetered to offline and the flow emits both
-- [ ] 1.6 Add the `articles` table keyed on the article id, the single-row `feed_metadata` table,
+- [x] 1.6 Add the `articles` table keyed on the article id, the single-row `feed_metadata` table,
       a DAO whose article query returns a `PagingSource`, and the database. Verify: a Room test
       writes the same article twice with different content and reads back one row holding the
       newer content
-- [ ] 1.7 Add the Retrofit service for `/v4/articles/` and its response types. Verify: a test
+- [x] 1.7 Add the Retrofit service for `/v4/articles/` and its response types. Verify: a test
       decodes a saved copy of a real response body, taken from the API rather than written by hand
-- [ ] 1.8 Read `Cache-Control: max-age` off the response and store it with the metadata. Verify: a
+- [x] 1.8 Read `Cache-Control: max-age` off the response and store it with the metadata. Verify: a
       test parses a real header value, and a response without the header yields no stated age
 - [ ] 1.9 Add the `RemoteMediator` with `decide` in `initialize()` and a `REFRESH` branch that
       fetches one page and upserts. Verify: a test with a counting fake source shows

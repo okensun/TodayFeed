@@ -31,6 +31,7 @@ javaxInject = "1"
 junit = "4.13.2"
 turbine = "1.2.1"
 robolectric = "4.16.1"
+paging = "3.5.1"
 
 detekt = "1.23.8"
 ktlint = "14.2.0"
@@ -74,6 +75,11 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+# Paging 3, chosen after a spike. See DECISIONS.md.
+room-paging = { group = "androidx.room", name = "room-paging", version.ref = "room" }
+paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "paging" }
+paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "paging" }
+paging-testing = { group = "androidx.paging", name = "paging-testing", version.ref = "paging" }
 # View tests run on the JVM through Robolectric, so there is no emulator in CI.
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }

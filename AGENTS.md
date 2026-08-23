@@ -194,9 +194,11 @@ Robolectric emulates the Android level named in `core/testing/src/main/resources
 currently 36. It is pinned because Robolectric has no jar for `compileSdk` 37 yet. Raise it when
 one ships.
 
-Any module with test source files must contain at least one `@Test`. Gradle fails a test task
-that compiles test classes and then discovers no test, and that check is worth keeping. A
-module with no test sources at all is fine: its test task reports no source and passes.
+Gradle's no-tests-discovered check is switched off for `data` and `ui` modules. Turning on
+Android resources for unit tests, which Room and Compose tests both need, makes Gradle see test
+sources in every module that applies those plugins, so the check fires on modules that simply
+have no tests yet. It is meant to catch tests that exist but are not found. Forcing a token test
+into a module with nothing worth testing is worse than losing the warning.
 
 One seam is not covered: nothing tests the stateful overload of a screen, which is where the
 view model is found and its callbacks are passed down. A screen could stop passing
