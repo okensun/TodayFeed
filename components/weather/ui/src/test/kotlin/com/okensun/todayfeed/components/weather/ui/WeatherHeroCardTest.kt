@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import com.okensun.todayfeed.components.weather.api.Weather
+import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,17 +17,7 @@ class WeatherHeroCardTest {
 
     @Test
     fun `shows the place, the temperature and the high and low`() {
-        compose.setContent {
-            WeatherHeroCard(
-                Weather(
-                    placeName = "Taipei",
-                    temperatureCelsius = 30.4,
-                    condition = "Cloudy",
-                    highCelsius = 31.0,
-                    lowCelsius = 26.0
-                )
-            )
-        }
+        show(temperature = 30.4)
 
         compose.onNodeWithText("Taipei").assertIsDisplayed()
         compose.onNodeWithText("30°").assertIsDisplayed()
@@ -35,19 +26,35 @@ class WeatherHeroCardTest {
     }
 
     @Test
-    fun `rounds the temperature down rather than showing decimals`() {
-        compose.setContent {
-            WeatherHeroCard(
-                Weather(
-                    placeName = "Taipei",
-                    temperatureCelsius = 30.9,
-                    condition = "Clear",
-                    highCelsius = 31.0,
-                    lowCelsius = 26.0
-                )
-            )
-        }
+    fun `rounds to the nearest degree, not toward zero`() {
+        show(temperature = 30.9)
 
-        compose.onNodeWithText("30°").assertIsDisplayed()
+        compose.onNodeWithText("31°").assertIsDisplayed()
     }
+
+    /**
+     * Open-Meteo returns temperatures below zero. Truncating toward zero would round those
+     * the wrong way, showing -3 for -3.7.
+     */
+    @Test
+    fun `rounds a temperature below zero away from zero`() {
+        show(temperature = -3.7)
+
+        compose.onNodeWithText("-4°").assertIsDisplayed()
+    }
+
+    private fun show(temperature: Double) =
+        compose.setContent {
+            TodayFeedTheme {
+                WeatherHeroCard(
+                    Weather(
+                        placeName = "Taipei",
+                        temperatureCelsius = temperature,
+                        condition = "Cloudy",
+                        highCelsius = 31.0,
+                        lowCelsius = 26.0
+                    )
+                )
+            }
+        }
 }

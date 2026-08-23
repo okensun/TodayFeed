@@ -153,6 +153,12 @@
 - [x] 8.6 Write the `README.md` stub: the one-line run command, a short overview and the
       module graph. Verify: a reader who follows only the README can build the project
 
+- [x] 8.7 Add view tests: the Compose test rule under Robolectric in the `todayfeed.ui`
+      convention plugin, Android resources on for unit tests, and the emulated Android level
+      pinned in `:core:testing` because Robolectric has no jar for `compileSdk` 37. Verify:
+      `./gradlew test` passes with no device, and three of the tests fail against the code as
+      it was before the review on pull request 1
+
 ## 9. Acceptance
 
 - [ ] 9.1 Check the whole change end to end. Clone the repository into a new directory. Run

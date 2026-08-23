@@ -70,14 +70,25 @@ broken into slices, the order they were built and why, and what was cut.
 
 Written as they are found.
 
-- **Retry does nothing yet.** The error and offline states both show a Try again button, and
-  every screen routes it to a view model method with an empty body. There is nothing to retry
-  until the repositories talk to the network, which is the next slice. The button is wired
-  through the whole path, so only the body is missing.
-- **The theme change scenario is not verified end to end.** The app applies a light or dark
-  theme from the system setting, and that was checked on an emulator. What is not checked is
-  that the screen keeps its scroll position across the change, because on this emulator
-  `adb shell cmd uimode night` restarts the task and the process, and writing the setting
-  directly has no effect. The same check passes for an equivalent configuration change: a
-  font scale change leaves the process, the task and the scroll position untouched. It still
+- **Retry does nothing yet on the feed and the saved list.** Both show a Try again button
+  wired to a view model method with an empty body, because nothing talks to the network until
+  the next slice. The path is wired end to end, so only the body is missing. The detail screen
+  is different: it has nothing to reload, so its button says Go back and leaves the screen.
+
+### Checked by hand rather than by a test
+
+There is no emulator in CI, so these were driven over `adb` on an emulator and the result
+recorded. See `DECISIONS.md` for why.
+
+| Behaviour | What was measured |
+|---|---|
+| Each tab keeps its own scroll position | Scrolled the feed, opened Saved, returned. The two screenshots are identical apart from the clock. |
+| Tapping the tab already open adds nothing to the back stack | After tapping Reading while on Reading, the system back button left the app for the launcher. |
+| The theme follows the system setting without a restart | Switching to dark redrew the app in dark, and the process id was unchanged before and after. |
+
+- **One scenario is still not verified: whether the screen keeps its state across a theme
+  change.** On this emulator `adb shell cmd uimode night` swaps the task and the process, which
+  loses the state for reasons that have nothing to do with the app, and writing the setting
+  directly has no effect. The same check passes for an equivalent configuration change: after a
+  font scale change the process, the task and the scroll position are all unchanged. It still
   needs a manual pass through Settings.

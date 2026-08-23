@@ -1,12 +1,12 @@
 package com.okensun.todayfeed.components.articles.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.core.designsystem.ContentState
+import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -20,9 +20,17 @@ class SavedScreenTest {
 
     @Test
     fun `content lists what was saved`() {
-        setState(ContentState.Content(listOf(previewArticle("s1"))))
+        setState(ContentState.Content(listOf(article)))
 
-        compose.onNodeWithText(previewArticle().title).assertIsDisplayed()
+        compose.onNodeWithText(article.title).assertIsDisplayed()
+    }
+
+    @Test
+    fun `loading says so and lists nothing`() {
+        setState(ContentState.Loading)
+
+        compose.onNodeWithText("Loading").assertIsDisplayed()
+        compose.onNodeWithText(article.title).assertDoesNotExist()
     }
 
     @Test
@@ -38,7 +46,7 @@ class SavedScreenTest {
         setState(ContentState.Offline(null))
 
         compose.onNodeWithText("You are offline").assertIsDisplayed()
-        compose.onNodeWithText("Nothing saved yet").assertIsNotDisplayed()
+        compose.onNodeWithText("Nothing saved yet").assertDoesNotExist()
     }
 
     /** The retry on this screen used to be wired to an empty lambda. */
@@ -53,20 +61,21 @@ class SavedScreenTest {
     }
 
     @Test
-    fun `offline with cached articles still lists them`() {
-        setState(ContentState.Offline(listOf(previewArticle())))
+    fun `offline with cached articles lists them and shows no offline notice`() {
+        setState(ContentState.Offline(listOf(article)))
 
-        compose.onNodeWithText(previewArticle().title).assertIsDisplayed()
+        compose.onNodeWithText(article.title).assertIsDisplayed()
+        compose.onNodeWithText("You are offline").assertDoesNotExist()
     }
 
     @Test
     fun `tapping a saved article passes its id`() {
         var clicked: String? = null
-        setState(ContentState.Content(listOf(previewArticle("s9"))), onArticleClick = { clicked = it })
+        setState(ContentState.Content(listOf(article)), onArticleClick = { clicked = it })
 
-        compose.onNodeWithText(previewArticle().title).performClick()
+        compose.onNodeWithText(article.title).performClick()
 
-        assertEquals("s9", clicked)
+        assertEquals(article.id, clicked)
     }
 
     private fun setState(
@@ -74,6 +83,12 @@ class SavedScreenTest {
         onRetry: () -> Unit = {},
         onArticleClick: (String) -> Unit = {},
     ) = compose.setContent {
-        SavedScreen(state = state, onRetry = onRetry, onArticleClick = onArticleClick)
+        TodayFeedTheme {
+            SavedScreen(state = state, onRetry = onRetry, onArticleClick = onArticleClick)
+        }
+    }
+
+    private companion object {
+        val article = previewArticle("s1")
     }
 }

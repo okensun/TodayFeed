@@ -314,10 +314,12 @@ mind was evidence rather than principle. A code review found two bugs in how the
 bugs are now regression tests.
 
 An emulator in CI would add six to twelve minutes to a two and a half minute run, and it is
-famously unreliable. What it would buy is repeatability for scenarios I have already checked by
+famously unreliable. The chosen option costs about twelve seconds of Robolectric startup per
+module, three modules, so roughly thirty six seconds. What it would buy is repeatability for scenarios I have already checked by
 hand once: tab back stacks, the system back gesture, a theme change. Against a Thursday
 deadline, that budget is better spent on the freshness policy, which is what the brief actually
-weighs. So device checks stay manual, and the README says which ones and what was measured.
+weighs. So device checks stay manual. The README lists each one and what was measured, including the
+one that is still unverified.
 
 The cost that remains: Robolectric ships one jar per Android level and lags the newest.
 `compileSdk` is 37 because the Compose BOM requires it, and a library module takes its manifest

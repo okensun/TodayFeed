@@ -191,8 +191,14 @@ Robolectric emulates the Android level named in `core/testing/src/main/resources
 currently 36. It is pinned because Robolectric has no jar for `compileSdk` 37 yet. Raise it when
 one ships.
 
-Every module whose test classpath has content must contain at least one test: Gradle fails a
-test task that finds nothing, and that check is worth keeping.
+Any module with test source files must contain at least one `@Test`. Gradle fails a test task
+that compiles test classes and then discovers no test, and that check is worth keeping. A
+module with no test sources at all is fine: its test task reports no source and passes.
+
+One seam is not covered: nothing tests the stateful overload of a screen, which is where the
+view model is found and its callbacks are passed down. A screen could stop passing
+`viewModel::onRetry` and every view test would still pass. Testing it needs Hilt, which is why
+it is left out for now.
 
 **Device behaviour** — back stacks, the system back gesture, a theme change, real loss of
 network — is checked by hand over `adb`, and what was measured goes in the README limitations.

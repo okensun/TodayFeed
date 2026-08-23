@@ -54,14 +54,15 @@ internal fun ArticleDetailScreen(
             ErrorState(
                 message = state.message,
                 onRetry = onBack,
-                modifier = modifier
+                modifier = modifier,
+                actionLabel = GO_BACK
             )
         is ContentState.Offline -> {
             // An article can be in the cache without ever having been saved, so being
             // offline is not the same as the article being missing. Show what we have.
             val cached = state.cached
             if (cached == null) {
-                OfflineState(onRetry = onBack, modifier = modifier)
+                OfflineState(onRetry = onBack, modifier = modifier, actionLabel = GO_BACK)
             } else {
                 ArticleBody(cached, scrollState, modifier)
             }
@@ -71,12 +72,16 @@ internal fun ArticleDetailScreen(
             ErrorState(
                 message = ARTICLE_NOT_FOUND,
                 onRetry = onBack,
-                modifier = modifier
+                modifier = modifier,
+                actionLabel = GO_BACK
             )
     }
 }
 
 private const val ARTICLE_NOT_FOUND = "That article could not be found."
+
+// This screen has nothing to reload, so its action leaves rather than retries.
+private const val GO_BACK = "Go back"
 
 @Composable
 private fun ArticleBody(

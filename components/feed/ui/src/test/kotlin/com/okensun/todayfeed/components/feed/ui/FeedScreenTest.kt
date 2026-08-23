@@ -1,6 +1,7 @@
 package com.okensun.todayfeed.components.feed.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -8,7 +9,9 @@ import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.components.feed.domain.FeedItem
 import com.okensun.todayfeed.components.weather.api.Weather
 import com.okensun.todayfeed.core.designsystem.ContentState
+import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,11 +28,21 @@ class FeedScreenTest {
     val compose = createComposeRule()
 
     @Test
-    fun `content shows the weather hero above the article titles`() {
+    fun `content puts the weather hero above the article titles`() {
         setState(ContentState.Content(feed))
 
-        compose.onNodeWithText("Taipei").assertIsDisplayed()
-        compose.onNodeWithText("Article one").assertIsDisplayed()
+        val hero = compose.onNodeWithText("Taipei").getBoundsInRoot()
+        val article = compose.onNodeWithText("Article one").getBoundsInRoot()
+
+        assertTrue("hero at ${hero.top}, article at ${article.top}", hero.top < article.top)
+    }
+
+    @Test
+    fun `loading says so and shows no content`() {
+        setState(ContentState.Loading)
+
+        compose.onNodeWithText("Loading").assertIsDisplayed()
+        compose.onNodeWithText("Article one").assertDoesNotExist()
     }
 
     @Test
@@ -37,6 +50,7 @@ class FeedScreenTest {
         setState(ContentState.Empty)
 
         compose.onNodeWithText("Nothing to read yet").assertIsDisplayed()
+        compose.onNodeWithText("Article one").assertDoesNotExist()
     }
 
     @Test
@@ -62,11 +76,13 @@ class FeedScreenTest {
     }
 
     @Test
-    fun `offline with cached content shows the content, not an error`() {
+    fun `offline with cached content shows the content and no offline notice`() {
         setState(ContentState.Offline(feed))
 
         compose.onNodeWithText("Article one").assertIsDisplayed()
         compose.onNodeWithText("Taipei").assertIsDisplayed()
+        compose.onNodeWithText("You are offline").assertDoesNotExist()
+        compose.onNodeWithText("Something went wrong").assertDoesNotExist()
     }
 
     @Test
@@ -84,7 +100,9 @@ class FeedScreenTest {
         onRetry: () -> Unit = {},
         onArticleClick: (String) -> Unit = {},
     ) = compose.setContent {
-        FeedScreen(state = state, onRetry = onRetry, onArticleClick = onArticleClick)
+        TodayFeedTheme {
+            FeedScreen(state = state, onRetry = onRetry, onArticleClick = onArticleClick)
+        }
     }
 
     private companion object {
