@@ -55,7 +55,10 @@ each is in `DECISIONS.md`.
   different from an article card (a wide banner carousel), and its correct time-to-live is
   "effectively forever", which is the sharpest illustration that the policy is per-source
   rather than one global number.
-- **Paging 3.** Pagination is hand-written instead, so the freshness logic stays testable.
+- **Hand-written pagination.** Paging 3 is used instead. The three reasons I first gave for
+  hand-writing it were all false, and a spike proved it. See `DECISIONS.md`.
+- **In-feed promotional cards.** Cut with the `serviceCard` component. They would use
+  `PagingData.insertSeparators`, whose constraint is recorded in `DECISIONS.md`.
 - **An emulator in CI.** View tests run on the JVM through Robolectric, so they are in CI.
   Device behaviour is checked by hand over `adb` and the evidence is written down. An emulator
   would add six to twelve minutes to a two and a half minute run, to make repeatable a handful

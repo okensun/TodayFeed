@@ -30,12 +30,16 @@ not. For this source it is ten minutes, because the server says `max-age=600`.
 ### The data layer, in `:components:articles:data`
 
 Retrofit against `https://api.spaceflightnewsapi.net/v4/articles/`, Room as the single source of
-truth, and pagination written by hand. The network writes to Room and the UI only ever reads from
+truth, and Paging 3 for the paging. The network writes to Room and the UI only ever reads from
 Room, so what the reader sees is always what is stored, and a failed refresh cannot empty the
 screen.
 
-Refresh upserts on the article id and keeps the pages already loaded, so someone five pages in
-who pulls to refresh keeps their place. It also **pages forward until it reaches an article
+The freshness decision stays ours, in `RemoteMediator.initialize()`, which is the seam the library
+provides for exactly that. Paging owns the offset, the append orchestration, the retry, the
+end-of-pagination signal and the trigger that starts the next page.
+
+Refresh upserts on the article id without deleting, so someone five pages in who pulls to refresh
+keeps their place: Paging reloads around where they are rather than from the top. It also **pages forward until it reaches an article
 already stored**, capped at five pages, because this source publishes twenty to forty articles a
 day and a reader who opens the app daily is more than a page behind every time. Fetching only the
 newest page would have left a day missing in the middle with nothing said.
@@ -86,20 +90,27 @@ as long as they did.
 
 ## Trade-offs
 
-**Pagination is written by hand rather than using Paging 3.** The first version of this reason was
-that `RemoteMediator` takes the load decision away from us and makes the policy untestable. That
-is false: `RemoteMediator.initialize()` exists so an app can check its own cache before deciding,
-and it is an ordinary class a test can drive.
+**Paging 3, after three wrong reasons for avoiding it.** The first version of this plan
+hand-wrote the paging, and gave reasons that turned out to be false: that `RemoteMediator` takes
+the load decision away and makes the policy untestable, that refresh invalidates and so loses the
+reader's place, and that `PagingData` cannot be driven by a JVM view test. `initialize()` exists
+for that decision; the refresh branch need not delete, and Paging reloads around the anchor;
+`PagingData.from` exists for tests. All three were checked by a throwaway spike rather than
+argued, along with `room-paging` under KSP on Kotlin 2.3 and the state derivation. Five spike
+tests, all passing, then deleted.
 
-The two reasons that hold are different. Paging 3 refreshes by invalidating and starting again,
-and the behaviour chosen here is the opposite — keep every loaded page, upsert by id, reach back
-until we meet known content. And `PagingData` is a stream of differences rather than a list, so
-asserting on it needs a differ and `LazyPagingItems` couples the screen to the library; this
-project's screens are stateless composables checked by JVM view tests, which is what the second
-half of the last slice was spent establishing. The cost is that the paging state machine and its
-edge cases are ours to get right, and they are unit tested rather than tested by scrolling.
+The pattern in those three is more useful than the conclusion: each was of the form "the library
+cannot do X", when the accurate statement was "the library does X differently". Looking for a
+reason to keep a decision already made produces "cannot" rather than "how".
 
-**The estimate is seven and a half hours against a four hour block**, and that is written into the
+What it costs: `ContentState` is derived from load states for the feed while the other screens
+have it handed down, which is one type from two sources; a card placed between articles would need
+`insertSeparators`, whose generator must be a pure function of the two adjacent items; and the
+refresh branch fetches several pages in one `load()`, which is legal but unusual. What it buys is
+not really time — about half an hour — but the removal of the paging state machine, which was the
+single item most likely to overrun.
+
+**The estimate is seven and a quarter hours against a four hour block**, and that is written into the
 task list rather than smoothed over. The first draft claimed four hours for the same work, which
 was five and a half minutes a task. The response is the shape of the plan rather than optimism:
 five passes, each ending with the app working and better than before, and a stated cut order. The
@@ -121,12 +132,14 @@ None. `app-shell` describes navigation and the shape of the four states, and nei
 ## Impact
 
 - **New**: the policy and its tests in `:core:freshness`; a Retrofit service, two Room tables, a
-  DAO and the real repository in `:components:articles:data`; `FakeConnectivity` and a counting
-  fake source in `:core:testing`; `DataSaver` in `:core:designsystem`; Coil in the catalog.
-- **Deleted**: the in-memory article repository and the placeholder state in the feed and detail
-  view models.
-- **Risk**: the paging state machine, especially a refresh arriving during an append. Requests
-  are serialised behind one mutex.
+  DAO, a `RemoteMediator` and the real repository in `:components:articles:data`;
+  `ObserveFeedSections` in `:components:feed:domain`; `FakeConnectivity` and a counting fake
+  source in `:core:testing`; `DataSaver` in `:core:designsystem`; Paging 3, `room-paging` and Coil
+  in the catalog.
+- **Deleted**: the in-memory article repository, `ObserveFeed` and its tests, and the placeholder
+  state in the feed and detail view models.
+- **Risk**: the refresh loop inside one `load()` call, which is where a bug would hide. It stops
+  at the first page containing something already stored and is capped at five.
 - **User-visible behaviour**: the feed shows real articles with pictures, keeps showing them
   without a network, loads more before the reader reaches the end, reaches back after a day away,
   and admits when it may be out of date.

@@ -73,8 +73,10 @@ context: |
     does not apply here. Explain the difference in DECISIONS.md.)
   - Network: Retrofit + OkHttp + kotlinx.serialization.
   - Persistence: Room, per component (offline-first single source of truth).
-  - Pagination: HAND-ROLLED (deliberately NOT Paging 3) so the freshness /
-    stale-while-revalidate logic stays fully under our control and unit testable.
+  - Pagination: Paging 3 with a RemoteMediator, plus room-paging for the PagingSource. The
+    freshness decision stays ours, in RemoteMediator.initialize(). An earlier decision to
+    hand-write the paging was reversed after a spike showed all three reasons for it were
+    false. See DECISIONS.md.
   - Gradle: Kotlin DSL, version catalog (libs.versions.toml), convention plugins in a
     build-logic included build. Project dependencies use string paths, not typesafe
     project accessors.

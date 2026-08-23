@@ -233,39 +233,66 @@ really inside it, and should use the vocabulary the reader already has.
 
 ## Build and tooling
 
-### Hand-written pagination, not Paging 3 — decided
+### Paging 3, after three wrong reasons for avoiding it — decided, reversing an earlier decision
 
-**Picked.** Pagination written by hand: a repository that holds the cursor and exposes a
-`StateFlow` of the loaded page state.
+**Picked.** Paging 3 with a `RemoteMediator`, `room-paging` for the `PagingSource`, and
+`LazyPagingItems` in the screen. The freshness decision stays ours, in
+`RemoteMediator.initialize()`.
 
-**Considered instead.** Paging 3 with a `RemoteMediator`, which is the official offline-first
-answer.
+**Considered instead.** Writing the paging by hand, which is what I decided first and wrote a plan
+around.
 
-**Trade-off.** `RemoteMediator` gives the framework control over when a load happens. The
-centre of this assignment is a per-source freshness policy with stale-while-revalidate, and I
-want that decision in my own code where I can unit test it against a fake clock. The cost is
-that I write the paging state machine myself, including the edge cases Paging 3 already handles,
-and I lose its built-in placeholders and retry plumbing.
+**Trade-off.** The reasons I gave for hand-writing it were three, and all three were false.
+`RemoteMediator` does not take the load decision away — `initialize()` exists precisely so an app
+can consult its own cache first, and a `RemoteMediator` is an ordinary class a test can drive.
+Refresh does not have to lose the reader's place — the refresh branch need not delete, and Paging
+reloads around `PagingState.anchorPosition`. And `PagingData` can be driven by a JVM view test,
+through `PagingData.from(items, sourceLoadStates = ...)`.
 
-### AGP 9.2.1, not the newest 9.3.1 — decided
+I checked all three with a throwaway spike rather than arguing: five tests covering `room-paging`
+under KSP on Kotlin 2.3 with AGP 9, the policy in `initialize()`, a `PagingData` flow rendering in
+a Robolectric view test, and the four content states coming out of a plain function over
+`loadState` and `itemCount`. All passed, then the spike was deleted.
 
-**Picked.** Android Gradle Plugin 9.2.1, with Gradle 9.7.1 and Kotlin 2.3.21.
+The pattern in those three mistakes is worth more than the conclusion. Each was of the form "the
+library cannot do X", when the accurate statement was "the library does X differently, and the
+difference has a specific shape". Looking for a reason to keep a decision already made produces
+"cannot" rather than "how".
 
-**Considered instead.** AGP 9.3.1, which was the newest stable release and which I started
-with. Also AGP 8.13.2, the previous major.
+What the choice costs: `ContentState` for the feed is derived from load states rather than handed
+down by a view model, so one type has two sources; the refresh branch fetches several pages inside
+one `load()` call, which is legal but unusual; and interleaving is constrained, which is the next
+entry. What it buys is not much time — about half an hour — but it removes the paging state
+machine, which was the single part of the plan most likely to overrun.
 
-**Trade-off.** 9.3.1 built fine from the command line, then Android Studio 2025.3 refused to
-open the project: it supports up to 9.2.1. My first thought was that my own tools were
-behind, but the reviewer's Studio is likely the same stable release. A project that builds
-on the command line and cannot be opened in the IDE is worse than one major-minor version
-behind, because opening it is the first thing anyone does. So the version ceiling here is
-not "newest released", it is "newest that a stable Android Studio can open".
+### A promotional card between articles would use `insertSeparators` — not built
 
-I kept AGP 9 rather than dropping to 8.13.2, because 9.x is where the built-in Kotlin
-support and the new DSL live, and the migration work was already done.
+**Picked.** Nothing. The service cards from DummyJSON were cut for time. This entry records how
+they would be added, because "we can add that later" is the kind of assumption that quietly turns
+out to be expensive.
 
-Worth recording as a general rule: for a deliverable someone else opens, check the IDE's
-supported range, not only the artifact repository.
+**How it would work.** `PagingData.insertSeparators` inserts an item between two adjacent items:
+
+```kotlin
+paging.map<Article, FeedItem> { FeedItem.ArticleRow(it) }
+    .insertSeparators { before, after -> promoOrNull(before, after) }
+```
+
+The article type has to be mapped into a sealed `FeedItem` first, because the separator type must
+be a supertype of the item type. The promotional content itself is collected separately and
+combined in, so it keeps its own allowance and no network call happens inside the transform.
+
+**The one real constraint.** The generator must be a pure function of the two adjacent items. It
+is called per boundary over whatever window is loaded, and the same boundary can be visited more
+than once as pages are re-collected, so a counter held outside it would be wrong. That makes
+"insert on a day boundary" direct, because both items carry a published time, and "insert every
+tenth article" need the article to carry a stable ordinal — which the schema deliberately does not
+have, because ordering comes from the published time instead.
+
+**Trade-off.** This is the one direction where the hand-written version would have been easier: a
+plain `List<FeedItem>` composed in `feed:domain` can have anything inserted anywhere in one line.
+Paging 3 costs that flexibility. It is a flexibility for a feature that was cut, so the exchange
+is worth it here — but it is worth writing down rather than discovering later.
 
 ### Core library desugaring, so `java.time` works on API 24 — decided
 
