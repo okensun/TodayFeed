@@ -39,8 +39,16 @@ context: |
   - Articles (required): https://api.spaceflightnewsapi.net/v4/articles/ — paginated, no key.
   - Weather hero: https://api.open-meteo.com/v1/forecast — no key, current + daily.
   - Service cards: https://dummyjson.com/products — no key, image + price + CTA.
-  - Movie carousel: TMDB — REQUIRES a free API key. Read from local.properties /
-    env var; when absent the movie section is hidden. Never commit a key.
+  - TV schedule carousel: https://api.tvmaze.com/schedule?country=US&date=YYYY-MM-DD
+    — no key, changes DAILY, has poster images, ratings and air times. Also
+    https://api.tvmaze.com/shows?page=N for a paginated stable list.
+    Chosen over TMDB precisely because TMDB requires an API key, which would break the
+    "clean checkout, single command, no secrets" ground rule. A happy side effect: a
+    daily-cadence source gives the freshness policy a third tier (minutes / hours /
+    days) instead of the two the brief hints at. Record this in DECISIONS.md.
+
+  EVERY data source is keyless. The project contains NO secrets and needs NO local
+  configuration of any kind — do not introduce a mechanism for one.
 
   CONVENTIONS:
   - Conventional commit subjects (feat:, fix:, refactor:, test:, docs:, chore:, build:).

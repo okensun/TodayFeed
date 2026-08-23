@@ -17,7 +17,7 @@ early, on a single source, before the heterogeneity multiplies its complexity.
 | 1 | `bootstrap-project-skeleton` | multi-module, dark theme, CI, single-command build | Nothing can be demoed or reviewed until a clean checkout builds. Doing the module graph and CI first also stops "we'll modularise later" from becoming never. |
 | 2 | `article-feed-offline-first` | paginated feed, all four UI states, offline-first cache, freshness core, tests | The graded heart. One source, hand-rolled pagination, Room as single source of truth, and the freshness abstraction with its unit tests. Everything later plugs into this. |
 | 3 | `detail-and-save-offline` | detail screen, save/unsave, Saved screen, offline readability | Completes the required core flow. Sits after 2 because it reuses the same cache and needs the article body persisted at save time. |
-| 4 | `heterogeneous-feed-sources` | heterogeneous feed, extra cell types, per-source cadence | Weather hero (Open-Meteo), service cards (DummyJSON), movie carousel (TMDB, optional key). Deliberately after 2 so each new source is a *parameter* of a proven freshness policy rather than a new special case. |
+| 4 | `heterogeneous-feed-sources` | heterogeneous feed, extra cell types, per-source cadence | Weather hero (Open-Meteo), service cards (DummyJSON), "on TV today" carousel (TVMaze). Deliberately after 2 so each new source is a *parameter* of a proven freshness policy rather than a new special case. |
 | 5 | `search-and-motion` | search/filter, animations/transitions | Pure nice-to-haves. Last because they can be cut wholesale without touching a single must-have. |
 | 6 | `submission-docs` | README, DECISIONS.md, AI_USAGE.md, limitations | Written last so the decision log reflects what actually happened, not what was planned. Notes are captured as I go so this is assembly, not archaeology. |
 
@@ -37,3 +37,7 @@ hindsight. See `DECISIONS.md` for the reasoning behind each.
 - **Paging 3** — hand-rolled pagination instead, to keep freshness logic testable.
 - **Instrumented / UI tests** — unit tests target the cache, freshness and async logic
   the brief names; Compose UI tests would cost more than they'd prove here.
+- **TMDB** — replaced by TVMaze. TMDB needs an API key, and any deliverable that asks
+  the reviewer to obtain a secret before it runs is at odds with the single-command
+  ground rule. TVMaze is keyless *and* updates daily, which buys the freshness policy a
+  third cadence tier.
