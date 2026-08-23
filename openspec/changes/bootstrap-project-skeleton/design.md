@@ -66,7 +66,7 @@ layers:
 
 | Layer | What it holds | What it may depend on |
 |---|---|---|
-| `api` | models and interfaces. Plain Kotlin, no Android | nothing else in the project |
+| `api` | the repository interfaces, and the models they speak in. Plain Kotlin, no Android | nothing else in the project |
 | `domain` | use cases and rules. Plain Kotlin | its own `api`, `:core:freshness` |
 | `data` | Retrofit and Room code that implements the `api` interfaces | its own `api`, `:core:network`, `:core:database`, `:core:freshness` |
 | `ui` | Compose cards and screens, plus ViewModels | its own `api` and `domain`, `:core:designsystem` |

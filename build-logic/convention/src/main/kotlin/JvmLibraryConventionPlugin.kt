@@ -11,6 +11,8 @@ class JvmLibraryConventionPlugin : Plugin<Project> {
         pluginManager.apply("org.jetbrains.kotlin.jvm")
         configureKotlinJvm()
         dependencies.add("implementation", library("kotlinx-coroutines-core"))
+        // @Inject on a domain class, without the domain layer depending on Hilt.
+        dependencies.add("api", library("javax-inject"))
         dependencies.add("testImplementation", library("junit"))
         dependencies.add("testImplementation", library("kotlinx-coroutines-test"))
         dependencies.add("testImplementation", library("turbine"))

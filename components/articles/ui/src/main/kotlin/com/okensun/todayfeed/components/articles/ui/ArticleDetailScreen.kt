@@ -3,6 +3,8 @@ package com.okensun.todayfeed.components.articles.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,20 +26,40 @@ fun ArticleDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     when (val current = state) {
         is ContentState.Loading -> LoadingState(modifier)
-        is ContentState.Error -> ErrorState(message = current.message, onRetry = onBack, modifier = modifier)
-        else ->
-            Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
+        is ContentState.Error ->
+            ErrorState(
+                message = current.message,
+                onRetry = onBack,
+                modifier = modifier
+            )
+        is ContentState.Content -> {
+            val article = current.value
+            Column(
+                modifier =
+                    modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp)
+            ) {
+                Text(text = article.title, style = MaterialTheme.typography.headlineSmall)
                 Text(
-                    text = "Article ${viewModel.articleId}",
-                    style = MaterialTheme.typography.headlineSmall
+                    text = article.source,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
                 Text(
-                    text =
-                        "The article body arrives in slice 2, together with the cache that " +
-                            "makes it readable offline once it has been saved.",
+                    text = article.summary,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 12.dp)
+                    modifier = Modifier.padding(top = 16.dp)
                 )
             }
+        }
+        else ->
+            ErrorState(
+                message = "That article could not be found.",
+                onRetry = onBack,
+                modifier = modifier
+            )
     }
 }

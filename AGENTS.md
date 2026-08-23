@@ -37,7 +37,7 @@ screen. Each component owns its own layers, and the build enforces the layering.
 
 | Layer | Holds | May depend on |
 |---|---|---|
-| `api` | models and interfaces. Plain Kotlin, no Android | nothing else in the project |
+| `api` | the repository interfaces, and the models they speak in. Plain Kotlin, no Android | nothing else in the project |
 | `domain` | use cases and rules. Plain Kotlin | its own `api`, `:core:freshness` |
 | `data` | Retrofit and Room code implementing the `api` interfaces | its own `api`, `:core:network`, `:core:database`, `:core:freshness` |
 | `ui` | Compose cards and screens, plus ViewModels | its own `api` and `domain`, `:core:designsystem` |
@@ -55,6 +55,33 @@ screen. Each component owns its own layers, and the build enforces the layering.
 :components:weather:{api,data,ui}           Open-Meteo
 :components:feed:{domain,ui}                puts the feed together, owns the Reading screen
 ```
+
+### What goes in `api`
+
+`api` exists for the **repository interface**, not for the model. The model is only the
+vocabulary that interface speaks in.
+
+```
+components/articles/api/
+  Article.kt              the model
+  ArticleRepository.kt     <-- the reason this module exists
+```
+
+Without the interface there is nothing for `ui` and `domain` to call, so they would have to
+call into `data`, and rule 1 below would be impossible. With it:
+
+```
+ui / domain  --depends on-->  api (interface)  <--implements--  data
+                                                     ^
+                                          :app binds one to the other
+```
+
+A quick way to tell whether you have put something in the right place: if `data` is the only
+module that could ever use it, it belongs in `data`. If `ui` or `domain` needs to name it, it
+belongs in `api`.
+
+Repository interfaces go in `api` and not in `domain`, even though classic Clean
+Architecture puts them in the inner circle. See `DECISIONS.md` for why.
 
 ### The two rules
 

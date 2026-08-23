@@ -24,8 +24,11 @@ context: |
   ARCHITECTURE: component-based Clean Architecture. Each domain capability is a
   "component" that owns its own layers, so components are independent by construction
   and dependency inversion is enforced by MODULE BOUNDARIES rather than by discipline:
-    <component>/api    - models + repository/use-case contracts. Pure Kotlin, no Android,
-                         no framework. This is the ONLY thing other components may see.
+    <component>/api    - the repository INTERFACES, plus the models they speak in. Pure
+                         Kotlin, no Android, no framework. The interface is the reason this
+                         module exists; the model is only its vocabulary. Without it, ui and
+                         domain would have to call into data. This is also the ONLY layer
+                         other components may see.
     <component>/domain - use cases / business logic. Pure Kotlin. Depends on its own api.
     <component>/data   - implements the api contracts with Retrofit + Room. Nothing
                          depends on a data module except :app (for DI wiring).

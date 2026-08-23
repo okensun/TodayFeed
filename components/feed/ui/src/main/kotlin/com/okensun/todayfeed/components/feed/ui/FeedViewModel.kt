@@ -1,63 +1,36 @@
 package com.okensun.todayfeed.components.feed.ui
 
 import androidx.lifecycle.ViewModel
-import com.okensun.todayfeed.components.articles.api.Article
+import androidx.lifecycle.viewModelScope
 import com.okensun.todayfeed.components.feed.domain.FeedItem
-import com.okensun.todayfeed.components.weather.api.Weather
+import com.okensun.todayfeed.components.feed.domain.ObserveFeed
 import com.okensun.todayfeed.core.designsystem.ContentState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import java.time.Instant
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/**
- * Placeholder state only. Slice 2 replaces the fixed list with the real feed, built from
- * the cache and refreshed according to the freshness policy.
- */
 @HiltViewModel
 class FeedViewModel
     @Inject
-    constructor() : ViewModel() {
-        private val _state =
-            MutableStateFlow<ContentState<List<FeedItem>>>(
-                ContentState.Content(placeholderFeed())
-            )
-        val state: StateFlow<ContentState<List<FeedItem>>> = _state.asStateFlow()
+    constructor(
+        observeFeed: ObserveFeed,
+    ) : ViewModel() {
+        val state: StateFlow<ContentState<List<FeedItem>>> =
+            observeFeed()
+                .map { items ->
+                    if (items.isEmpty()) ContentState.Empty else ContentState.Content(items)
+                }.stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+                    initialValue = ContentState.Loading
+                )
 
         fun onRetry() = Unit
 
-        private fun placeholderFeed(): List<FeedItem> =
-            buildList {
-                add(
-                    FeedItem.WeatherHero(
-                        Weather(
-                            placeName = "Taipei",
-                            temperatureCelsius = 30.0,
-                            condition = "Cloudy",
-                            highCelsius = 31.0,
-                            lowCelsius = 26.0
-                        )
-                    )
-                )
-                repeat(PLACEHOLDER_ROWS) { index ->
-                    add(
-                        FeedItem.ArticleRow(
-                            Article(
-                                id = "placeholder-$index",
-                                title = "Placeholder article ${index + 1}",
-                                summary = "Real articles arrive in slice 2.",
-                                source = "Spaceflight News",
-                                imageUrl = null,
-                                publishedAt = Instant.EPOCH
-                            )
-                        )
-                    )
-                }
-            }
-
         private companion object {
-            const val PLACEHOLDER_ROWS = 6
+            const val STOP_TIMEOUT_MILLIS = 5_000L
         }
     }

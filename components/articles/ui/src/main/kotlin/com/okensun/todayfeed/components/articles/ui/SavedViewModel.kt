@@ -1,37 +1,35 @@
 package com.okensun.todayfeed.components.articles.ui
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.ArticleRepository
 import com.okensun.todayfeed.core.designsystem.ContentState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import java.time.Instant
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
-/**
- * Placeholder state. Slice 3 replaces the fixed row with what the user actually saved,
- * read from the cache so it stays readable with no network.
- */
 @HiltViewModel
 class SavedViewModel
     @Inject
-    constructor() : ViewModel() {
-        private val _state =
-            MutableStateFlow<ContentState<List<Article>>>(
-                ContentState.Content(
-                    listOf(
-                        Article(
-                            id = "placeholder-saved",
-                            title = "Placeholder saved article",
-                            summary = "Saving arrives in slice 3.",
-                            source = "Spaceflight News",
-                            imageUrl = null,
-                            publishedAt = Instant.EPOCH
-                        )
-                    )
+    constructor(
+        articles: ArticleRepository,
+    ) : ViewModel() {
+        val state: StateFlow<ContentState<List<Article>>> =
+            articles
+                .observeSaved()
+                .map { saved ->
+                    if (saved.isEmpty()) ContentState.Empty else ContentState.Content(saved)
+                }.stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+                    initialValue = ContentState.Loading
                 )
-            )
-        val state: StateFlow<ContentState<List<Article>>> = _state.asStateFlow()
+
+        private companion object {
+            const val STOP_TIMEOUT_MILLIS = 5_000L
+        }
     }

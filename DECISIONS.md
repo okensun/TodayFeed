@@ -137,6 +137,33 @@ which is plain Kotlin and may carry its own arithmetic.
 Worth recording: my first draft of this justified it as "these components have no business
 logic". That was wrong, and the corrected rule above is the one I can actually apply.
 
+### Repository interfaces live in `api`, not in `domain` — decided
+
+**Picked.** Each component's `api` module holds the repository interface and the models it
+speaks in. `data` implements the interface, `ui` and `domain` compile against it, and `:app`
+binds one to the other.
+
+**Considered instead.** Putting the repository interfaces in `domain`, which is what classic
+Clean Architecture does: the inner circle declares what it needs, and the outer circle
+implements it. Also a separate `dataApi` module per component, which is what the production
+codebase this structure is modelled on does.
+
+**Trade-off.** Interfaces in `domain` would mean `data` depends on `domain`. That reads
+oddly, and worse, it does not work for every component here: `weather` has no `domain`
+module, so its interface would have nowhere to live except `api`, and the two components
+would be laid out differently for no reason a reader could guess. Putting the interface in
+`api` is the same in every component whether it has a `domain` module or not.
+
+The separate `dataApi` module is the more careful version, because then another component can
+see our models without seeing our repository. I merged the two, which means
+`:components:feed:domain` can call `ArticleRepository` directly. That is exactly what it
+needs to do, so at this size the extra module would buy nothing. The looseness it allows is
+that `feed:ui` could also call a repository directly, bypassing `feed:domain`. Nothing
+structural prevents that; it is a review matter.
+
+Worth naming because "why aren't the repository interfaces in the domain layer" is the first
+question anyone who knows Clean Architecture will ask.
+
 ### `:components:feed:ui` may depend on other components' `ui` — decided
 
 **Picked.** One exception to the component isolation rule. `:components:feed:ui` depends on the
