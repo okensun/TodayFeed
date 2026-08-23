@@ -18,8 +18,6 @@ class DataLayerConventionPlugin : Plugin<Project> {
         dependencies.add("implementation", library("room-runtime"))
         dependencies.add("implementation", library("room-ktx"))
         dependencies.add("ksp", library("room-compiler"))
-        dependencies.add("implementation", library("room-paging"))
-        dependencies.add("api", library("paging-runtime"))
         dependencies.add("testImplementation", project(":core:testing"))
     }
 }

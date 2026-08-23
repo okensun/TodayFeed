@@ -15,8 +15,6 @@ class UiLayerConventionPlugin : Plugin<Project> {
         dependencies.add("implementation", library("androidx-lifecycle-runtime-compose"))
         dependencies.add("implementation", library("androidx-lifecycle-viewmodel-compose"))
         dependencies.add("implementation", library("androidx-hilt-navigation-compose"))
-        dependencies.add("implementation", library("paging-compose"))
-        dependencies.add("testImplementation", library("paging-testing"))
         dependencies.add("testImplementation", project(":core:testing"))
 
         // View tests: does this composable draw the right thing for a given state, and do
