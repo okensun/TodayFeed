@@ -1,11 +1,18 @@
 name: CI
 
+# A branch that has a pull request open would otherwise be built twice for the same
+# commit, once for the push and once for the pull request. Pushes are limited to main, so
+# a branch is built by its pull request and main is built when the merge lands.
 on:
   push:
+    branches: [ main ]
   pull_request:
 
+# head_ref is set for a pull request and names the branch. github.ref would name
+# refs/pull/N/merge instead, which does not match the push run's ref, so a shared group
+# needs head_ref first.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
