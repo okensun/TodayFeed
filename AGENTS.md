@@ -178,8 +178,31 @@ Hand-written fakes, no mocking library. Shared fakes live in `:core:testing`, in
 `FakeClock`, which only moves when a test tells it to. Test names go in backticks and read
 as sentences.
 
-The tests that matter most are the ones covering the freshness policy and the cache. They
-run on the JVM, with a fake clock and fake sources, so they are fast and repeatable.
+The tests that matter most are the ones covering the freshness policy and the cache. They run
+on the JVM, with a fake clock and fake sources, so they are fast and repeatable.
+
+**View tests** answer a narrower question: given a state, does the screen draw the right thing
+and do its callbacks fire. They use the Compose test rule under Robolectric, so they run in the
+ordinary `test` task with no emulator. Write them against the stateless overload of a screen,
+never the stateful one, so no Hilt is involved. Use
+`androidx.compose.ui.test.junit4.v2.createComposeRule`; the older one is deprecated.
+
+Robolectric emulates the Android level named in `core/testing/src/main/resources/robolectric.properties`,
+currently 36. It is pinned because Robolectric has no jar for `compileSdk` 37 yet. Raise it when
+one ships.
+
+Any module with test source files must contain at least one `@Test`. Gradle fails a test task
+that compiles test classes and then discovers no test, and that check is worth keeping. A
+module with no test sources at all is fine: its test task reports no source and passes.
+
+One seam is not covered: nothing tests the stateful overload of a screen, which is where the
+view model is found and its callbacks are passed down. A screen could stop passing
+`viewModel::onRetry` and every view test would still pass. Testing it needs Hilt, which is why
+it is left out for now.
+
+**Device behaviour** — back stacks, the system back gesture, a theme change, real loss of
+network — is checked by hand over `adb`, and what was measured goes in the README limitations.
+There is no emulator in CI.
 
 ## Writing style
 

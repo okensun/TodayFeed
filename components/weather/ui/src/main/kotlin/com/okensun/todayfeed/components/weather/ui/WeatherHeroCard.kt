@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.okensun.todayfeed.components.weather.api.Weather
+import kotlin.math.roundToInt
 
 /**
  * A wide hero card pinned above the article list. Its shape is deliberately unlike an
@@ -29,13 +30,13 @@ fun WeatherHeroCard(
         Column(modifier = Modifier.padding(20.dp)) {
             Text(text = weather.placeName, style = MaterialTheme.typography.labelLarge)
             Text(
-                text = "${weather.temperatureCelsius.toInt()}°",
+                text = "${weather.temperatureCelsius.roundToInt()}°",
                 style = MaterialTheme.typography.displayMedium
             )
             Row {
                 Text(text = weather.condition, style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "  H ${weather.highCelsius.toInt()}°  L ${weather.lowCelsius.toInt()}°",
+                    text = "  H ${weather.highCelsius.roundToInt()}°  L ${weather.lowCelsius.roundToInt()}°",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

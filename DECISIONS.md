@@ -297,6 +297,35 @@ which tests the implementation rather than the behaviour and breaks when the imp
 tidied up. The `api` modules make fakes cheap, because every interface a test needs is small and
 framework-free.
 
+### View tests on the JVM, device tests by hand — decided, reversing an earlier cut
+
+**Picked.** View tests run through Robolectric with the Compose test rule, inside the ordinary
+`test` task, so CI needs no emulator. They answer one question: given a state, does the screen
+draw the right thing and do its callbacks fire. Device behaviour is checked by hand over `adb`,
+with the evidence recorded.
+
+**Considered instead.** No UI tests at all, which is what I decided first. Also an emulator in
+CI through `android-emulator-runner`.
+
+**Trade-off.** The original reasoning was that Compose UI tests need an emulator and would cost
+more than they prove. Half of that was wrong: Robolectric runs them on the JVM. What changed my
+mind was evidence rather than principle. A code review found two bugs in how the screens map
+`ContentState` to what the user sees, and both are exactly what a view test asserts. Those two
+bugs are now regression tests.
+
+An emulator in CI would add six to twelve minutes to a two and a half minute run, and it is
+famously unreliable. The chosen option costs about twelve seconds of Robolectric startup per
+module, three modules, so roughly thirty six seconds. What it would buy is repeatability for scenarios I have already checked by
+hand once: tab back stacks, the system back gesture, a theme change. Against a Thursday
+deadline, that budget is better spent on the freshness policy, which is what the brief actually
+weighs. So device checks stay manual. The README lists each one and what was measured, including the
+one that is still unverified.
+
+The cost that remains: Robolectric ships one jar per Android level and lags the newest.
+`compileSdk` is 37 because the Compose BOM requires it, and a library module takes its manifest
+`targetSdk` from `compileSdk`, which Robolectric then refuses. The emulated level is pinned to
+36 in one properties file rather than annotated on every test class.
+
 ### detekt and ktlint in CI — decided
 
 **Picked.** Both run in the build and in CI. 140-character lines, 4-space indent, no star

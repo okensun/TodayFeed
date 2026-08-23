@@ -72,12 +72,13 @@ fun ErrorState(
     message: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    actionLabel: String = TRY_AGAIN,
 ) {
     CentredMessage(
         title = "Something went wrong",
         body = message,
         modifier = modifier,
-        action = { Button(onClick = onRetry) { Text("Try again") } }
+        action = { Button(onClick = onRetry) { Text(actionLabel) } }
     )
 }
 
@@ -85,14 +86,19 @@ fun ErrorState(
 fun OfflineState(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    actionLabel: String = TRY_AGAIN,
 ) {
     CentredMessage(
         title = "You are offline",
         body = "Nothing has been saved for this screen yet, so there is nothing to show.",
         modifier = modifier,
-        action = { Button(onClick = onRetry) { Text("Try again") } }
+        action = { Button(onClick = onRetry) { Text(actionLabel) } }
     )
 }
+
+// Not every screen can retry. The article detail screen has nothing to reload, so its
+// button leaves the screen instead, and the label has to say what the action does.
+private const val TRY_AGAIN = "Try again"
 
 @ThemePreviews
 @Composable
