@@ -11,6 +11,8 @@ function count. Do not spend review effort on those.
 - Only `:app` may depend on a `data` module. Not even a component's own `ui` or `domain`.
 - A component may see another component only through its `api` module. The single
   exception is `:components:feed:ui`, which draws the other components' cards.
+- Never write `else` in a `when` over `ContentState`. Write every case out, so the compiler
+  stops you when a new one appears. `Offline` carrying cached content must show the content.
 - `api` and `domain` modules are plain Kotlin. If you need an Android class there, the
   design is wrong, not the rule.
 

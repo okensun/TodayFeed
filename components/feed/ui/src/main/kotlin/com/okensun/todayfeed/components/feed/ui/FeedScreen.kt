@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.okensun.todayfeed.components.articles.api.Article
@@ -21,6 +20,7 @@ import com.okensun.todayfeed.core.designsystem.EmptyState
 import com.okensun.todayfeed.core.designsystem.ErrorState
 import com.okensun.todayfeed.core.designsystem.LoadingState
 import com.okensun.todayfeed.core.designsystem.OfflineState
+import com.okensun.todayfeed.core.designsystem.ThemePreviews
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import java.time.Instant
 
@@ -49,9 +49,9 @@ fun FeedScreen(
  * The Reading screen, in its stateless form. This module is the only one allowed to depend
  * on other components' ui modules, because drawing their cards in one list is its whole job.
  *
- * `listState` is a parameter with a default rather than a value created inside, so a caller
- * or a test can supply it, and so moving between Loading and Content does not create a new
- * one and reset the scroll position.
+ * `listState` is a parameter so that it is created above the `when`. Inside a branch it
+ * would be dropped on any frame where that branch is not composed, which would reset the
+ * scroll position when the state changes.
  */
 @Composable
 internal fun FeedScreen(
@@ -128,27 +128,27 @@ private val previewFeed =
         )
     )
 
-@Preview(name = "Content")
+@ThemePreviews
 @Composable
 private fun FeedContentPreview() = FeedPreview(ContentState.Content(previewFeed))
 
-@Preview(name = "Loading")
+@ThemePreviews
 @Composable
 private fun FeedLoadingPreview() = FeedPreview(ContentState.Loading)
 
-@Preview(name = "Empty")
+@ThemePreviews
 @Composable
 private fun FeedEmptyPreview() = FeedPreview(ContentState.Empty)
 
-@Preview(name = "Error")
+@ThemePreviews
 @Composable
 private fun FeedErrorPreview() = FeedPreview(ContentState.Error("Could not reach the server."))
 
-@Preview(name = "Offline with nothing cached")
+@ThemePreviews
 @Composable
 private fun FeedOfflineEmptyPreview() = FeedPreview(ContentState.Offline(null))
 
-@Preview(name = "Offline with cached content")
+@ThemePreviews
 @Composable
 private fun FeedOfflineCachedPreview() = FeedPreview(ContentState.Offline(previewFeed))
 

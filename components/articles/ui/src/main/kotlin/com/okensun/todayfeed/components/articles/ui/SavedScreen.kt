@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.okensun.todayfeed.components.articles.api.Article
@@ -16,8 +15,9 @@ import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.EmptyState
 import com.okensun.todayfeed.core.designsystem.ErrorState
 import com.okensun.todayfeed.core.designsystem.LoadingState
+import com.okensun.todayfeed.core.designsystem.OfflineState
+import com.okensun.todayfeed.core.designsystem.ThemePreviews
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
-import java.time.Instant
 
 /** Stateful form: finds the view model and nothing else. */
 @Composable
@@ -27,36 +27,50 @@ fun SavedScreen(
     viewModel: SavedViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SavedScreen(state = state, onArticleClick = onArticleClick, modifier = modifier)
+    SavedScreen(
+        state = state,
+        onRetry = viewModel::onRetry,
+        onArticleClick = onArticleClick,
+        modifier = modifier
+    )
 }
 
+/**
+ * Stateless form. Every case of [ContentState] is written out, with no `else`, for the same
+ * reason as in the feed and the detail screen.
+ *
+ * `listState` is a parameter so that it lives above the `when` and the scroll position
+ * survives a change of state.
+ */
 @Composable
 internal fun SavedScreen(
     state: ContentState<List<Article>>,
+    onRetry: () -> Unit,
     onArticleClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
 ) {
     when (state) {
         is ContentState.Loading -> LoadingState(modifier)
+        is ContentState.Content -> SavedList(state.value, listState, onArticleClick, modifier)
+        is ContentState.Empty -> EmptySaved(modifier)
         is ContentState.Error ->
             ErrorState(
                 message = state.message,
-                onRetry = {},
+                onRetry = onRetry,
                 modifier = modifier
             )
-        is ContentState.Content -> SavedList(state.value, listState, onArticleClick, modifier)
         is ContentState.Offline -> {
+            // Saved articles are stored when the user saves them, so this screen is not
+            // expected to report being offline. It is handled the same way as the feed
+            // rather than reused as the empty state, so the two stay distinguishable.
             val cached = state.cached
             if (cached == null) {
-                // Saved articles are stored at the moment the user saves them, so being
-                // offline with nothing here means nothing was ever saved.
-                EmptySaved(modifier)
+                OfflineState(onRetry = onRetry, modifier = modifier)
             } else {
                 SavedList(cached, listState, onArticleClick, modifier)
             }
         }
-        is ContentState.Empty -> EmptySaved(modifier)
     }
 }
 
@@ -82,33 +96,33 @@ private fun SavedList(
     }
 }
 
-private val previewSaved =
-    listOf(
-        Article(
-            id = "1",
-            title = "CNES seeks partners to mass produce compact optical telescopes",
-            summary = "The French space agency is looking for an industrial partner.",
-            source = "European Spaceflight",
-            imageUrl = null,
-            publishedAt = Instant.EPOCH
-        )
-    )
-
-@Preview(name = "Saved content")
+@ThemePreviews
 @Composable
-private fun SavedContentPreview() = SavedPreview(ContentState.Content(previewSaved))
+private fun SavedContentPreview() = SavedPreview(ContentState.Content(listOf(previewArticle("1"), previewArticle("2"))))
 
-@Preview(name = "Saved empty")
+@ThemePreviews
+@Composable
+private fun SavedLoadingPreview() = SavedPreview(ContentState.Loading)
+
+@ThemePreviews
 @Composable
 private fun SavedEmptyPreview() = SavedPreview(ContentState.Empty)
 
-@Preview(name = "Saved offline with cache")
+@ThemePreviews
 @Composable
-private fun SavedOfflinePreview() = SavedPreview(ContentState.Offline(previewSaved))
+private fun SavedErrorPreview() = SavedPreview(ContentState.Error("Could not read what you saved."))
+
+@ThemePreviews
+@Composable
+private fun SavedOfflineCachedPreview() = SavedPreview(ContentState.Offline(listOf(previewArticle())))
+
+@ThemePreviews
+@Composable
+private fun SavedOfflineEmptyPreview() = SavedPreview(ContentState.Offline(null))
 
 @Composable
 private fun SavedPreview(state: ContentState<List<Article>>) {
     TodayFeedTheme {
-        SavedScreen(state = state, onArticleClick = {})
+        SavedScreen(state = state, onRetry = {}, onArticleClick = {})
     }
 }

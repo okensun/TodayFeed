@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.articles.ui
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -10,7 +11,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -18,8 +18,9 @@ import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.ErrorState
 import com.okensun.todayfeed.core.designsystem.LoadingState
+import com.okensun.todayfeed.core.designsystem.OfflineState
+import com.okensun.todayfeed.core.designsystem.ThemePreviews
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
-import java.time.Instant
 
 /** Stateful form: finds the view model and nothing else. */
 @Composable
@@ -32,42 +33,62 @@ fun ArticleDetailScreen(
     ArticleDetailScreen(state = state, onBack = onBack, modifier = modifier)
 }
 
+/**
+ * Stateless form. Every case of [ContentState] is written out, with no `else`: an `else` here
+ * would let a new case reach production as a wrong screen with nothing to warn about.
+ *
+ * `scrollState` is a parameter so that it lives above the `when`, which is what keeps the
+ * reading position when the state changes.
+ */
 @Composable
 internal fun ArticleDetailScreen(
     state: ContentState<Article>,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    scrollState: ScrollState = rememberScrollState(),
 ) {
     when (state) {
         is ContentState.Loading -> LoadingState(modifier)
-        is ContentState.Content -> ArticleBody(state.value, modifier)
+        is ContentState.Content -> ArticleBody(state.value, scrollState, modifier)
         is ContentState.Error ->
             ErrorState(
                 message = state.message,
                 onRetry = onBack,
                 modifier = modifier
             )
-        // There is no useful empty or offline detail screen: either the article was stored
-        // when the user saved it, or it was never there.
-        else ->
+        is ContentState.Offline -> {
+            // An article can be in the cache without ever having been saved, so being
+            // offline is not the same as the article being missing. Show what we have.
+            val cached = state.cached
+            if (cached == null) {
+                OfflineState(onRetry = onBack, modifier = modifier)
+            } else {
+                ArticleBody(cached, scrollState, modifier)
+            }
+        }
+        // A single article is either there or it is not, so there is no useful empty state.
+        is ContentState.Empty ->
             ErrorState(
-                message = "That article could not be found.",
+                message = ARTICLE_NOT_FOUND,
                 onRetry = onBack,
                 modifier = modifier
             )
     }
 }
 
+private const val ARTICLE_NOT_FOUND = "That article could not be found."
+
 @Composable
 private fun ArticleBody(
     article: Article,
+    scrollState: ScrollState,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .padding(16.dp)
     ) {
         Text(text = article.title, style = MaterialTheme.typography.headlineSmall)
@@ -85,32 +106,33 @@ private fun ArticleBody(
     }
 }
 
-@Preview(name = "Detail content")
+@ThemePreviews
 @Composable
-private fun DetailContentPreview() =
-    TodayFeedTheme {
-        ArticleDetailScreen(
-            state =
-                ContentState.Content(
-                    Article(
-                        id = "1",
-                        title = "CNES seeks partners to mass produce compact optical telescopes",
-                        summary =
-                            "The French space agency is looking for an industrial partner to " +
-                                "develop and qualify a compact optical telescope for future satellite " +
-                                "constellations.",
-                        source = "European Spaceflight",
-                        imageUrl = null,
-                        publishedAt = Instant.EPOCH
-                    )
-                ),
-            onBack = {}
-        )
-    }
+private fun DetailContentPreview() = DetailPreview(ContentState.Content(previewArticle()))
 
-@Preview(name = "Detail unknown id")
+@ThemePreviews
 @Composable
-private fun DetailErrorPreview() =
+private fun DetailLoadingPreview() = DetailPreview(ContentState.Loading)
+
+@ThemePreviews
+@Composable
+private fun DetailErrorPreview() = DetailPreview(ContentState.Error(ARTICLE_NOT_FOUND))
+
+@ThemePreviews
+@Composable
+private fun DetailEmptyPreview() = DetailPreview(ContentState.Empty)
+
+@ThemePreviews
+@Composable
+private fun DetailOfflineCachedPreview() = DetailPreview(ContentState.Offline(previewArticle()))
+
+@ThemePreviews
+@Composable
+private fun DetailOfflineEmptyPreview() = DetailPreview(ContentState.Offline(null))
+
+@Composable
+private fun DetailPreview(state: ContentState<Article>) {
     TodayFeedTheme {
-        ArticleDetailScreen(state = ContentState.Error("That article could not be found."), onBack = {})
+        ArticleDetailScreen(state = state, onBack = {})
     }
+}
