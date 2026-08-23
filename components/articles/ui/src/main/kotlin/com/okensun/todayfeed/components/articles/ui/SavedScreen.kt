@@ -3,6 +3,7 @@ package com.okensun.todayfeed.components.articles.ui
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -19,10 +20,15 @@ fun SavedScreen(
     viewModel: SavedViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Hoisted for the same reason as in FeedScreen: a state created inside a branch is
+    // dropped on any frame where that branch is not composed.
+    val listState = rememberLazyListState()
+
     when (val current = state) {
         is ContentState.Loading -> LoadingState(modifier)
         is ContentState.Content ->
-            LazyColumn(modifier = modifier.fillMaxSize()) {
+            LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
                 items(current.value) { article ->
                     ArticleRowCard(article = article, onClick = { onArticleClick(article.id) })
                 }

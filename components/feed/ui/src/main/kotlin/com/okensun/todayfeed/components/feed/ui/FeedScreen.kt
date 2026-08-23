@@ -2,7 +2,9 @@ package com.okensun.todayfeed.components.feed.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -28,6 +30,12 @@ fun FeedScreen(
     viewModel: FeedViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    // Hoisted above the `when` so that moving between Loading and Content does not create
+    // a new state object and reset the scroll position. Inside a branch it would be dropped
+    // from the saveable registry on any frame where that branch is not composed.
+    val listState = rememberLazyListState()
+
     when (val current = state) {
         is ContentState.Loading -> LoadingState(modifier)
         is ContentState.Empty -> EmptyState(title = "Nothing to read yet", modifier = modifier)
@@ -44,12 +52,18 @@ fun FeedScreen(
             if (cached == null) {
                 OfflineState(onRetry = viewModel::onRetry, modifier = modifier)
             } else {
-                FeedList(items = cached, onArticleClick = onArticleClick, modifier = modifier)
+                FeedList(
+                    items = cached,
+                    listState = listState,
+                    onArticleClick = onArticleClick,
+                    modifier = modifier
+                )
             }
         }
         is ContentState.Content ->
             FeedList(
                 items = current.value,
+                listState = listState,
                 onArticleClick = onArticleClick,
                 modifier = modifier
             )
@@ -59,10 +73,11 @@ fun FeedScreen(
 @Composable
 private fun FeedList(
     items: List<FeedItem>,
+    listState: LazyListState,
     onArticleClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(modifier = modifier.fillMaxSize()) {
+    LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
         items(items) { item ->
             when (item) {
                 is FeedItem.WeatherHero -> WeatherHeroCard(item.weather)

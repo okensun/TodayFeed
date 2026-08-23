@@ -82,7 +82,7 @@
 - [x] 5.1 Add the light and dark Material 3 colour schemes based on the reference screens'
       green, with dynamic colour turned off, plus typography and spacing tokens. Verify:
       both schemes show correctly in Compose previews
-- [ ] 5.2 Add the `TodayFeedTheme` composable. It picks the scheme from the system setting
+- [x] 5.2 Add the `TodayFeedTheme` composable. It picks the scheme from the system setting
       and matches the status bar to it. Verify: changing the system setting while the app is
       open switches the theme without a restart
 - [x] 5.3 Add the `ContentState` sealed interface: `Loading`, `Empty`, `Error`, `Offline`,
@@ -101,7 +101,7 @@
 - [x] 6.2 Define the `@Serializable` route types in `:app`: the two top-level destinations
       and `ArticleDetail(articleId)`. Verify: a unit test sends `ArticleDetail` through the
       navigation argument encoding and gets the same value back
-- [ ] 6.3 Add the `NavHost` and the two-tab bottom bar, saving and restoring each tab's back
+- [x] 6.3 Add the `NavHost` and the two-tab bottom bar, saving and restoring each tab's back
       stack. Verify by hand the spec's four navigation scenarios, including that tapping the
       current tab adds no back stack entry and that leaving and returning keeps the state
 - [x] 6.4 Wire the detail destination. Both the Reading and Saved screens open it through an
@@ -111,7 +111,13 @@
 - [x] 6.5 Handle an unknown article id on the detail screen by showing the error state with a
       way out. Verify: navigating to a made-up id does not crash the app
 - [ ] 6.6 Handle a system theme change while the app is open. Verify: the current destination
-      and its state survive the change, as the spec requires
+      and its state survive the change, as the spec requires.
+      NOT VERIFIED. On this emulator `adb shell cmd uimode night` swaps the task and the
+      process, which loses the state for reasons that have nothing to do with the app, and
+      `settings put secure ui_night_mode` has no effect at all. State does survive an
+      equivalent configuration change: after a font scale change the process, the task and
+      the scroll position are all unchanged. Needs checking by hand through Settings ->
+      Display -> Dark theme, which is the path a real user takes
 
 ## 7. Placeholder screens
 

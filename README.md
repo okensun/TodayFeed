@@ -68,4 +68,12 @@ broken into slices, the order they were built and why, and what was cut.
 
 ## Known limitations
 
-To be written in the final block.
+Written as they are found.
+
+- **The theme change scenario is not verified end to end.** The app applies a light or dark
+  theme from the system setting, and that was checked on an emulator. What is not checked is
+  that the screen keeps its scroll position across the change, because on this emulator
+  `adb shell cmd uimode night` restarts the task and the process, and writing the setting
+  directly has no effect. The same check passes for an equivalent configuration change: a
+  font scale change leaves the process, the task and the scroll position untouched. It still
+  needs a manual pass through Settings.
