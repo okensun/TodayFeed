@@ -56,6 +56,14 @@ one repository or source. Only two components qualify. The rest keep their logic
 models in `api`. That version can be applied to a component I have not written yet; the
 original could not.
 
+The same thing happened again with the `api` modules. I looked at them and saw only a model
+file, so I asked whether that was all `api` was for. It was not: `api` exists for the
+repository interface, and the model is only the vocabulary that interface uses. But the code
+did not show that, because the placeholder view models had empty constructors and depended on
+nothing. So the architecture's central claim was written down in three documents and proved
+by nothing. Two questions from me, and both times the answer was "the reasoning is right and
+the artefact does not match it".
+
 A second one, nearly missed. It read the AGP 9 release notes and told me the Compose
 compiler plugin is no longer needed. The build disagreed immediately. It also proposed
 `movie` as the name for a component backed by TVMaze, which serves television schedules and
