@@ -179,6 +179,34 @@ writing is graded, so simple wording helps.
 Commit subjects follow `type(scope): Subject`, where scope is the OpenSpec change name.
 The body is at most five lines and never lists files.
 
+## How work lands
+
+Slice 1 went straight to `main`, before this process was agreed. Everything after it goes
+through a pull request.
+
+```bash
+git switch -c slice/<change-name>          # one branch per OpenSpec change
+# implement, one commit per task group
+git push -u origin slice/<change-name>
+gh pr create --fill                        # body uses .github/pull_request_template.md
+# review, fix, push again
+gh pr merge --merge                        # a merge commit, never a squash
+```
+
+Never squash. The commit history is part of what is being assessed, and a merge commit
+also leaves the pull request boundaries visible in `main`.
+
+### Review
+
+A reviewer subagent reads the diff for the branch. It gets the description and the
+requirements, and deliberately **not** the session history, so it does not inherit the
+author's blind spots. It returns strengths, then issues split into Critical, Important and
+Minor, then a clear verdict on whether the branch can merge.
+
+Whatever needs fixing is then posted as an **inline comment on the exact line**, two to
+three lines long: the problem, then the fix. No summary comment at the top of the pull
+request, and no praise-only comments.
+
 ## Common pitfalls
 
 - **AGP 9 applies Kotlin itself.** Applying `org.jetbrains.kotlin.android` fails the

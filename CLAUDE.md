@@ -22,6 +22,12 @@ function count. Do not spend review effort on those.
 - Commit body: at most 5 lines. Never list the files; git already has the diff.
 - Review comments: inline, on the exact line, two to three lines long.
 
+## How work lands
+
+One branch per OpenSpec change, then a pull request. `gh pr merge --merge`, never a squash.
+Review is done by a subagent that does not see the session history, and its findings are
+posted as inline comments on the exact line. See AGENTS.md.
+
 ## Comments
 
 - Say what the code means now, or warn about this code's own behaviour.
