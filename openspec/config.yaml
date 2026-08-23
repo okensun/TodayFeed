@@ -1,0 +1,62 @@
+schema: spec-driven
+
+context: |
+  PROJECT: TodayFeed — a LINE TODAY / VOOM style content-feed Android app.
+  This is a take-home pre-assessment for a Senior Android Engineer role at LINE Taiwan.
+  It is graded on: engineering judgment & trade-offs, Android depth, working with AI,
+  communication & documentation, code quality. Judgment beats completeness.
+
+  HARD CONSTRAINTS (from the assignment):
+  - Kotlin, minSdk 24.
+  - Must build from a clean checkout with a SINGLE command (`./gradlew assembleDebug`).
+    No step may require a secret to be present. Optional secrets degrade gracefully.
+  - Incremental git history with real, logical commits. Never squash into one commit.
+  - Core flow: Feed list -> Detail -> Save/Unsave, plus a Saved list screen.
+  - Saved items MUST be readable offline after first load (persist the article body,
+    not just an id).
+  - Feed is HETEROGENEOUS: article cards plus visually distinct card types from other
+    real sources of a different shape.
+  - A FRESHNESS POLICY is the centrepiece: per-source cadence (weather changes by the
+    minute, articles by the hour), stale-while-revalidate, must be unit tested, and the
+    reasoning must be written up in the README.
+  - Every UI state handled explicitly: loading / empty / error / offline.
+
+  TECH STACK (decided; record rejected alternatives in DECISIONS.md):
+  - UI: Jetpack Compose, Material 3, light + dark theme.
+  - Architecture: MVVM + unidirectional data flow. Kotlin Flow + StateFlow, coroutines.
+  - DI: Hilt.
+  - Network: Retrofit + OkHttp + kotlinx.serialization.
+  - Persistence: Room (offline-first single source of truth).
+  - Pagination: HAND-ROLLED (deliberately NOT Paging 3) so the freshness /
+    stale-while-revalidate logic stays fully under our control and unit testable.
+  - Multi-module: :app, :core:model, :core:network, :core:database, :core:data,
+    :core:designsystem, :core:testing, :feature:feed, :feature:detail, :feature:saved.
+  - Gradle: Kotlin DSL, version catalog (libs.versions.toml), convention plugins.
+  - Tests: JUnit + kotlinx-coroutines-test + Turbine + fake/in-memory sources.
+  - CI: GitHub Actions (build + unit test on push).
+
+  DATA SOURCES:
+  - Articles (required): https://api.spaceflightnewsapi.net/v4/articles/ — paginated, no key.
+  - Weather hero: https://api.open-meteo.com/v1/forecast — no key, current + daily.
+  - Service cards: https://dummyjson.com/products — no key, image + price + CTA.
+  - Movie carousel: TMDB — REQUIRES a free API key. Read from local.properties /
+    env var; when absent the movie section is hidden. Never commit a key.
+
+  CONVENTIONS:
+  - Conventional commit subjects (feat:, fix:, refactor:, test:, docs:, chore:, build:).
+  - Public API of each module stays minimal; feature modules never depend on each other.
+  - No secrets, keys, or personal data in the repository.
+
+rules:
+  proposal:
+    - State the trade-off explicitly; name the alternative that was rejected and why.
+    - Call out which assignment must-have or nice-to-have the change satisfies.
+  tasks:
+    - Each task must be small enough to become one logical git commit.
+    - Tests that cover cache/freshness or async logic are tasks, not afterthoughts.
+
+operations:
+  apply:
+    guidance:
+      - Commit incrementally, one logical commit per completed task group.
+      - Never squash. The git history is part of the deliverable.
