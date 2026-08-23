@@ -13,15 +13,19 @@
 
 ## 1. Real articles on the screen — about two and a quarter hours
 
-- [ ] 1.1 Add `Connection`, `Decision` and `decide` to `:core:freshness`, with the five cases from
+- [x] 1.1 Add `Connection`, `Decision` and `decide` to `:core:freshness`, with the five cases from
       design.md. Verify: `./gradlew :core:freshness:dependencies` shows no Android, no Room, no
       Retrofit and no paging artifact
-- [ ] 1.2 Write the truth table for `decide` first, using the existing `FakeClock`: nothing
-      stored, nothing stored and offline, stored and offline, within the allowance, past it.
-      Verify: they fail because `decide` is empty, not because they are wrong
-- [ ] 1.3 Implement `decide` in the order from design.md. Verify: the table passes, and a test
+- [x] 1.2 Write the truth table for `decide` first: nothing stored, nothing stored and offline,
+      stored and offline, within the allowance, past it. Verify: they fail because `decide` is
+      empty, not because they are wrong.
+      No `FakeClock` is involved, which this task originally assumed. `decide` takes `now` as a
+      parameter, so its tests need only two `Instant` constants — and `:core:testing` depends on
+      `:core:freshness`, so using the fake here would have been circular anyway. The pure
+      function paid for itself immediately
+- [x] 1.3 Implement `decide` in the order from design.md. Verify: the table passes, and a test
       shows a stated server maximum age replaces our figure
-- [ ] 1.4 Check the boundary. Verify: tests at exactly the allowance, one second before and one
+- [x] 1.4 Check the boundary. Verify: tests at exactly the allowance, one second before and one
       second after, so an off-by-one cannot hide
 - [ ] 1.5 Add `Connectivity` to `:core:freshness` and `FakeConnectivity` to `:core:testing`.
       Verify: a test moves the fake from unmetered to offline and the flow emits both

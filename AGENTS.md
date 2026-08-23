@@ -241,6 +241,11 @@ requirements, and deliberately **not** the session history, so it does not inher
 author's blind spots. It returns strengths, then issues split into Critical, Important and
 Minor, then a clear verdict on whether the branch can merge.
 
+Read `git diff --stat main..HEAD` before writing a pull request body. Four times in one day a
+body claimed something its own diff contradicted — "planning only" over three build files,
+"covers every state" missing three. The body gets written after the work, by which time what is
+in the branch is no longer fresh, so look rather than remember.
+
 Whatever needs fixing is then posted as an **inline comment on the exact line**, two to
 three lines long: the problem, then the fix. No summary comment at the top of the pull
 request, and no praise-only comments.
