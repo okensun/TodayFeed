@@ -4,56 +4,56 @@
 
 ## 1. Gradle foundation
 
-- [ ] 1.1 Commit the Gradle wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`), pinned
+- [x] 1.1 Commit the Gradle wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`), pinned
       to a current Gradle release. Verify: `./gradlew --version` works on a machine with no
       Gradle installed and reports the pinned version
-- [ ] 1.2 Answer design.md's open question about versions. Look up the current stable AGP,
+- [x] 1.2 Answer design.md's open question about versions. Look up the current stable AGP,
       Kotlin, Compose BOM, `compileSdk` and `targetSdk` in their real repositories, then put
       them in `gradle/libs.versions.toml`. The Compose BOM decides all Compose versions.
       Verify: `./gradlew help` resolves the catalog with no unresolved dependency
-- [ ] 1.3 Add `settings.gradle.kts` with plugin management, repository setup,
+- [x] 1.3 Add `settings.gradle.kts` with plugin management, repository setup,
       `includeBuild("build-logic")` and all twenty-one module declarations. Verify:
       `./gradlew projects` lists every module and the included build
-- [ ] 1.4 Add the root `build.gradle.kts`, `gradle.properties` (JVM args, AndroidX,
+- [x] 1.4 Add the root `build.gradle.kts`, `gradle.properties` (JVM args, AndroidX,
       configuration cache, non-transitive R class) and `.editorconfig` (4-space indent, 140
       characters, no star imports). Verify: `./gradlew help` runs clean with the
       configuration cache on
 
 ## 2. Convention plugins that hold the layer rules
 
-- [ ] 2.1 Create the `build-logic` included build with its own settings and access to the
+- [x] 2.1 Create the `build-logic` included build with its own settings and access to the
       version catalog. No plugins yet. Verify: `./gradlew :build-logic:tasks` works
-- [ ] 2.2 Add the shared Android setup: `minSdk 24`, the pinned `compileSdk` and
+- [x] 2.2 Add the shared Android setup: `minSdk 24`, the pinned `compileSdk` and
       `targetSdk`, the Java 17 toolchain, and core library desugaring with
       `desugar_jdk_libs`. Verify: a test module using it builds and can call
       `java.time.Instant.now()`
-- [ ] 2.3 Add the `todayfeed.api` plugin as a plain JVM library that never applies the
+- [x] 2.3 Add the `todayfeed.api` plugin as a plain JVM library that never applies the
       Android plugin. Verify: a module using it fails to compile an `android.*` import. That
       failure is what makes "no Android in api" a build fact
-- [ ] 2.4 Add the `todayfeed.domain` plugin: JVM library plus coroutines. Verify:
+- [x] 2.4 Add the `todayfeed.domain` plugin: JVM library plus coroutines. Verify:
       `./gradlew <module>:dependencies` on a domain module shows no Android artifacts
-- [ ] 2.5 Add the `todayfeed.data` plugin: Android library and Hilt, plus `:core:network`,
+- [x] 2.5 Add the `todayfeed.data` plugin: Android library and Hilt, plus `:core:network`,
       `:core:database` and `:core:freshness`. Verify: a data module builds without declaring
       those three itself
-- [ ] 2.6 Add the `todayfeed.ui` plugin: Android library, Compose and Hilt, plus
+- [x] 2.6 Add the `todayfeed.ui` plugin: Android library, Compose and Hilt, plus
       `:core:designsystem`. Verify: a ui module compiles a simple `@Composable`, and its
       dependency report holds no `data` module
-- [ ] 2.7 Add the `todayfeed.core` and `todayfeed.application` plugins. Verify:
+- [x] 2.7 Add the `todayfeed.core` and `todayfeed.application` plugins. Verify:
       `./gradlew assembleDebug` reaches the app module
-- [ ] 2.8 Escape hatch. If `build-logic` cannot be made to work in its timebox, fall back to
+- [x] 2.8 Escape hatch. If `build-logic` cannot be made to work in its timebox, fall back to
       plain per-module setup and add it to the deferred list in `docs/ROADMAP.md`. Verify:
       the fallback still passes task 1.4
 
 ## 3. Core modules
 
-- [ ] 3.1 Create `:core:freshness` as a plain Kotlin module. For now it only exposes an
+- [x] 3.1 Create `:core:freshness` as a plain Kotlin module. For now it only exposes an
       injectable `Clock`. Verify: `./gradlew :core:freshness:dependencies` shows no Android,
       no Room and no Retrofit. Slice 2 depends on that staying true
-- [ ] 3.2 Create `:core:network` with the OkHttp, Retrofit and serialization setup and no
+- [x] 3.2 Create `:core:network` with the OkHttp, Retrofit and serialization setup and no
       endpoints. Verify: it builds and exposes a configured client
-- [ ] 3.3 Create `:core:database` with shared Room settings and an `Instant` type converter,
+- [x] 3.3 Create `:core:database` with shared Room settings and an `Instant` type converter,
       and no tables. Verify: it builds and holds no `@Database` class
-- [ ] 3.4 Create `:core:testing` with a `FakeClock` and coroutine test rules, used only from
+- [x] 3.4 Create `:core:testing` with a `FakeClock` and coroutine test rules, used only from
       test code. Verify: `./gradlew :core:freshness:dependencies --configuration
       runtimeClasspath` does not list it
 - [ ] 3.5 Add a unit test that `FakeClock` only moves when told to. Verify: it passes. Every
@@ -61,41 +61,41 @@
 
 ## 4. Component modules
 
-- [ ] 4.1 Create the four `articles` modules (`api`, `domain`, `data`, `ui`) with the layer
+- [x] 4.1 Create the four `articles` modules (`api`, `domain`, `data`, `ui`) with the layer
       plugins and placeholder types only. Verify: `assembleDebug` works, and
       `./gradlew :components:articles:ui:dependencies` lists neither
       `:components:articles:data` nor Room
-- [ ] 4.2 Create the three `weather` modules (`api`, `data`, `ui`). Verify: the same
+- [x] 4.2 Create the three `weather` modules (`api`, `data`, `ui`). Verify: the same
       dependency check passes
-- [ ] 4.3 Create `:components:feed:domain`, depending only on the `api` modules of
+- [x] 4.3 Create `:components:feed:domain`, depending only on the `api` modules of
       `articles` and `weather`. Verify: its dependency report lists no `data` and no `ui` module
-- [ ] 4.4 Create `:components:feed:ui`, depending on `:components:feed:domain` and the `ui`
+- [x] 4.4 Create `:components:feed:ui`, depending on `:components:feed:domain` and the `ui`
       modules of `articles` and `weather`. Verify: it builds, and it is the only `ui` module in the
       project that depends on another component's `ui`
-- [ ] 4.5 Check all of group 4 at once. Confirm each dependency rule from design.md: no
+- [x] 4.5 Check all of group 4 at once. Confirm each dependency rule from design.md: no
       module except `:app` depends on a `data` module, no component depends on another
       component's `domain`, and `feed:ui` is the only cross-component `ui` dependency. Write
       the commands down so the check can be repeated later
 
 ## 5. Design system
 
-- [ ] 5.1 Add the light and dark Material 3 colour schemes based on the reference screens'
+- [x] 5.1 Add the light and dark Material 3 colour schemes based on the reference screens'
       green, with dynamic colour turned off, plus typography and spacing tokens. Verify:
       both schemes show correctly in Compose previews
 - [ ] 5.2 Add the `TodayFeedTheme` composable. It picks the scheme from the system setting
       and matches the status bar to it. Verify: changing the system setting while the app is
       open switches the theme without a restart
-- [ ] 5.3 Add the `ContentState` sealed interface: `Loading`, `Empty`, `Error`, `Offline`,
+- [x] 5.3 Add the `ContentState` sealed interface: `Loading`, `Empty`, `Error`, `Offline`,
       `Content<T>`. `Offline` is a non-failing state that can carry content. Verify: a unit
       test shows `Offline` can hold content and `Error` cannot
-- [ ] 5.4 Add one composable per non-content state: loading, empty, error with retry,
+- [x] 5.4 Add one composable per non-content state: loading, empty, error with retry,
       offline with retry. Each must look clearly different from the others. Verify: all four
       render in previews in light and dark, covering the spec scenarios about telling states
       apart, offering retry, and staying readable
 
 ## 6. App shell and navigation
 
-- [ ] 6.1 Add the `@HiltAndroidApp` application class and the single `@AndroidEntryPoint`
+- [x] 6.1 Add the `@HiltAndroidApp` application class and the single `@AndroidEntryPoint`
       Compose activity in `:app`. Verify: `assembleDebug` works with Hilt code generation
       and the app starts
 - [ ] 6.2 Define the `@Serializable` route types in `:app`: the two top-level destinations
@@ -104,26 +104,26 @@
 - [ ] 6.3 Add the `NavHost` and the two-tab bottom bar, saving and restoring each tab's back
       stack. Verify by hand the spec's four navigation scenarios, including that tapping the
       current tab adds no back stack entry and that leaving and returning keeps the state
-- [ ] 6.4 Wire the detail destination. Both the Reading and Saved screens open it through an
+- [x] 6.4 Wire the detail destination. Both the Reading and Saved screens open it through an
       `onArticleClick(id)` callback owned by `:app`, and it closes on both the system back
       gesture and the in-app back button. Verify: the spec's open and return scenarios pass,
       and no component module mentions a route type
-- [ ] 6.5 Handle an unknown article id on the detail screen by showing the error state with a
+- [x] 6.5 Handle an unknown article id on the detail screen by showing the error state with a
       way out. Verify: navigating to a made-up id does not crash the app
 - [ ] 6.6 Handle a system theme change while the app is open. Verify: the current destination
       and its state survive the change, as the spec requires
 
 ## 7. Placeholder screens
 
-- [ ] 7.1 Add a placeholder `@HiltViewModel` and screen to `:components:feed:ui` that
+- [x] 7.1 Add a placeholder `@HiltViewModel` and screen to `:components:feed:ui` that
       exposes a fixed `ContentState` through a `StateFlow`. Verify: it shows under the
       Reading tab and a unit test reads the first state
-- [ ] 7.2 Add the placeholder Saved screen and its ViewModel to `:components:articles:ui`.
+- [x] 7.2 Add the placeholder Saved screen and its ViewModel to `:components:articles:ui`.
       Verify: it shows under the Saved tab
-- [ ] 7.3 Add the placeholder detail screen and ViewModel to `:components:articles:ui`,
+- [x] 7.3 Add the placeholder detail screen and ViewModel to `:components:articles:ui`,
       reading the article id from `SavedStateHandle`. Verify: a unit test shows the id
       reaches the ViewModel
-- [ ] 7.4 Add a placeholder hero card composable to the `weather` `ui` module and draw it
+- [x] 7.4 Add a placeholder hero card composable to the `weather` `ui` module and draw it
       above the article list in the Reading screen. Verify: the feed shows two clearly
       different placeholder cards. This proves the path the real heterogeneous feed will use
 

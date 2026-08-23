@@ -128,7 +128,11 @@ context: |
   user's own saved copies.
 
   CONVENTIONS:
-  - Conventional commit subjects (feat:, fix:, refactor:, test:, docs:, chore:, build:).
+  - Conventional commit subjects (feat:, fix:, refactor:, test:, docs:, chore:, build:),
+    with the OpenSpec change name as the scope. Subject under 72 characters.
+  - Commit message BODY is at most 5 lines. Say what changed and why, nothing else.
+    Git already records the diff, so never list the files.
+  - Pull request bodies use .github/pull_request_template.md.
   - Git author is `okensun <okensun@users.noreply.github.com>`. No other identity, and
     no employer email, may appear anywhere in the history or the content.
   - Kotlin sources in src/main/kotlin. Package names: com.okensun.todayfeed.<component>.<layer>.
