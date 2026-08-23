@@ -29,6 +29,12 @@ class SavedViewModel
                     initialValue = ContentState.Loading
                 )
 
+        /**
+         * Nothing to retry yet: this screen reads a fixed list. Slice 2 gives it a body when the
+         * repository starts reading storage that can fail.
+         */
+        fun onRetry() = Unit
+
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L
         }

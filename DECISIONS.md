@@ -417,6 +417,24 @@ article is never evicted and never goes stale.
 policy that can delete something the user explicitly kept would break it. The article body is
 written at the moment the user saves it, not looked up later.
 
+### What "offline" means for a screen that only reads local storage — decided
+
+**Picked.** The Saved screen handles `Offline` exactly as the feed does: cached content is
+shown, and `Offline(null)` shows the offline state with a retry. Its repository is not
+expected to emit `Offline` at all, because it reads local storage.
+
+**Considered instead.** Reusing the empty state's visuals for `Offline(null)`, on the grounds
+that a local-only screen with nothing stored means nothing was ever saved.
+
+**Trade-off.** The rejected option reads well in isolation and is what I wrote first. It fails
+two requirements at once: the four states have to be distinguishable from each other, and here
+`Offline` and `Empty` would be identical; and offline has to offer a retry, which the empty
+state does not. It also made the same state look different on two screens.
+
+Handling a case the repository should never produce is defensive code, which is normally worth
+avoiding. It earns its place here because the alternative is an `else`, and an `else` over a
+sealed state type is how a wrong screen reaches production without a warning.
+
 ## Open
 
 - **How the data layer reports staleness upward.** The UI already has an `Offline` state that

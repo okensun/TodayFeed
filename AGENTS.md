@@ -155,6 +155,18 @@ function, at most 15 functions per class. Config is in `config/detekt/detekt.yml
   freshness tests depend on being able to replace it.
 - Prefer `?.` over `!!`. Catch specific exceptions, not `Exception`.
 
+### Never write `else` in a `when` over `ContentState`
+
+Write every case out. `ContentState` is a sealed interface, so an exhaustive `when` makes the
+compiler stop you when a case is added or when a state starts reaching a screen that did not
+handle it before. An `else` throws that away, and the failure it allows is a wrong screen
+rather than a crash, so nothing else will catch it either.
+
+This is not something detekt can check, which is why it is here.
+
+The case that keeps being got wrong is `Offline`. It is not a failure: when it carries cached
+content, show the content. Only `Offline(null)` is a dead end, and even then it offers retry.
+
 ### Comments
 
 Say what the code means now, or warn about this code's own behaviour. Never narrate the

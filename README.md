@@ -70,6 +70,10 @@ broken into slices, the order they were built and why, and what was cut.
 
 Written as they are found.
 
+- **Retry does nothing yet.** The error and offline states both show a Try again button, and
+  every screen routes it to a view model method with an empty body. There is nothing to retry
+  until the repositories talk to the network, which is the next slice. The button is wired
+  through the whole path, so only the body is missing.
 - **The theme change scenario is not verified end to end.** The app applies a light or dark
   theme from the system setting, and that was checked on an emulator. What is not checked is
   that the screen keeps its scroll position across the change, because on this emulator
