@@ -4,7 +4,7 @@
 #             newest Kotlin this project can use.
 #   detekt  - 1.23.8 is the newest stable; there is no 2.x yet.
 [versions]
-agp = "9.3.1"
+agp = "9.2.1"
 kotlin = "2.3.21"
 ksp = "2.3.11"
 compileSdk = "37"

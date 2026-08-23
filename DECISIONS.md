@@ -220,6 +220,26 @@ want that decision in my own code where I can unit test it against a fake clock.
 that I write the paging state machine myself, including the edge cases Paging 3 already handles,
 and I lose its built-in placeholders and retry plumbing.
 
+### AGP 9.2.1, not the newest 9.3.1 — decided
+
+**Picked.** Android Gradle Plugin 9.2.1, with Gradle 9.7.1 and Kotlin 2.3.21.
+
+**Considered instead.** AGP 9.3.1, which was the newest stable release and which I started
+with. Also AGP 8.13.2, the previous major.
+
+**Trade-off.** 9.3.1 built fine from the command line, then Android Studio 2025.3 refused to
+open the project: it supports up to 9.2.1. My first thought was that my own tools were
+behind, but the reviewer's Studio is likely the same stable release. A project that builds
+on the command line and cannot be opened in the IDE is worse than one major-minor version
+behind, because opening it is the first thing anyone does. So the version ceiling here is
+not "newest released", it is "newest that a stable Android Studio can open".
+
+I kept AGP 9 rather than dropping to 8.13.2, because 9.x is where the built-in Kotlin
+support and the new DSL live, and the migration work was already done.
+
+Worth recording as a general rule: for a deliverable someone else opens, check the IDE's
+supported range, not only the artifact repository.
+
 ### Core library desugaring, so `java.time` works on API 24 — decided
 
 **Picked.** `isCoreLibraryDesugaringEnabled` with `desugar_jdk_libs`, set once in the Android
