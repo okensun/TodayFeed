@@ -56,8 +56,10 @@ each is in `DECISIONS.md`.
   "effectively forever", which is the sharpest illustration that the policy is per-source
   rather than one global number.
 - **Paging 3.** Pagination is hand-written instead, so the freshness logic stays testable.
-- **Device and UI tests.** The unit tests target the cache, the freshness policy and the async
-  logic the brief names. Compose UI tests would cost more than they would prove here.
+- **An emulator in CI.** View tests run on the JVM through Robolectric, so they are in CI.
+  Device behaviour is checked by hand over `adb` and the evidence is written down. An emulator
+  would add six to twelve minutes to a two and a half minute run, to make repeatable a handful
+  of checks already done once. See `DECISIONS.md`.
 - **TMDB.** Needs an API key, and a submission that asks the reviewer to get a secret before it
   runs works against the single-command rule.
 - **TVMaze.** Considered for the carousel because its schedule endpoint changes daily. Dropped
