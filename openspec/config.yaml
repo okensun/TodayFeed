@@ -21,19 +21,65 @@ context: |
     reasoning must be written up in the README.
   - Every UI state handled explicitly: loading / empty / error / offline.
 
+  ARCHITECTURE: component-based Clean Architecture. Each domain capability is a
+  "component" that owns its own layers, so components are independent by construction
+  and dependency inversion is enforced by MODULE BOUNDARIES rather than by discipline:
+    <component>/api    - models + repository/use-case contracts. Pure Kotlin, no Android,
+                         no framework. This is the ONLY thing other components may see.
+    <component>/domain - use cases / business logic. Pure Kotlin. Depends on its own api.
+    <component>/data   - implements the api contracts with Retrofit + Room. Nothing
+                         depends on a data module except :app (for DI wiring).
+    <component>/ui     - Compose screens, card composables and ViewModels. Depends on
+                         its own api + :core:designsystem. NEVER on its own data module.
+  A layer that would be empty is not created. Only the articles component earns a
+  separate domain module; the three secondary sources have no business logic worth one.
+
+  MODULE GRAPH (21 modules):
+    :app                            NavHost, bottom bar, Hilt aggregation. Thin.
+    :core:designsystem              theme (light + dark), ContentState, state composables
+    :core:network                   OkHttp/Retrofit/serialization setup. No endpoints.
+    :core:database                  shared Room configuration + type converters only
+    :core:freshness                 the per-source freshness policy. Pure Kotlin. Clock-injected.
+    :core:testing                   fakes, FakeClock, coroutine test rules
+    :components:articles:{api,domain,data,ui}   Spaceflight News. Feed cards, detail, saved.
+    :components:weather:{api,data,ui}           Open-Meteo. Hero card.
+    :components:shopping:{api,data,ui}          DummyJSON. Service cards.
+    :components:tvschedule:{api,data,ui}        TVMaze. "On TV today" carousel.
+    :components:feed:{domain,ui}                heterogeneous composition + the Reading screen
+
+  DEPENDENCY RULES (enforced, not advisory):
+  - A component's ui/domain/api NEVER depends on any data module, its own included.
+  - A component NEVER depends on another component's domain, data or ui. Only on api.
+    Exception: :components:feed:ui depends on each component's ui, because it renders
+    their card composables. That is the composition root for the feed and is the reason
+    feed is a component rather than a screen inside :app.
+  - Card composables take api models directly. No per-card UI-model mapping layer.
+  - Each component owns its OWN Room database. There is no shared schema, so no
+    cross-component migration coupling and no cycle between :core:database and data
+    modules. No query ever spans components.
+  - Screens: Reading = :components:feed:ui. Article detail and Saved =
+    :components:articles:ui. Navigation graph lives in :app; features expose callbacks.
+
   TECH STACK (decided; record rejected alternatives in DECISIONS.md):
   - UI: Jetpack Compose, Material 3, light + dark theme.
-  - Architecture: MVVM + unidirectional data flow. Kotlin Flow + StateFlow, coroutines.
-  - DI: Hilt.
+  - Presentation: MVVM + unidirectional data flow. StateFlow, coroutines, Flow.
+  - DI: Hilt. (The reference architecture this is modelled on uses plain Dagger 2 with
+    hand-written component graphs; that is an automotive multi-process constraint which
+    does not apply here. Explain the difference in DECISIONS.md.)
   - Network: Retrofit + OkHttp + kotlinx.serialization.
-  - Persistence: Room (offline-first single source of truth).
+  - Persistence: Room, per component (offline-first single source of truth).
   - Pagination: HAND-ROLLED (deliberately NOT Paging 3) so the freshness /
     stale-while-revalidate logic stays fully under our control and unit testable.
-  - Multi-module: :app, :core:model, :core:network, :core:database, :core:data,
-    :core:designsystem, :core:testing, :feature:feed, :feature:detail, :feature:saved.
-  - Gradle: Kotlin DSL, version catalog (libs.versions.toml), convention plugins.
-  - Tests: JUnit + kotlinx-coroutines-test + Turbine + fake/in-memory sources.
-  - CI: GitHub Actions (build + unit test on push).
+  - Gradle: Kotlin DSL, version catalog (libs.versions.toml), convention plugins in a
+    build-logic included build. Project dependencies use string paths, not typesafe
+    project accessors.
+  - Tests: JUnit + kotlinx-coroutines-test + Turbine + HAND-WRITTEN FAKES, not a mocking
+    framework. Fakes over mocks because the freshness tests assert on behaviour over
+    time, which a fake clock and a fake source express far more readably than
+    stubbed call expectations.
+  - Static analysis: detekt + ktlint in CI. 140-char lines, 4-space indent, no star
+    imports, ReturnCount <= 3, TooManyFunctions <= 15.
+  - CI: GitHub Actions (build + detekt/ktlint + unit test on push).
 
   DATA SOURCES:
   - Articles (required): https://api.spaceflightnewsapi.net/v4/articles/ — paginated, no key.
@@ -52,8 +98,38 @@ context: |
 
   CONVENTIONS:
   - Conventional commit subjects (feat:, fix:, refactor:, test:, docs:, chore:, build:).
-  - Public API of each module stays minimal; feature modules never depend on each other.
+  - Git author is `okensun <okensun@users.noreply.github.com>`. No other identity, and
+    no employer email, may appear anywhere in the history or the content.
+  - Kotlin sources in src/main/kotlin. Package names: com.okensun.todayfeed.<component>.<layer>.
+  - Comments say what the CURRENT code means. Never narrate the change ("previously...",
+    "now uses..."), never restate the code, never leave commented-out code. Git records
+    history. The best comment is the one a clearer name made unnecessary.
+  - Prefer StateFlow over SharedFlow(replay = 1) for always-available state. Collect in
+    repeatOnLifecycle. Cancel the scope, not child jobs. No blocking calls on the main
+    thread. No expensive work in init or composition.
+  - Prefer safe calls over !!. Catch specific exceptions.
+  - Test names use backticks and read as sentences.
+  - AGENTS.md holds the full agent guide; CLAUDE.md is a short in-context digest that
+    points at it. Keep both truthful as the code changes.
+  - The project is modelled on the ARCHITECTURE and CONVENTIONS of a proprietary
+    reference codebase. Nothing is copied from it: no text, no copyright headers, no
+    naming, no internal ticket conventions. Write everything fresh.
   - No secrets, keys, or personal data in the repository.
+
+  WRITING STYLE (applies to every document: README, DECISIONS.md, AI_USAGE.md, AGENTS.md,
+  CLAUDE.md, OpenSpec artifacts, code comments, commit messages, PR bodies):
+  - Plain, general English. A reader below high-school English level must be able to
+    follow it. The reviewers are not native English speakers, and clear writing is a
+    graded item, so simple wording helps the score rather than hurting it.
+  - One idea per sentence. Short sentences. Active voice.
+  - Use common words. If a technical term is needed, say what it means the first time.
+  - No rhetorical flourishes, no long chains of clauses, no dashes used for drama.
+  - Describe things in general terms first, then give the detail.
+
+  CODE REVIEW COMMENTS:
+  - Always inline, on the exact line. Never a long summary comment at the top of the PR.
+  - Two to three lines maximum per comment. Say the problem, then the fix.
+  - No praise-only comments. If nothing is wrong, leave no comment.
 
 rules:
   proposal:

@@ -1,117 +1,155 @@
 ## 1. Gradle foundation
 
-- [ ] 1.1 Commit the Gradle wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`) pinned
-      to a current Gradle release; verify `./gradlew --version` succeeds on a machine
-      with no Gradle installed and reports the pinned version
-- [ ] 1.2 Resolve design.md's open question on versions: check the current stable AGP,
-      Kotlin, Compose BOM, `compileSdk` and `targetSdk` against their actual
-      repositories, and record the chosen values in `gradle/libs.versions.toml` with the
-      Compose BOM as the single source of truth for Compose artifact versions; verify
-      `./gradlew help` resolves the catalog without an unresolved-dependency error
-- [ ] 1.3 Add `settings.gradle.kts` with `pluginManagement`, dependency resolution
-      management pointing at the catalog, and `includeBuild("build-logic")`; verify
-      `./gradlew projects` lists the included build
-- [ ] 1.4 Add root `build.gradle.kts` and `gradle.properties` (JVM args, AndroidX,
-      configuration cache, non-transitive R class); verify `./gradlew help` runs clean
-      with the configuration cache enabled
+- [ ] 1.1 Commit the Gradle wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`), pinned
+      to a current Gradle release. Verify: `./gradlew --version` works on a machine with no
+      Gradle installed and reports the pinned version
+- [ ] 1.2 Answer design.md's open question about versions. Look up the current stable AGP,
+      Kotlin, Compose BOM, `compileSdk` and `targetSdk` in their real repositories, then put
+      them in `gradle/libs.versions.toml`. The Compose BOM decides all Compose versions.
+      Verify: `./gradlew help` resolves the catalog with no unresolved dependency
+- [ ] 1.3 Add `settings.gradle.kts` with plugin management, repository setup,
+      `includeBuild("build-logic")` and all twenty-one module declarations. Verify:
+      `./gradlew projects` lists every module and the included build
+- [ ] 1.4 Add the root `build.gradle.kts`, `gradle.properties` (JVM args, AndroidX,
+      configuration cache, non-transitive R class) and `.editorconfig` (4-space indent, 140
+      characters, no star imports). Verify: `./gradlew help` runs clean with the
+      configuration cache on
 
-## 2. Convention plugins
+## 2. Convention plugins that hold the layer rules
 
-- [ ] 2.1 Create the `build-logic` included build with its own settings and catalog
-      access, exposing no plugins yet; verify `./gradlew :build-logic:tasks` succeeds
-- [ ] 2.2 Add the shared Android configuration used by every Android module — `minSdk`
-      24, the pinned `compileSdk`/`targetSdk`, Java 17 toolchain, and
-      `isCoreLibraryDesugaringEnabled = true` with `desugar_jdk_libs` — and expose it as
-      the `todayfeed.android.application` and `todayfeed.android.library` plugins; verify
-      a scratch module applying the library plugin assembles
-- [ ] 2.3 Add the `todayfeed.android.library.compose` plugin wiring the Compose compiler
-      plugin and the Compose BOM; verify a module applying it compiles a trivial
-      `@Composable`
-- [ ] 2.4 Add the `todayfeed.hilt` and `todayfeed.jvm.library` plugins; verify a module
-      applying `todayfeed.hilt` generates Hilt components during `assembleDebug`
-- [ ] 2.5 Add the `todayfeed.android.feature` plugin that applies the Compose and Hilt
-      conventions and declares the `:core:data` and `:core:designsystem` dependencies
-      once; verify a feature module compiles against both without declaring either
-      itself
-- [ ] 2.6 If `build-logic` cannot be made to work within its timebox, fall back to plain
-      per-module configuration and record the fallback in `docs/ROADMAP.md`'s deferred
-      list; verify the fallback still satisfies task 1.4
+- [ ] 2.1 Create the `build-logic` included build with its own settings and access to the
+      version catalog. No plugins yet. Verify: `./gradlew :build-logic:tasks` works
+- [ ] 2.2 Add the shared Android setup: `minSdk 24`, the pinned `compileSdk` and
+      `targetSdk`, the Java 17 toolchain, and core library desugaring with
+      `desugar_jdk_libs`. Verify: a test module using it builds and can call
+      `java.time.Instant.now()`
+- [ ] 2.3 Add the `todayfeed.api` plugin as a plain JVM library that never applies the
+      Android plugin. Verify: a module using it fails to compile an `android.*` import. That
+      failure is what makes "no Android in api" a build fact
+- [ ] 2.4 Add the `todayfeed.domain` plugin: JVM library plus coroutines. Verify:
+      `./gradlew <module>:dependencies` on a domain module shows no Android artifacts
+- [ ] 2.5 Add the `todayfeed.data` plugin: Android library and Hilt, plus `:core:network`,
+      `:core:database` and `:core:freshness`. Verify: a data module builds without declaring
+      those three itself
+- [ ] 2.6 Add the `todayfeed.ui` plugin: Android library, Compose and Hilt, plus
+      `:core:designsystem`. Verify: a ui module compiles a simple `@Composable`, and its
+      dependency report holds no `data` module
+- [ ] 2.7 Add the `todayfeed.core` and `todayfeed.application` plugins. Verify:
+      `./gradlew assembleDebug` reaches the app module
+- [ ] 2.8 Escape hatch. If `build-logic` cannot be made to work in its timebox, fall back to
+      plain per-module setup and add it to the deferred list in `docs/ROADMAP.md`. Verify:
+      the fallback still passes task 1.4
 
-## 3. Module graph
+## 3. Core modules
 
-- [ ] 3.1 Create `:core:model` as a plain JVM library with no Android dependency; verify
-      `./gradlew :core:model:dependencies` shows no Android artifacts
-- [ ] 3.2 Create the empty-but-wired `:core:network`, `:core:database` and `:core:data`
-      modules with the dependency directions from design.md and no networking or
-      persistence libraries yet; verify `./gradlew :core:data:dependencies` shows
-      `:core:network`, `:core:database` and `:core:model` and nothing else from the
-      project
-- [ ] 3.3 Create `:core:testing` holding shared test fixtures and coroutine test
-      helpers, depended on only from test source sets; verify `./gradlew
-      :core:data:dependencies --configuration debugRuntimeClasspath` does not contain it
-- [ ] 3.4 Create the three feature modules and `:app` using the convention plugins;
-      verify `./gradlew assembleDebug` succeeds and that no feature module's dependency
-      report lists another feature module, `:core:network` or `:core:database`
+- [ ] 3.1 Create `:core:freshness` as a plain Kotlin module. For now it only exposes an
+      injectable `Clock`. Verify: `./gradlew :core:freshness:dependencies` shows no Android,
+      no Room and no Retrofit. Slice 2 depends on that staying true
+- [ ] 3.2 Create `:core:network` with the OkHttp, Retrofit and serialization setup and no
+      endpoints. Verify: it builds and exposes a configured client
+- [ ] 3.3 Create `:core:database` with shared Room settings and an `Instant` type converter,
+      and no tables. Verify: it builds and holds no `@Database` class
+- [ ] 3.4 Create `:core:testing` with a `FakeClock` and coroutine test rules, used only from
+      test code. Verify: `./gradlew :core:freshness:dependencies --configuration
+      runtimeClasspath` does not list it
+- [ ] 3.5 Add a unit test that `FakeClock` only moves when told to. Verify: it passes. Every
+      freshness test in slice 2 rests on this
 
-## 4. Design system
+## 4. Component modules
 
-- [ ] 4.1 Add the light and dark Material 3 colour schemes built on the reference
-      screens' green, with dynamic colour explicitly disabled, plus typography and
-      spacing tokens; verify both schemes render in Compose previews
-- [ ] 4.2 Add the `TodayFeedTheme` composable that selects the scheme from the system
-      setting and applies the matching status-bar appearance; verify toggling the system
-      setting while the app is foregrounded re-renders in the other appearance without
-      restarting
-- [ ] 4.3 Add the `ContentState` sealed interface (`Loading`, `Empty`, `Error`,
-      `Offline`, `Content<T>`) with `Offline` modelled as a non-failing state that can
-      carry content, per design.md; verify the type compiles and a unit test asserts
-      `Offline` can hold content while `Error` cannot
-- [ ] 4.4 Add one composable per non-content state — loading, empty, error with retry,
-      offline with retry — each visually distinguishable from the others; verify the
-      four render in previews in both appearances, covering the spec's "each state is
-      visually distinguishable", "retry is offered on failure" and legibility scenarios
+- [ ] 4.1 Create the four `articles` modules (`api`, `domain`, `data`, `ui`) with the layer
+      plugins and placeholder types only. Verify: `assembleDebug` works, and
+      `./gradlew :components:articles:ui:dependencies` lists neither
+      `:components:articles:data` nor Room
+- [ ] 4.2 Create the three `weather` modules (`api`, `data`, `ui`). Verify: the same
+      dependency check passes
+- [ ] 4.3 Create the three `shopping` modules (`api`, `data`, `ui`). Verify: the same
+- [ ] 4.4 Create the three `tvschedule` modules (`api`, `data`, `ui`). Verify: the same
+- [ ] 4.5 Create `:components:feed:domain`, depending only on the four components' `api`
+      modules. Verify: its dependency report lists no `data` and no `ui` module
+- [ ] 4.6 Create `:components:feed:ui`, depending on `:components:feed:domain` and the four
+      components' `ui` modules. Verify: it builds, and it is the only `ui` module in the
+      project that depends on another component's `ui`
+- [ ] 4.7 Check all of group 4 at once. Confirm each dependency rule from design.md: no
+      module except `:app` depends on a `data` module, no component depends on another
+      component's `domain`, and `feed:ui` is the only cross-component `ui` dependency. Write
+      the commands down so the check can be repeated later
 
-## 5. App shell and navigation
+## 5. Design system
 
-- [ ] 5.1 Add the `@HiltAndroidApp` application class and the single
-      `@AndroidEntryPoint` Compose activity; verify `assembleDebug` succeeds with Hilt
-      code generation and the app launches
-- [ ] 5.2 Define the `@Serializable` route types — the two top-level destinations and
-      `ArticleDetail(articleId)` — in `:app`; verify a unit test round-trips
-      `ArticleDetail` through the navigation argument encoding
-- [ ] 5.3 Add the `NavHost` and the two-destination bottom bar, with per-destination
-      back-stack save and restore; verify the spec's four top-level navigation
-      scenarios by hand, including that re-selecting the current destination adds no
-      back-stack entry and that leaving and returning restores state
-- [ ] 5.4 Wire the detail destination so both features open it via an
-      `onArticleClick(id)` callback owned by `:app`, and handle dismissal by system back
-      gesture and in-app affordance; verify the spec's opening and returning scenarios
-- [ ] 5.5 Handle the detail destination being opened with an unknown identifier by
-      showing the error state with a way out; verify the app does not crash when
-      navigated to a fabricated identifier
+- [ ] 5.1 Add the light and dark Material 3 colour schemes based on the reference screens'
+      green, with dynamic colour turned off, plus typography and spacing tokens. Verify:
+      both schemes show correctly in Compose previews
+- [ ] 5.2 Add the `TodayFeedTheme` composable. It picks the scheme from the system setting
+      and matches the status bar to it. Verify: changing the system setting while the app is
+      open switches the theme without a restart
+- [ ] 5.3 Add the `ContentState` sealed interface: `Loading`, `Empty`, `Error`, `Offline`,
+      `Content<T>`. `Offline` is a non-failing state that can carry content. Verify: a unit
+      test shows `Offline` can hold content and `Error` cannot
+- [ ] 5.4 Add one composable per non-content state: loading, empty, error with retry,
+      offline with retry. Each must look clearly different from the others. Verify: all four
+      render in previews in light and dark, covering the spec scenarios about telling states
+      apart, offering retry, and staying readable
 
-## 6. Feature placeholders
+## 6. App shell and navigation
 
-- [ ] 6.1 Add a placeholder `@HiltViewModel` and screen to `:feature:feed` exposing a
-      hard-coded `ContentState` through a `StateFlow`; verify the screen renders under
-      the Reading destination and a unit test collects the initial state
-- [ ] 6.2 Add the equivalent placeholder to `:feature:saved`; verify it renders under
-      the Saved destination
-- [ ] 6.3 Add the equivalent placeholder to `:feature:detail`, reading the article
-      identifier from its `SavedStateHandle`; verify a unit test asserts the identifier
+- [ ] 6.1 Add the `@HiltAndroidApp` application class and the single `@AndroidEntryPoint`
+      Compose activity in `:app`. Verify: `assembleDebug` works with Hilt code generation
+      and the app starts
+- [ ] 6.2 Define the `@Serializable` route types in `:app`: the two top-level destinations
+      and `ArticleDetail(articleId)`. Verify: a unit test sends `ArticleDetail` through the
+      navigation argument encoding and gets the same value back
+- [ ] 6.3 Add the `NavHost` and the two-tab bottom bar, saving and restoring each tab's back
+      stack. Verify by hand the spec's four navigation scenarios, including that tapping the
+      current tab adds no back stack entry and that leaving and returning keeps the state
+- [ ] 6.4 Wire the detail destination. Both the Reading and Saved screens open it through an
+      `onArticleClick(id)` callback owned by `:app`, and it closes on both the system back
+      gesture and the in-app back button. Verify: the spec's open and return scenarios pass,
+      and no component module mentions a route type
+- [ ] 6.5 Handle an unknown article id on the detail screen by showing the error state with a
+      way out. Verify: navigating to a made-up id does not crash the app
+- [ ] 6.6 Handle a system theme change while the app is open. Verify: the current destination
+      and its state survive the change, as the spec requires
+
+## 7. Placeholder screens
+
+- [ ] 7.1 Add a placeholder `@HiltViewModel` and screen to `:components:feed:ui` that
+      exposes a fixed `ContentState` through a `StateFlow`. Verify: it shows under the
+      Reading tab and a unit test reads the first state
+- [ ] 7.2 Add the placeholder Saved screen and its ViewModel to `:components:articles:ui`.
+      Verify: it shows under the Saved tab
+- [ ] 7.3 Add the placeholder detail screen and ViewModel to `:components:articles:ui`,
+      reading the article id from `SavedStateHandle`. Verify: a unit test shows the id
       reaches the ViewModel
+- [ ] 7.4 Add a placeholder card composable to each of the `weather`, `shopping` and
+      `tvschedule` `ui` modules, and draw all three in the Reading screen. Verify: the feed
+      shows three clearly different placeholder cards. This proves the path the real
+      heterogeneous feed will use
 
-## 7. CI, docs and acceptance
+## 8. Static analysis, CI and documents
 
-- [ ] 7.1 Add `.github/workflows/ci.yml` running JDK 17 with Gradle caching and
-      `./gradlew assembleDebug testDebugUnitTest --stacktrace` on push and pull request,
-      with no secrets configured; verify the workflow passes on a pushed branch
-- [ ] 7.2 Add the `README.md` stub with the one-line run command, a one-paragraph
-      overview, and the module graph; verify a reader who follows only the README can
-      build the project
-- [ ] 7.3 Acceptance check spanning the whole change: clone the repository into a fresh
-      directory, run `./gradlew assembleDebug` with no `local.properties` and no
-      environment variables set, install the resulting APK, and confirm the app launches
-      into Reading, both tabs switch and restore state, detail opens and returns, and
-      the appearance follows the system setting — covering every scenario in the
-      `app-shell` spec
+- [ ] 8.1 Add detekt with `config/detekt/detekt.yml` (140 characters, class member ordering,
+      `MagicNumber` in production code only, at most 3 returns, at most 15 functions) and
+      ktlint driven by `.editorconfig`. Verify: `./gradlew detekt ktlintCheck` passes on the
+      whole project
+- [ ] 8.2 Add `.github/workflows/ci.yml`: JDK 17, Gradle caching, and
+      `./gradlew assembleDebug detekt ktlintCheck testDebugUnitTest --stacktrace` on push
+      and pull request, with no secrets. Verify: the workflow passes on a pushed branch
+- [ ] 8.3 Write `AGENTS.md`: build commands, the module graph, the dependency rules, the
+      layer conventions, code style, writing style and testing patterns. Verify: someone can
+      add a new component using only this file
+- [ ] 8.4 Write `CLAUDE.md` as a short summary that points at `AGENTS.md` and lists only the
+      rules a linter cannot catch. Verify: it fits on one screen and does not contradict
+      `AGENTS.md`
+- [ ] 8.5 Add `.github/pull_request_template.md` with the agreed sections. Verify: it renders
+      correctly when opening a pull request
+- [ ] 8.6 Write the `README.md` stub: the one-line run command, a short overview and the
+      module graph. Verify: a reader who follows only the README can build the project
+
+## 9. Acceptance
+
+- [ ] 9.1 Check the whole change end to end. Clone the repository into a new directory. Run
+      `./gradlew assembleDebug` with no `local.properties` and no environment variables.
+      Install the APK. Confirm the app opens on Reading, both tabs switch and keep their
+      state, detail opens and returns, and the theme follows the system setting. This covers
+      every scenario in the `app-shell` spec

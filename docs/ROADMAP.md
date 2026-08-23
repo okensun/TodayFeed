@@ -1,43 +1,46 @@
-# Roadmap & sequencing
+# Roadmap and sequencing
 
-Working notes that will be condensed into the README's **Plan & Sequencing** section.
-Each numbered slice is one OpenSpec change (`openspec/changes/<name>/`) and lands as
-several logical commits.
+Working notes. They will be shortened into the README's **Plan & Sequencing** section. Each
+numbered slice is one OpenSpec change in `openspec/changes/`, and lands as several small
+commits.
 
 ## How the problem was broken down
 
-The brief hides its centre of gravity in one bullet: a *freshness policy* for a feed
-that mixes sources updating at different cadences, that stays usable offline. Feed →
-detail → save is straightforward CRUD-over-HTTP; the freshness/caching layer is where
-the judgment actually is. So the slices are ordered to get that layer built and tested
-early, on a single source, before the heterogeneity multiplies its complexity.
+The brief hides its hardest part in one bullet: a *freshness policy* for a feed that mixes
+sources which update at different speeds, and that still works offline. Feed, detail and save
+are ordinary work. The caching and freshness layer is where the real judgement is. So the
+slices are ordered to build and test that layer early, against one source, before four
+sources make it harder.
 
-| # | Change | Satisfies | Why here |
-|---|--------|-----------|----------|
-| 1 | `bootstrap-project-skeleton` | multi-module, dark theme, CI, single-command build | Nothing can be demoed or reviewed until a clean checkout builds. Doing the module graph and CI first also stops "we'll modularise later" from becoming never. |
-| 2 | `article-feed-offline-first` | paginated feed, all four UI states, offline-first cache, freshness core, tests | The graded heart. One source, hand-rolled pagination, Room as single source of truth, and the freshness abstraction with its unit tests. Everything later plugs into this. |
-| 3 | `detail-and-save-offline` | detail screen, save/unsave, Saved screen, offline readability | Completes the required core flow. Sits after 2 because it reuses the same cache and needs the article body persisted at save time. |
-| 4 | `heterogeneous-feed-sources` | heterogeneous feed, extra cell types, per-source cadence | Weather hero (Open-Meteo), service cards (DummyJSON), "on TV today" carousel (TVMaze). Deliberately after 2 so each new source is a *parameter* of a proven freshness policy rather than a new special case. |
-| 5 | `search-and-motion` | search/filter, animations/transitions | Pure nice-to-haves. Last because they can be cut wholesale without touching a single must-have. |
-| 6 | `submission-docs` | README, DECISIONS.md, AI_USAGE.md, limitations | Written last so the decision log reflects what actually happened, not what was planned. Notes are captured as I go so this is assembly, not archaeology. |
+| # | Change | Covers | Why here |
+|---|--------|--------|----------|
+| 1 | `bootstrap-project-skeleton` | multi-module layout, dark theme, CI, single-command build | Nothing can be run or reviewed until a fresh copy builds. Deciding the module layout now is also much cheaper than deciding it after feature code has grown across a line we never drew. |
+| 2 | `article-feed-offline-first` | paginated feed, all four UI states, offline-first cache, the freshness policy, tests | The heart of the assignment. One source, hand-written pagination, Room as the single source of truth, and the freshness policy with its unit tests. Everything later plugs into this. |
+| 3 | `detail-and-save-offline` | detail screen, save and unsave, Saved tab, reading saved items offline | Finishes the core flow the brief asks for. It comes after slice 2 because it reuses the same cache and needs the article body stored at the moment the user saves it. |
+| 4 | `heterogeneous-feed-sources` | mixed feed, extra card types, per-source update speeds | Weather hero card (Open-Meteo), service cards (DummyJSON), "on TV today" carousel (TVMaze). Deliberately after slice 2, so each new source is a setting on a policy that already works instead of a new special case. |
+| 5 | `search-and-motion` | search and filter, animations and transitions | Nice-to-haves only. Last, because they can be dropped completely without touching a single must-have. |
+| 6 | `submission-docs` | README, DECISIONS.md, AI_USAGE.md, known limitations | Written last so the decision log says what actually happened, not what I planned. Notes are kept as I go, so this slice is assembly and not archaeology. |
 
-## Order rationale
+## Why this order
 
-Risk-first, not feature-first. Slices 1–3 cover every must-have; if the week
-evaporates, the submission is still complete and honest. Slices 4–5 add the
-nice-to-haves in decreasing order of what the brief rewards. Slice 6 is fixed cost and
-non-negotiable — the brief says judgment beats completeness, so the write-up cannot be
-the thing that gets squeezed.
+Risk first, not features first. Slices 1 to 3 cover every must-have. If the week runs out
+after slice 3, the submission is still complete and honest. Slices 4 and 5 add the
+nice-to-haves, most valuable first. Slice 6 is a fixed cost and cannot be cut. The brief says
+judgement counts for more than completeness, so the write-up must not be the thing that gets
+squeezed.
 
-## Deliberately deferred / cut
+## Left out on purpose
 
-Recorded here as they are decided, so the README section is evidence rather than
-hindsight. See `DECISIONS.md` for the reasoning behind each.
+Recorded here as they are decided, so the README section is a record and not hindsight. The
+reasoning for each goes in `DECISIONS.md`.
 
-- **Paging 3** — hand-rolled pagination instead, to keep freshness logic testable.
-- **Instrumented / UI tests** — unit tests target the cache, freshness and async logic
-  the brief names; Compose UI tests would cost more than they'd prove here.
-- **TMDB** — replaced by TVMaze. TMDB needs an API key, and any deliverable that asks
-  the reviewer to obtain a secret before it runs is at odds with the single-command
-  ground rule. TVMaze is keyless *and* updates daily, which buys the freshness policy a
-  third cadence tier.
+- **Paging 3.** Pagination is hand-written instead, so the freshness logic stays testable.
+- **Device and UI tests.** The unit tests target the cache, the freshness policy and the async
+  logic the brief names. Compose UI tests would cost more than they would prove here.
+- **TMDB.** Replaced by TVMaze. TMDB needs an API key, and a submission that asks the reviewer
+  to get a secret before it runs works against the single-command rule. TVMaze needs no key
+  and changes daily, which gives the freshness policy a third update speed to reason about.
+- **A `domain` module for every component.** Only `articles` gets one. The other three have no
+  rules worth a module, and a pass-through class is worse than a small inconsistency.
+- **Typed project accessors and a mocking library.** String project paths and hand-written
+  fakes instead. Both are explained in `DECISIONS.md`.

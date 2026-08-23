@@ -1,118 +1,113 @@
 ## Purpose
 
-The app shell is the frame every feature is displayed inside: it launches the app, lets
-the user move between the top-level Reading and Saved destinations, opens and closes an
-article detail view, and renders everything in the light or dark appearance the device
-is set to.
+The app shell is the frame that every feature is drawn inside. It starts the app, lets the
+user move between the Reading and Saved tabs, opens and closes an article detail screen, and
+draws everything in the light or dark theme the device is set to.
 
 ## ADDED Requirements
 
-### Requirement: App launches into the Reading destination
+### Requirement: The app starts on the Reading tab
 
-The app SHALL launch to the Reading destination without requiring any account, sign-in,
-permission grant, network connection, or externally supplied configuration value.
+The app SHALL open on the Reading tab. It SHALL NOT need an account, a sign-in, a
+permission, a network connection, or any setup value supplied from outside the project.
 
-#### Scenario: Cold start with no network
+#### Scenario: First start with no network
 
-- **WHEN** the app is launched for the first time on a device with no network connection
-- **THEN** the Reading destination is displayed
-- **AND** no crash, dialog, or blocking prompt is shown
+- **WHEN** the app is started for the first time on a device with no network connection
+- **THEN** the Reading tab is shown
+- **AND** there is no crash, dialog, or prompt that blocks the user
 
-#### Scenario: Cold start with no optional configuration present
+#### Scenario: First start with no setup files
 
-- **WHEN** the app is built and launched from a checkout that supplies no API keys or
-  local configuration overrides
-- **THEN** the app launches and the Reading destination is displayed
+- **WHEN** the app is built and started from a copy of the repository that provides no API
+  keys and no local setup files
+- **THEN** the app starts and the Reading tab is shown
 
-### Requirement: Top-level navigation between Reading and Saved
+### Requirement: Moving between the Reading and Saved tabs
 
-The app SHALL present a persistent top-level navigation control offering exactly two
-destinations, Reading and Saved, and SHALL indicate which of the two is currently
-selected.
+The app SHALL always show a navigation bar with exactly two tabs, Reading and Saved. It
+SHALL show which of the two is selected.
 
 #### Scenario: Switching to Saved
 
-- **WHEN** the user selects Saved from the top-level navigation control
-- **THEN** the Saved destination is displayed
-- **AND** the control indicates Saved as the selected destination
+- **WHEN** the user taps Saved in the navigation bar
+- **THEN** the Saved tab is shown
+- **AND** the navigation bar shows Saved as selected
 
 #### Scenario: Switching back to Reading
 
-- **WHEN** the user is on the Saved destination and selects Reading
-- **THEN** the Reading destination is displayed
-- **AND** the control indicates Reading as the selected destination
+- **WHEN** the user is on the Saved tab and taps Reading
+- **THEN** the Reading tab is shown
+- **AND** the navigation bar shows Reading as selected
 
-#### Scenario: Re-selecting the destination already shown
+#### Scenario: Tapping the tab that is already open
 
-- **WHEN** the user selects the destination that is already displayed
-- **THEN** that destination remains displayed
-- **AND** no additional entry is added to the back stack
+- **WHEN** the user taps the tab that is already shown
+- **THEN** that tab stays shown
+- **AND** nothing is added to the back stack
 
-#### Scenario: Independent scroll and selection state per destination
+#### Scenario: Each tab keeps its own state
 
-- **WHEN** the user leaves a top-level destination and later returns to it
-- **THEN** that destination is restored to the state it was left in, rather than reset
+- **WHEN** the user leaves a tab and later comes back to it
+- **THEN** the tab is shown in the state it was left in, not reset
 
-### Requirement: Article detail destination
+### Requirement: The article detail screen
 
-The app SHALL provide a detail destination that is opened for a specific article
-identifier and that returns the user to the destination they came from when dismissed.
+The app SHALL have a detail screen that is opened for one article id. When the user leaves
+it, the app SHALL return them to the tab they came from.
 
-#### Scenario: Opening detail from a destination
+#### Scenario: Opening detail from a tab
 
-- **WHEN** an article is activated from either the Reading or the Saved destination
-- **THEN** the detail destination is displayed for that article's identifier
+- **WHEN** an article is tapped on either the Reading or the Saved tab
+- **THEN** the detail screen is shown for that article's id
 
 #### Scenario: Returning from detail
 
-- **WHEN** the user dismisses the detail destination using either the system back
-  gesture or the in-app back affordance
-- **THEN** the destination the user came from is displayed again, in the state it was
-  left in
+- **WHEN** the user leaves the detail screen using either the system back gesture or the
+  back button in the app
+- **THEN** the tab they came from is shown again, in the state it was left in
 
-#### Scenario: Detail opened for an unknown identifier
+#### Scenario: Detail opened with an unknown id
 
-- **WHEN** the detail destination is opened with an identifier that matches no known
-  article
-- **THEN** an error state is displayed with a way to leave the destination
+- **WHEN** the detail screen is opened with an id that matches no article
+- **THEN** an error state is shown, with a way to leave the screen
 - **AND** the app does not crash
 
-### Requirement: Appearance follows the system setting
+### Requirement: The theme follows the system setting
 
-The app SHALL render in a light or dark appearance according to the device setting, and
-SHALL apply a change to that setting without needing to be restarted. Text and its
-background SHALL remain legible in both appearances.
+The app SHALL use a light or dark theme according to the device setting, and SHALL apply a
+change to that setting without needing a restart. Text SHALL stay readable against its
+background in both themes.
 
 #### Scenario: Device set to dark
 
-- **WHEN** the device is set to a dark appearance and the app is launched
-- **THEN** the app is displayed in its dark appearance
+- **WHEN** the device is set to dark and the app is started
+- **THEN** the app is shown in its dark theme
 
-#### Scenario: Appearance changed while the app is in the foreground
+#### Scenario: Theme changed while the app is open
 
-- **WHEN** the device appearance is switched while the app is in the foreground
-- **THEN** the app is displayed in the newly selected appearance
-- **AND** the user's current destination and its state are preserved
+- **WHEN** the device theme is changed while the app is open
+- **THEN** the app is shown in the new theme
+- **AND** the current screen and its state are kept
 
-### Requirement: A shared vocabulary of content states
+### Requirement: One shared set of content states
 
-The app SHALL be able to represent, for any content area, each of four states
-distinguishably: content is loading, content loaded but is empty, content could not be
-loaded because of an error, and content is unavailable or possibly stale because the
-device is offline. The error and offline states SHALL each offer the user a way to
-retry.
+For any area that shows content, the app SHALL be able to show four states that the user can
+tell apart: content is loading, content loaded but there is none, content could not be
+loaded because of an error, and content may be old because the device is offline. The error
+state and the offline state SHALL each offer the user a way to try again.
 
-#### Scenario: Each state is visually distinguishable
+#### Scenario: The states look different from each other
 
-- **WHEN** a content area is in the loading, empty, error, or offline state
-- **THEN** the state presented to the user is distinguishable from the other three
+- **WHEN** a content area is loading, empty, in error, or offline
+- **THEN** what the user sees is clearly different from the other three states
 
-#### Scenario: Retry is offered on failure
+#### Scenario: Retry is offered when something goes wrong
 
-- **WHEN** a content area is in the error or the offline state
-- **THEN** a retry affordance is available to the user
+- **WHEN** a content area is in the error state or the offline state
+- **THEN** the user has a way to try again
 
-#### Scenario: States are consistent across destinations
+#### Scenario: The states look the same on every screen
 
-- **WHEN** two different destinations enter the same state
-- **THEN** that state is presented consistently in both
+- **WHEN** two different screens are in the same state
+- **THEN** that state is shown the same way on both
