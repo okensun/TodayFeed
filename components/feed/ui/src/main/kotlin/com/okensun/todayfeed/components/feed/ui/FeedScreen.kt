@@ -8,20 +8,27 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.components.articles.ui.ArticleRowCard
 import com.okensun.todayfeed.components.feed.domain.FeedItem
+import com.okensun.todayfeed.components.weather.api.Weather
 import com.okensun.todayfeed.components.weather.ui.WeatherHeroCard
 import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.EmptyState
 import com.okensun.todayfeed.core.designsystem.ErrorState
 import com.okensun.todayfeed.core.designsystem.LoadingState
 import com.okensun.todayfeed.core.designsystem.OfflineState
+import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
+import java.time.Instant
 
 /**
- * The Reading screen. This module is the only one allowed to depend on other components'
- * ui modules, because drawing their cards in one list is its whole job.
+ * The Reading screen, in its stateful form: it finds the view model and nothing else.
+ *
+ * Everything that draws lives in the stateless overload below, so each state can be seen in
+ * a preview and checked without Hilt.
  */
 @Composable
 fun FeedScreen(
@@ -30,43 +37,50 @@ fun FeedScreen(
     viewModel: FeedViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    FeedScreen(
+        state = state,
+        onRetry = viewModel::onRetry,
+        onArticleClick = onArticleClick,
+        modifier = modifier
+    )
+}
 
-    // Hoisted above the `when` so that moving between Loading and Content does not create
-    // a new state object and reset the scroll position. Inside a branch it would be dropped
-    // from the saveable registry on any frame where that branch is not composed.
-    val listState = rememberLazyListState()
-
-    when (val current = state) {
+/**
+ * The Reading screen, in its stateless form. This module is the only one allowed to depend
+ * on other components' ui modules, because drawing their cards in one list is its whole job.
+ *
+ * `listState` is a parameter with a default rather than a value created inside, so a caller
+ * or a test can supply it, and so moving between Loading and Content does not create a new
+ * one and reset the scroll position.
+ */
+@Composable
+internal fun FeedScreen(
+    state: ContentState<List<FeedItem>>,
+    onRetry: () -> Unit,
+    onArticleClick: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
+) {
+    when (state) {
         is ContentState.Loading -> LoadingState(modifier)
         is ContentState.Empty -> EmptyState(title = "Nothing to read yet", modifier = modifier)
         is ContentState.Error ->
             ErrorState(
-                message = current.message,
-                onRetry = viewModel::onRetry,
+                message = state.message,
+                onRetry = onRetry,
                 modifier = modifier
             )
         is ContentState.Offline -> {
             // Bound to a local because Kotlin will not smart cast a public property that
             // belongs to another module. Offline with cached content still shows content.
-            val cached = current.cached
+            val cached = state.cached
             if (cached == null) {
-                OfflineState(onRetry = viewModel::onRetry, modifier = modifier)
+                OfflineState(onRetry = onRetry, modifier = modifier)
             } else {
-                FeedList(
-                    items = cached,
-                    listState = listState,
-                    onArticleClick = onArticleClick,
-                    modifier = modifier
-                )
+                FeedList(cached, listState, onArticleClick, modifier)
             }
         }
-        is ContentState.Content ->
-            FeedList(
-                items = current.value,
-                listState = listState,
-                onArticleClick = onArticleClick,
-                modifier = modifier
-            )
+        is ContentState.Content -> FeedList(state.value, listState, onArticleClick, modifier)
     }
 }
 
@@ -88,5 +102,59 @@ private fun FeedList(
                     )
             }
         }
+    }
+}
+
+private val previewFeed =
+    listOf(
+        FeedItem.WeatherHero(
+            Weather(
+                placeName = "Taipei",
+                temperatureCelsius = 30.0,
+                condition = "Cloudy",
+                highCelsius = 31.0,
+                lowCelsius = 26.0
+            )
+        ),
+        FeedItem.ArticleRow(
+            Article(
+                id = "1",
+                title = "CNES seeks partners to mass produce compact optical telescopes",
+                summary = "The French space agency is looking for an industrial partner.",
+                source = "European Spaceflight",
+                imageUrl = null,
+                publishedAt = Instant.EPOCH
+            )
+        )
+    )
+
+@Preview(name = "Content")
+@Composable
+private fun FeedContentPreview() = FeedPreview(ContentState.Content(previewFeed))
+
+@Preview(name = "Loading")
+@Composable
+private fun FeedLoadingPreview() = FeedPreview(ContentState.Loading)
+
+@Preview(name = "Empty")
+@Composable
+private fun FeedEmptyPreview() = FeedPreview(ContentState.Empty)
+
+@Preview(name = "Error")
+@Composable
+private fun FeedErrorPreview() = FeedPreview(ContentState.Error("Could not reach the server."))
+
+@Preview(name = "Offline with nothing cached")
+@Composable
+private fun FeedOfflineEmptyPreview() = FeedPreview(ContentState.Offline(null))
+
+@Preview(name = "Offline with cached content")
+@Composable
+private fun FeedOfflineCachedPreview() = FeedPreview(ContentState.Offline(previewFeed))
+
+@Composable
+private fun FeedPreview(state: ContentState<List<FeedItem>>) {
+    TodayFeedTheme {
+        FeedScreen(state = state, onRetry = {}, onArticleClick = {})
     }
 }
