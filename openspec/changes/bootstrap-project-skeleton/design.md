@@ -19,15 +19,19 @@ Three limits matter more than they first look:
   That is a build setting, so it is this change's problem, not slice 2's.
 
 - **No secrets needed to build.** The first choice for the carousel was TMDB, which needs
-  an API key. Instead of building a way to handle an optional key, I changed the source.
-  TVMaze gives the same kind of card and needs no key. So "builds with no setup" becomes a
-  fact about the project rather than a feature we must get right.
+  an API key. Instead of building a way to handle an optional key, I changed the source. The
+  Studio Ghibli film API gives the same kind of card and needs no key. So "builds with no
+  setup" becomes a fact about the project rather than a feature we must get right.
 
-- **Four sources, four update speeds.** Weather changes every few minutes. Articles change
-  every hour or so. The TV schedule changes once a day. The product list almost never
-  changes. That is why a *per-source* freshness policy is the heart of the project, and why
-  the policy gets its own module instead of living inside whichever repository needed it
-  first.
+- **Four sources, four different update speeds.** Weather changes every few minutes.
+  Articles change every hour or so. The service card list and the film list barely change
+  at all, so the right policy for them is closer to "fetch once and keep it". One single
+  refresh interval cannot serve all four. Too short and the app wastes the user's mobile
+  data re-downloading a film list that has not changed since 1986. Too long and the
+  weather card is wrong. That is why the policy is *per-source*, and why it gets its own
+  module instead of living inside whichever repository needed it first. The film list is
+  the useful extreme: its correct time-to-live is "effectively forever", which is only
+  expressible if the policy is a value per source rather than one number for the app.
 
 ## Goals / Non-Goals
 
@@ -88,25 +92,45 @@ interfaces and their implementations in the same module: rejected because it onl
 long as nobody imports the implementation, and a module boundary removes the need to trust
 that.
 
-### A layer that would be empty is not created
+### A `domain` module exists only when logic has no model to belong to
 
-Only `articles` gets a `domain` module. `weather`, `shopping` and `tvschedule` have no rules
-worth one. Their use case is "give me the current value, refreshed according to policy", and
-the policy already lives in `:core:freshness`. A `domain` module for them would hold one
-pass-through class each.
+Only `articles` and `feed` get a `domain` module. The test is not "does this component have
+any logic". All five have some. The test is:
 
-`feed` is the opposite case. It gets `domain` and `ui` but no `api`, because nothing uses
-feed. Feed uses everything else.
+> A `domain` module exists when there is logic that no single model can own.
 
-Applying the full layer set to every component would have given twenty-six modules. Four of
-them would only pass calls along, and one would have no users. That is what happens when you
-copy a structure instead of following the idea behind it, so it is worth saying clearly that
-the structure was applied with judgement.
+That means logic which coordinates more than one repository, or which decides something
+using more than one source. Anything smaller has a better home.
 
-*Option rejected:* full consistency, on the grounds that one shape is easier to learn and an
-empty layer only costs a build file. That is fair, but a pass-through class is worse than a
-small inconsistency. It invites logic that belongs somewhere else, and it makes the
-`articles` domain module look like boilerplate instead of the one place the rules live.
+| Component | Its logic | Where that logic belongs | `domain`? |
+|---|---|---|---|
+| `weather` | weather code to a weather condition | normalising one model, so the `data` mapper | no |
+| `serviceCard` | price after discount | arithmetic on one model, so a computed property in `api` | no |
+| `movie` | sort by air time, drop items with no image, "on now" or "later today" | a pure function over one model plus the clock, so `api` | no |
+| `articles` | move the paging cursor, make save and unsave work with the cache, decide from freshness whether to call the network | coordination across repositories. No model owns it | **yes** |
+| `feed` | combine four sources, choose the section order, decide what to show when one source fails | a decision across sources | **yes** |
+
+The `api` modules are plain Kotlin, so a model is allowed to carry its own arithmetic. Putting
+`discountedPrice` on the `Product` model in `api` is more honest than opening a module for it.
+
+Applying all four layers to every component would have added modules that only pass calls
+along, plus one that nobody imports. That is what happens when you copy a structure instead of
+following the idea behind it.
+
+**Scope note.** The deadline moved to Thursday, leaving about sixteen working hours. Only
+`articles`, `weather` and `feed` are built. `movie` is designed and added last if there is
+time. `serviceCard` is cut. The heterogeneous feed requirement needs articles plus one more
+source, and `weather` is that source, so cutting the other two leaves every must-have intact.
+See `docs/ROADMAP.md` for the full cut list.
+
+This test is worth stating because it can be checked. "Does anything here need to coordinate
+more than one source?" has an answer. "Is there enough logic to justify a module?" does not.
+
+*Option rejected:* give every component the same four layers, on the grounds that one shape is
+easier to learn and an empty layer only costs a build file. That is fair, but a pass-through
+class is worse than a small inconsistency. It invites logic that belongs somewhere else, and it
+makes the `articles` domain module look like boilerplate instead of the one place the rules
+live.
 
 ### Every component keeps its own Room database
 
@@ -134,8 +158,8 @@ puts schema and migration decisions in the module least able to reason about the
 
 ### `:components:feed:ui` is the one allowed cross-component UI dependency
 
-`:components:feed:ui` depends on the `ui` modules of `articles`, `weather`, `shopping` and
-`tvschedule`, because drawing their cards in one list is its whole purpose. Each of those
+`:components:feed:ui` depends on the `ui` modules of `articles`, `weather`, `serviceCard` and
+`movie`, because drawing their cards in one list is its whole purpose. Each of those
 modules gives out one stateless card composable. `feed:ui` owns the list, the scroll position
 and the single ViewModel behind it.
 
@@ -306,7 +330,7 @@ signing, no secrets.
   included build and wiring the Compose compiler are the usual sticking points. → Hard
   limit: if `build-logic` resists, fall back to plain per-module setup, write it down in
   `DECISIONS.md`, and move on. This slice must not spend the freshness policy's time.
-- **Twenty-one modules costs something on every later slice**, in wiring and in navigation
+- **Fifteen modules costs something on every later slice**, in wiring and in navigation
   indirection. → Accepted on purpose. Convention plugins make the twenty-second module
   nearly free, and the dependency guarantees are the reason for doing it.
 - **Four separate Room databases may look like a mistake** rather than a choice. → The
@@ -319,7 +343,13 @@ signing, no secrets.
   the reviewer builds looks like a bug in my code. → That is what the offline and error
   states are for. Slice 2's cache turns a dead source into old content instead of a blank
   screen. All four were checked and responding before I committed to them.
-- **A walking skeleton can look like progress.** Twenty-one wired modules showing
+- **The film API is the weakest link.** It is a community deployment on Vercel rather than
+  an official API, and it sends `cache-control: no-cache`. → Its data is static and only 22
+  items, so once cached it never needs to be fetched again. The freshness policy already
+  gives it a very long time-to-live, which means a single successful fetch is enough for the
+  rest of the session. If it turns out to be down often during slice 4, the fallback is to
+  ship the 22 records as a bundled asset and treat the network as an optional refresh.
+- **A walking skeleton can look like progress.** Fifteen wired modules showing
   placeholder text has no user value. → It is one timeboxed slice, and the real deliverable
   is the module layout, the desugaring decision and the layer rules.
 
@@ -328,6 +358,6 @@ signing, no secrets.
 - The exact versions to pin for AGP, Kotlin, the Compose BOM, `compileSdk` and `targetSdk`.
   Left to implementation, where they can be checked against the repositories instead of
   recalled. Nothing above depends on which stable versions they turn out to be.
-- Whether `shopping` should get a `domain` module once its card has real behaviour. It has
+- Whether `serviceCard` should get a `domain` module once its card has real behaviour. It has
   none today. If slice 4 gives it some, adding the module is one build file, and the layer
   plugins make that a local change.

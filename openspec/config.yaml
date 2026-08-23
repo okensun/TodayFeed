@@ -34,18 +34,20 @@ context: |
   A layer that would be empty is not created. Only the articles component earns a
   separate domain module; the three secondary sources have no business logic worth one.
 
-  MODULE GRAPH (21 modules):
+  MODULE GRAPH (15 modules built; 3 more only if time allows):
     :app                            NavHost, bottom bar, Hilt aggregation. Thin.
     :core:designsystem              theme (light + dark), ContentState, state composables
     :core:network                   OkHttp/Retrofit/serialization setup. No endpoints.
     :core:database                  shared Room configuration + type converters only
-    :core:freshness                 the per-source freshness policy. Pure Kotlin. Clock-injected.
-    :core:testing                   fakes, FakeClock, coroutine test rules
+    :core:freshness                 the per-source freshness policy. Pure Kotlin, injected Clock.
+    :core:testing                   fakes, FakeClock, FakeConnectivity, coroutine test rules
     :components:articles:{api,domain,data,ui}   Spaceflight News. Feed cards, detail, saved.
     :components:weather:{api,data,ui}           Open-Meteo. Hero card.
-    :components:shopping:{api,data,ui}          DummyJSON. Service cards.
-    :components:tvschedule:{api,data,ui}        TVMaze. "On TV today" carousel.
     :components:feed:{domain,ui}                heterogeneous composition + the Reading screen
+  Only if the schedule allows, added last (3 more modules):
+    :components:movie:{api,data,ui}             Studio Ghibli. Film carousel.
+  CUT for time, recorded in the README deferred list, NOT to be built:
+    serviceCard (DummyJSON), search/filter, animations. See docs/ROADMAP.md.
 
   DEPENDENCY RULES (enforced, not advisory):
   - A component's ui/domain/api NEVER depends on any data module, its own included.
@@ -84,17 +86,46 @@ context: |
   DATA SOURCES:
   - Articles (required): https://api.spaceflightnewsapi.net/v4/articles/ — paginated, no key.
   - Weather hero: https://api.open-meteo.com/v1/forecast — no key, current + daily.
-  - Service cards: https://dummyjson.com/products — no key, image + price + CTA.
-  - TV schedule carousel: https://api.tvmaze.com/schedule?country=US&date=YYYY-MM-DD
-    — no key, changes DAILY, has poster images, ratings and air times. Also
-    https://api.tvmaze.com/shows?page=N for a paginated stable list.
-    Chosen over TMDB precisely because TMDB requires an API key, which would break the
-    "clean checkout, single command, no secrets" ground rule. A happy side effect: a
-    daily-cadence source gives the freshness policy a third tier (minutes / hours /
-    days) instead of the two the brief hints at. Record this in DECISIONS.md.
+  - Service cards: https://dummyjson.com/products — no key. CUT for time. Not built.
+  - Movie carousel: https://ghibliapi.vercel.app/films — no key. 22 Studio Ghibli films
+    with title, description, director, release_date, rt_score, running_time, a poster
+    (`image`) and a wide banner (`movie_banner`). The list is STATIC. Verified to answer
+    304 Not Modified with 0 bytes when sent If-None-Match. OPTIONAL: build only if the
+    schedule allows, after the submission documents are finished.
+    Chosen over TMDB because TMDB requires an API key, which would break the "clean
+    checkout, single command, no secrets" ground rule.
 
   EVERY data source is keyless. The project contains NO secrets and needs NO local
   configuration of any kind — do not introduce a mechanism for one.
+
+  SCHEDULE: hard deadline Thursday 2026-08-27. About 16 working hours total, in four
+  blocks of about four hours. Sunday evening: the skeleton. Monday evening: the freshness
+  policy and the article feed, which is the graded centre. Tuesday evening: detail, save,
+  saved screen and the weather card, after which every must-have is done. Wednesday
+  evening: the submission documents FIRST, then the movie component only with whatever
+  time is left. Thursday: verify a fresh clone and submit, no new features.
+  The rule that matters: documents are a must-have and are never the thing that gets cut.
+
+  FRESHNESS POLICY (decided; full write-up goes in the README):
+  Refresh happens only at moments the user can see: app comes to the foreground, a tab is
+  shown, pull to refresh, and scrolling to the end for the next page. No WorkManager and
+  no background work at all.
+  The policy has TWO independent dimensions, measured rather than guessed:
+    1. How fast the content really changes -> a per-source TTL, chosen from what the card
+       means in a real product. Where the server declares its own `Cache-Control:
+       max-age`, that wins over our number. Spaceflight News declares max-age=600.
+    2. What it costs to ask -> whether the source answers 304 Not Modified. Verified:
+       DummyJSON and Ghibli do (0 bytes), Spaceflight News and Open-Meteo do not.
+       So the expensive sources are the ones that cannot be revalidated cheaply, which is
+       the opposite of what "static data is cheap" intuition suggests.
+  On a metered connection every TTL is multiplied, and sources with no cheap
+  revalidation are multiplied more. Connectivity is an injected interface returning
+  Unmetered / Metered / Offline, so :core:freshness stays pure Kotlin.
+  The decision type has four cases, which line up with the four UI states:
+  ServeCache, ServeCacheAndRevalidate (stale-while-revalidate), FetchBlocking (nothing
+  cached yet), ServeStaleOffline.
+  Saved articles are never evicted and never expire. Freshness governs the feed, not the
+  user's own saved copies.
 
   CONVENTIONS:
   - Conventional commit subjects (feat:, fix:, refactor:, test:, docs:, chore:, build:).

@@ -24,18 +24,19 @@ modules in instead of inventing them.
 - **Component-based Clean Architecture.** A *component* is one area of the app's subject
   matter, not one screen. Each component owns its own layers: `api`, `domain`, `data` and
   `ui`. The build enforces the layering, so it does not rely on people remembering it.
-  Twenty-one modules in total:
+  Fifteen modules to start with:
 
   | Component | Layers | Data source |
   |---|---|---|
   | `articles` | `api`, `domain`, `data`, `ui` | Spaceflight News |
   | `weather` | `api`, `data`, `ui` | Open-Meteo |
-  | `shopping` | `api`, `data`, `ui` | DummyJSON |
-  | `tvschedule` | `api`, `data`, `ui` | TVMaze |
   | `feed` | `domain`, `ui` | puts the others together |
 
   plus `:core:designsystem`, `:core:network`, `:core:database`, `:core:freshness`,
-  `:core:testing`, and a thin `:app`.
+  `:core:testing`, and a thin `:app`. A `movie` component (`api`, `data`, `ui`, backed by
+  the Studio Ghibli film API) is designed but built only if the schedule allows, after the
+  submission documents are done. With the convention plugins in place, adding it is three
+  build files of about two lines each.
 
 - Two dependency rules give the layout its value, and the convention plugins state them
   once:
@@ -117,7 +118,7 @@ None. This is the first change in the project.
 
 - **New files**: `settings.gradle.kts`, the root `build.gradle.kts`,
   `gradle/libs.versions.toml`, the `build-logic` convention plugins, the Gradle wrapper,
-  twenty-one module directories, `config/detekt/detekt.yml`, `.editorconfig`,
+  fifteen module directories, `config/detekt/detekt.yml`, `.editorconfig`,
   `.github/workflows/ci.yml`, `.github/pull_request_template.md`, `AGENTS.md`,
   `CLAUDE.md`, `README.md`.
 - **New dependencies**: Kotlin, AGP, the Compose BOM and Material 3, Compose Navigation,

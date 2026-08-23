@@ -1,3 +1,7 @@
+> **Timebox: about four hours, Sunday evening.** If the convention plugins are not working
+> by the two-and-a-half hour mark, take the escape hatch in task 2.8 and move on. This slice
+> must not spend the freshness policy's time.
+
 ## 1. Gradle foundation
 
 - [ ] 1.1 Commit the Gradle wrapper (`gradlew`, `gradlew.bat`, `gradle/wrapper/*`), pinned
@@ -63,14 +67,12 @@
       `:components:articles:data` nor Room
 - [ ] 4.2 Create the three `weather` modules (`api`, `data`, `ui`). Verify: the same
       dependency check passes
-- [ ] 4.3 Create the three `shopping` modules (`api`, `data`, `ui`). Verify: the same
-- [ ] 4.4 Create the three `tvschedule` modules (`api`, `data`, `ui`). Verify: the same
-- [ ] 4.5 Create `:components:feed:domain`, depending only on the four components' `api`
-      modules. Verify: its dependency report lists no `data` and no `ui` module
-- [ ] 4.6 Create `:components:feed:ui`, depending on `:components:feed:domain` and the four
-      components' `ui` modules. Verify: it builds, and it is the only `ui` module in the
+- [ ] 4.3 Create `:components:feed:domain`, depending only on the `api` modules of
+      `articles` and `weather`. Verify: its dependency report lists no `data` and no `ui` module
+- [ ] 4.4 Create `:components:feed:ui`, depending on `:components:feed:domain` and the `ui`
+      modules of `articles` and `weather`. Verify: it builds, and it is the only `ui` module in the
       project that depends on another component's `ui`
-- [ ] 4.7 Check all of group 4 at once. Confirm each dependency rule from design.md: no
+- [ ] 4.5 Check all of group 4 at once. Confirm each dependency rule from design.md: no
       module except `:app` depends on a `data` module, no component depends on another
       component's `domain`, and `feed:ui` is the only cross-component `ui` dependency. Write
       the commands down so the check can be repeated later
@@ -121,10 +123,9 @@
 - [ ] 7.3 Add the placeholder detail screen and ViewModel to `:components:articles:ui`,
       reading the article id from `SavedStateHandle`. Verify: a unit test shows the id
       reaches the ViewModel
-- [ ] 7.4 Add a placeholder card composable to each of the `weather`, `shopping` and
-      `tvschedule` `ui` modules, and draw all three in the Reading screen. Verify: the feed
-      shows three clearly different placeholder cards. This proves the path the real
-      heterogeneous feed will use
+- [ ] 7.4 Add a placeholder hero card composable to the `weather` `ui` module and draw it
+      above the article list in the Reading screen. Verify: the feed shows two clearly
+      different placeholder cards. This proves the path the real heterogeneous feed will use
 
 ## 8. Static analysis, CI and documents
 

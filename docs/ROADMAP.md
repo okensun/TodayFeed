@@ -1,46 +1,72 @@
 # Roadmap and sequencing
 
-Working notes. They will be shortened into the README's **Plan & Sequencing** section. Each
-numbered slice is one OpenSpec change in `openspec/changes/`, and lands as several small
-commits.
+Working notes. They become the README's **Plan & Sequencing** section. Each numbered slice is
+one OpenSpec change in `openspec/changes/`, and lands as several small commits.
 
 ## How the problem was broken down
 
 The brief hides its hardest part in one bullet: a *freshness policy* for a feed that mixes
 sources which update at different speeds, and that still works offline. Feed, detail and save
 are ordinary work. The caching and freshness layer is where the real judgement is. So the
-slices are ordered to build and test that layer early, against one source, before four
-sources make it harder.
+slices are ordered to build and test that layer early, against one source, before more sources
+make it harder.
 
 | # | Change | Covers | Why here |
 |---|--------|--------|----------|
-| 1 | `bootstrap-project-skeleton` | multi-module layout, dark theme, CI, single-command build | Nothing can be run or reviewed until a fresh copy builds. Deciding the module layout now is also much cheaper than deciding it after feature code has grown across a line we never drew. |
-| 2 | `article-feed-offline-first` | paginated feed, all four UI states, offline-first cache, the freshness policy, tests | The heart of the assignment. One source, hand-written pagination, Room as the single source of truth, and the freshness policy with its unit tests. Everything later plugs into this. |
-| 3 | `detail-and-save-offline` | detail screen, save and unsave, Saved tab, reading saved items offline | Finishes the core flow the brief asks for. It comes after slice 2 because it reuses the same cache and needs the article body stored at the moment the user saves it. |
-| 4 | `heterogeneous-feed-sources` | mixed feed, extra card types, per-source update speeds | Weather hero card (Open-Meteo), service cards (DummyJSON), "on TV today" carousel (TVMaze). Deliberately after slice 2, so each new source is a setting on a policy that already works instead of a new special case. |
-| 5 | `search-and-motion` | search and filter, animations and transitions | Nice-to-haves only. Last, because they can be dropped completely without touching a single must-have. |
-| 6 | `submission-docs` | README, DECISIONS.md, AI_USAGE.md, known limitations | Written last so the decision log says what actually happened, not what I planned. Notes are kept as I go, so this slice is assembly and not archaeology. |
+| 1 | `bootstrap-project-skeleton` | multi-module layout, dark theme, CI, single-command build | Nothing can be run or reviewed until a fresh copy builds. Deciding the module layout now is far cheaper than deciding it after feature code has grown across a line we never drew. |
+| 2 | `article-feed-freshness` | the freshness policy, paginated feed, offline-first cache, all four UI states, unit tests | The heart of the assignment. `:core:freshness` first, tests first inside it, then one source wired through Room as the single source of truth. |
+| 3 | `detail-save-and-weather` | detail screen, save and unsave, Saved tab, offline reading, the weather hero card | Finishes every must-have. Save needs the article body stored at the moment the user saves it. The weather card is what makes the feed heterogeneous, and it is also the short-TTL end of the freshness policy. |
+
+The submission documents are not a slice. They are written in the last block, before any
+optional work, and are never cut.
 
 ## Why this order
 
-Risk first, not features first. Slices 1 to 3 cover every must-have. If the week runs out
-after slice 3, the submission is still complete and honest. Slices 4 and 5 add the
-nice-to-haves, most valuable first. Slice 6 is a fixed cost and cannot be cut. The brief says
-judgement counts for more than completeness, so the write-up must not be the thing that gets
-squeezed.
+Risk first, not features first. The three slices cover every must-have. Optional work comes
+after the documents, so the thing that gets dropped when time runs out is a feature and never
+the write-up. The brief says judgement counts for more than completeness.
+
+## Schedule
+
+Deadline: Thursday 2026-08-27. About sixteen working hours, in four blocks.
+
+| Block | Work | Checkpoint |
+|---|---|---|
+| Sunday evening, 4h | Slice 1: skeleton, 15 modules, CI, theme, navigation shell | If the convention plugins are not working after 2.5h, take the escape hatch and use plain per-module setup |
+| Monday evening, 4h | Slice 2: `:core:freshness` with tests first, then the article feed | The freshness tests must be green by the end of this block. If not, drop optional work and finish here on Tuesday |
+| Tuesday evening, 4h | Slice 3: detail, save, Saved tab, weather hero card | Every must-have is done by the end of this block |
+| Wednesday evening, 4h | Documents first: README, `DECISIONS.md` final pass, `AI_USAGE.md`. Then the `movie` component only with time left over | Documents are finished before any optional feature is started |
+| Thursday | Fresh clone, one command, install, walk through, submit | No new features |
 
 ## Left out on purpose
 
-Recorded here as they are decided, so the README section is a record and not hindsight. The
-reasoning for each goes in `DECISIONS.md`.
+Recorded as decided, so the README section is a record and not hindsight. The reasoning for
+each is in `DECISIONS.md`.
 
+- **The `serviceCard` component** (DummyJSON promo cards). Cut for time. The heterogeneous
+  feed requirement needs articles plus one more source, and the weather card is that source,
+  so cutting this leaves every must-have intact.
+- **Search and filter.** A nice-to-have that needs debounce handling and its own empty-result
+  state. Not worth 1.5 hours against the freshness policy.
+- **Animations and transitions.** Pure polish. First thing cut.
+- **The `movie` component** (Studio Ghibli). Designed, and built only if Wednesday has time
+  left after the documents. Chosen over `serviceCard` for the single optional source because
+  it is cheaper to build (22 static records, one request, no arithmetic), it looks the most
+  different from an article card (a wide banner carousel), and its correct time-to-live is
+  "effectively forever", which is the sharpest illustration that the policy is per-source
+  rather than one global number.
 - **Paging 3.** Pagination is hand-written instead, so the freshness logic stays testable.
 - **Device and UI tests.** The unit tests target the cache, the freshness policy and the async
   logic the brief names. Compose UI tests would cost more than they would prove here.
-- **TMDB.** Replaced by TVMaze. TMDB needs an API key, and a submission that asks the reviewer
-  to get a secret before it runs works against the single-command rule. TVMaze needs no key
-  and changes daily, which gives the freshness policy a third update speed to reason about.
-- **A `domain` module for every component.** Only `articles` gets one. The other three have no
-  rules worth a module, and a pass-through class is worse than a small inconsistency.
+- **TMDB.** Needs an API key, and a submission that asks the reviewer to get a secret before it
+  runs works against the single-command rule.
+- **TVMaze.** Considered for the carousel because its schedule endpoint changes daily. Dropped
+  because it serves TV shows, not films, so a component named `movie` holding TV schedule data
+  would be a name that lies.
+- **Background refresh with WorkManager.** Refresh happens only at moments the user can see.
+  Spending the user's mobile data while they are not looking is what the brief warns against.
+- **A `domain` module for every component.** Only `articles` and `feed` get one. A `domain`
+  module exists when logic has no single model to belong to, which means it coordinates more
+  than one repository or source.
 - **Typed project accessors and a mocking library.** String project paths and hand-written
-  fakes instead. Both are explained in `DECISIONS.md`.
+  fakes instead.
