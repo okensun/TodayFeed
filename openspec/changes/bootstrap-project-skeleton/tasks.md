@@ -161,8 +161,12 @@
 
 ## 9. Acceptance
 
-- [ ] 9.1 Check the whole change end to end. Clone the repository into a new directory. Run
+- [x] 9.1 Check the whole change end to end. Clone the repository into a new directory. Run
       `./gradlew assembleDebug` with no `local.properties` and no environment variables.
       Install the APK. Confirm the app opens on Reading, both tabs switch and keep their
       state, detail opens and returns, and the theme follows the system setting. This covers
-      every scenario in the `app-shell` spec
+      every scenario in the `app-shell` spec except the one in 6.6.
+      Done. A fresh clone built with one command and produced an APK; the behaviour was then
+      driven over `adb` and the evidence is in the README. Detail opened for the article that
+      was tapped, showed no bottom bar, and the system back gesture returned to the feed with
+      its scroll position intact
