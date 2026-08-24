@@ -57,6 +57,24 @@ class SavedViewModelTest {
         }
 
     /**
+     * The row hands over the article it drew, which is the reader's own stale copy: nothing has
+     * written yet, so it still reads as not kept. Deciding from that made both taps save, and the
+     * reader could not get back to not kept.
+     */
+    @Test
+    fun `two taps with the same article on screen leave it not kept`() =
+        runTest(dispatcher) {
+            val onScreen = previewArticle("s1")
+            articles.hold(onScreen)
+            val viewModel = SavedViewModel(articles)
+
+            viewModel.onToggleSave(onScreen).join()
+            viewModel.onToggleSave(onScreen).join()
+
+            assertEquals(emptySet<String>(), articles.kept)
+        }
+
+    /**
      * Storage that rejects a write must not reach the top. Uncaught inside `viewModelScope` it
      * becomes the thread's problem, and that is the app going down.
      */

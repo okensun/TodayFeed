@@ -22,10 +22,10 @@ interface ArticleRepository {
     /** One article from what is stored, or null when nothing has that id. */
     suspend fun findArticle(id: String): Article?
 
-    /** Keeps this article until the reader says otherwise. Saving one already saved changes
-     * nothing. */
-    suspend fun save(id: String)
-
-    /** Lets it go. Unsaving one that is not saved changes nothing. */
-    suspend fun unsave(id: String)
+    /**
+     * Keeps this article, or lets it go if it was already kept. One call rather than a choice the
+     * caller makes: a caller can only go by what it last saw, and two quick taps see the same
+     * answer. An id that is not stored changes nothing.
+     */
+    suspend fun toggleSaved(id: String)
 }

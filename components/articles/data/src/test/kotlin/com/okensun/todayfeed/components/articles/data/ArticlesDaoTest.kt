@@ -151,22 +151,46 @@ class ArticlesDaoTest {
                 )
             )
 
-            dao.setSaved("old", Instant.parse("2026-08-01T00:00:00Z"))
-            dao.setSaved("new", Instant.parse("2026-08-02T00:00:00Z"))
+            dao.toggleSaved("old", Instant.parse("2026-08-01T00:00:00Z"))
+            dao.toggleSaved("new", Instant.parse("2026-08-02T00:00:00Z"))
 
             assertEquals(listOf("new", "old"), dao.observeSaved().first().map { it.id })
         }
 
+    /**
+     * Two quick taps on the star. A caller that read the article and then chose would have saved
+     * twice, because neither tap had seen the other's write. One statement cannot be caught out
+     * that way, so the second tap really does let it go.
+     */
     @Test
-    fun `unsaving takes it out of the saved list and leaves the article stored`() =
+    fun `keeping twice leaves the article not kept, and still stored`() =
         runTest {
             dao.upsertArticles(listOf(article("a1")))
-            dao.setSaved("a1", Instant.parse("2026-08-01T00:00:00Z"))
 
-            dao.setSaved("a1", null)
+            dao.toggleSaved("a1", Instant.parse("2026-08-01T00:00:00Z"))
+            dao.toggleSaved("a1", Instant.parse("2026-08-01T00:00:01Z"))
 
             assertTrue(dao.observeSaved().first().isEmpty())
             assertEquals("a1", dao.findArticle("a1")?.id)
+        }
+
+    @Test
+    fun `keeping an article that is not stored changes nothing`() =
+        runTest {
+            dao.toggleSaved("missing", Instant.parse("2026-08-01T00:00:00Z"))
+
+            assertTrue(dao.observeSaved().first().isEmpty())
+        }
+
+    /** Keeping is storage's answer, so an article that arrives claiming to be kept is not. */
+    @Test
+    fun `writing an article does not bring its own saved time`() =
+        runTest {
+            dao.upsertArticles(
+                listOf(article("a1").copy(savedAt = Instant.parse("2026-08-01T00:00:00Z")))
+            )
+
+            assertNull(dao.findArticle("a1")?.savedAt)
         }
 
     /** A refresh writes the same article again. It must not quietly unsave it. */
@@ -175,7 +199,7 @@ class ArticlesDaoTest {
         runTest {
             dao.upsertArticles(listOf(article("a1")))
             val savedAt = Instant.parse("2026-08-01T00:00:00Z")
-            dao.setSaved("a1", savedAt)
+            dao.toggleSaved("a1", savedAt)
 
             dao.upsertArticles(listOf(article("a1", title = "Corrected")))
 

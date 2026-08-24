@@ -28,8 +28,11 @@ internal interface ArticlesDao {
     suspend fun countStored(ids: List<String>): Int
 
     /**
-     * Writes what the source said and carries `savedAt` over. A plain upsert replaces every
-     * column, so one refresh would quietly unsave everything the reader had kept.
+     * Writes what the source said and keeps whatever `savedAt` the row already had. A plain upsert
+     * replaces every column, so one refresh would quietly unsave everything the reader had kept.
+     *
+     * The `savedAt` on the entities handed in is dropped. Keeping is storage's answer and
+     * [toggleSaved] is the only thing that changes it, so a caller cannot bring its own.
      */
     @Transaction
     suspend fun upsertArticles(articles: List<ArticleEntity>) {
@@ -43,11 +46,18 @@ internal interface ArticlesDao {
     @Upsert
     suspend fun upsertAll(articles: List<ArticleEntity>)
 
-    /** Null unsaves. The time is also the order the Saved tab reads in. */
-    @Query("UPDATE articles SET savedAt = :savedAt WHERE id = :id")
-    suspend fun setSaved(
+    /**
+     * Turns keeping on, or off if it was already on, in one statement. A caller that read the
+     * article first and then chose could only go by what it last saw, and two quick taps both saw
+     * the same answer, so both saved. The time is also the order the Saved tab reads in.
+     */
+    @Query(
+        "UPDATE articles SET savedAt = CASE WHEN savedAt IS NULL THEN :now ELSE NULL END " +
+            "WHERE id = :id"
+    )
+    suspend fun toggleSaved(
         id: String,
-        savedAt: Instant?,
+        now: Instant,
     )
 
     /**

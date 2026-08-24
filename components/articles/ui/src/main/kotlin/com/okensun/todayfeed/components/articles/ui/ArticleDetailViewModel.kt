@@ -30,11 +30,15 @@ class ArticleDetailViewModel
             load()
         }
 
+        /**
+         * The id comes from the arguments rather than from what is on screen, so nothing here goes
+         * by a snapshot. An id that is not stored changes nothing, which is what the early return
+         * used to be for.
+         */
         fun onToggleSave() =
             viewModelScope.launch {
-                val article = (_state.value as? ContentState.Content)?.value ?: return@launch
                 try {
-                    if (article.saved) articles.unsave(article.id) else articles.save(article.id)
+                    articles.toggleSaved(articleId)
                 } catch (ignored: SQLiteException) {
                     // Storage is full or broken. Reading again below shows what is really stored,
                     // so the star settles on the truth. Uncaught it would take the app down.
