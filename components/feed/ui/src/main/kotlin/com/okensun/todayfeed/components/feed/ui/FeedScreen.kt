@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
@@ -133,16 +134,7 @@ internal fun FeedScreen(
                                 )
                             }
                         }
-                        when (val append = paged.loadState.append) {
-                            is LoadState.Loading -> item(key = APPENDING) { Appending() }
-                            // The failure belongs at the end of the list. Blanking what the reader holds
-                            // because the next page did not arrive loses more than it explains.
-                            is LoadState.Error ->
-                                item(key = APPEND_FAILED) {
-                                    AppendFailed(append.error.message, paged::retry)
-                                }
-                            is LoadState.NotLoading -> Unit
-                        }
+                        appendState(paged.loadState.append, paged::retry)
                     }
                 }
             }
@@ -161,11 +153,12 @@ internal fun FeedScreen(
 private fun ShowNewSections(
     count: Int,
     listState: LazyListState,
-) = LaunchedEffect(count, listState) {
-    if (count > 0 && listState.firstVisibleItemIndex <= count) {
-        listState.scrollToItem(0)
+) =
+    LaunchedEffect(count, listState) {
+        if (count > 0 && listState.firstVisibleItemIndex <= count) {
+            listState.scrollToItem(0)
+        }
     }
-}
 
 /**
  * Watched with the lifecycle rather than with the composition. A composition outlives the app
@@ -252,6 +245,20 @@ private const val COULD_NOT_LOAD_MORE = "More articles could not be loaded."
 
 // The same word as the full screen error, so one action does not have two names.
 private const val TRY_AGAIN = "Try again"
+
+/**
+ * The failure belongs at the end of the list. Blanking what the reader holds because the next
+ * page did not arrive loses more than it explains.
+ */
+private fun LazyListScope.appendState(
+    append: LoadState,
+    onRetry: () -> Unit,
+) = when (append) {
+    is LoadState.Loading -> item(key = APPENDING) { Appending() }
+    is LoadState.Error ->
+        item(key = APPEND_FAILED) { AppendFailed(append.error.message, onRetry) }
+    is LoadState.NotLoading -> Unit
+}
 
 @Composable
 private fun Section(section: FeedSection) =
