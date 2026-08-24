@@ -7,6 +7,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.Dispatchers
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
@@ -21,10 +22,15 @@ internal object NetworkModule {
     @Singleton
     fun httpClient(): OkHttpClient = todayFeedHttpClient(debug = BuildConfig.DEBUG)
 
-    /** Reading the platform is this module's job, not the application module's. */
+    /**
+     * Reading the platform is this module's job, not the application module's.
+     *
+     * Every read behind [Connectivity] is a binder call, and both collectors are on the main
+     * thread, so the dispatcher is passed in rather than chosen inside.
+     */
     @Provides
     @Singleton
     fun connectivity(
         @ApplicationContext context: Context,
-    ): Connectivity = AndroidConnectivity(context)
+    ): Connectivity = AndroidConnectivity(context, Dispatchers.IO)
 }

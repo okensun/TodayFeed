@@ -146,8 +146,11 @@ passes 1 to 3 are the must-haves and this is not one.
       `NET_CAPABILITY_NOT_METERED` rather than the transport type. **Pulled forward out of pass
       5**: until it existed, 3.1 to 3.4 could not happen on a device at all, because the stand-in
       always answered unmetered. Verified on a Pixel 6 for wifi and for aeroplane mode. Mobile
-      data is untested, that phone has no SIM. The rules are a plain function with three tests;
-      the platform read is the part the device checks
+      data is untested, that phone has no SIM, and swapping between two networks is the case that
+      needs it: the platform hands over the new network before it reports the old one gone, so a
+      loss has to be matched against the network being answered for or a working phone reads as
+      offline. The rules and that match are plain functions with seven tests between them; only
+      the platform read itself is left to a device
 - [ ] 5.2 Add `DataSaver` and `LocalDataSaver` to `:core:designsystem`. Verify:
       `./gradlew :core:designsystem:dependencies` shows no dependency on `:core:freshness`,
       because the mapping belongs to `:app`

@@ -23,7 +23,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -75,8 +78,14 @@ internal fun FeedScreen(
 ) {
     val paged = articles.collectAsLazyPagingItems()
 
-    LaunchedEffect(refreshWhen, paged) {
-        refreshWhen.collect { paged.refresh() }
+    // Watched with the lifecycle rather than with the composition. A composition outlives the
+    // app going to the background, so on its own it would keep the platform callback registered
+    // and fetch when the connection came back with nobody looking.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(refreshWhen, paged, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            refreshWhen.collect { paged.refresh() }
+        }
     }
 
     val state = feedContentState(paged.loadState.refresh, paged.itemCount, sections.isNotEmpty(), offline)
