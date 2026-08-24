@@ -31,7 +31,11 @@ internal object ArticlesDataProviders {
     @Singleton
     fun database(
         @ApplicationContext context: Context,
-    ): ArticlesDatabase = Room.databaseBuilder(context, ArticlesDatabase::class.java, "articles.db").build()
+    ): ArticlesDatabase =
+        Room
+            .databaseBuilder(context, ArticlesDatabase::class.java, "articles.db")
+            .addMigrations(MIGRATION_1_2)
+            .build()
 
     /**
      * The Retrofit instance is per source because the base address is per source. The client

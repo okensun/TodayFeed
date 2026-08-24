@@ -22,5 +22,6 @@ internal fun ArticleEntity.toArticle(): Article =
         summary = summary,
         source = source,
         imageUrl = imageUrl,
-        publishedAt = publishedAt
+        publishedAt = publishedAt,
+        saved = savedAt != null
     )

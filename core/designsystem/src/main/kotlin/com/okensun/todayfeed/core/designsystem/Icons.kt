@@ -44,3 +44,61 @@ val BackArrow: ImageVector by lazy {
     }
     arrow.build()
 }
+
+/**
+ * A filled star for a kept article and a hollow one for an unkept article. Drawn here for the
+ * same reason as [BackArrow]. The numbers are the Material paths in a 24 by 24 viewport.
+ */
+@Suppress("MagicNumber")
+val SavedStar: ImageVector by lazy {
+    val star =
+        ImageVector.Builder(
+            name = "SavedStar",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        )
+    star.path(fill = SolidColor(Color.Black)) {
+        moveTo(12f, 17.27f)
+        lineTo(18.18f, 21f)
+        lineToRelative(-1.64f, -7.03f)
+        lineTo(22f, 9.24f)
+        lineToRelative(-7.19f, -0.61f)
+        lineTo(12f, 2f)
+        lineTo(9.19f, 8.63f)
+        lineTo(2f, 9.24f)
+        lineToRelative(5.46f, 4.73f)
+        lineTo(5.82f, 21f)
+        close()
+    }
+    star.build()
+}
+
+/** The same star drawn as an outline. Stroked rather than filled with a hole, because a hole
+ * depends on a fill rule and a stroke does not. */
+@Suppress("MagicNumber")
+val UnsavedStar: ImageVector by lazy {
+    val star =
+        ImageVector.Builder(
+            name = "UnsavedStar",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        )
+    star.path(stroke = SolidColor(Color.Black), strokeLineWidth = 1.8f) {
+        moveTo(12f, 17.27f)
+        lineTo(18.18f, 21f)
+        lineToRelative(-1.64f, -7.03f)
+        lineTo(22f, 9.24f)
+        lineToRelative(-7.19f, -0.61f)
+        lineTo(12f, 2f)
+        lineTo(9.19f, 8.63f)
+        lineTo(2f, 9.24f)
+        lineToRelative(5.46f, 4.73f)
+        lineTo(5.82f, 21f)
+        close()
+    }
+    star.build()
+}

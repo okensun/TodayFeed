@@ -2,6 +2,7 @@ package com.okensun.todayfeed.components.articles.data
 
 import androidx.paging.PagingSource
 import androidx.room.Room
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -138,6 +139,71 @@ class ArticlesDaoTest {
             assertNull(stored?.serverMaxAge)
             assertEquals(40, stored?.nextOffset)
             assertEquals(false, stored?.hasMore)
+        }
+
+    @Test
+    fun `saved articles come back most recently saved first, whatever they were published`() =
+        runTest {
+            dao.upsertArticles(
+                listOf(
+                    article("old", publishedAt = EPOCH.plus(Duration.ofDays(9))),
+                    article("new", publishedAt = EPOCH)
+                )
+            )
+
+            dao.toggleSaved("old", Instant.parse("2026-08-01T00:00:00Z"))
+            dao.toggleSaved("new", Instant.parse("2026-08-02T00:00:00Z"))
+
+            assertEquals(listOf("new", "old"), dao.observeSaved().first().map { it.id })
+        }
+
+    /**
+     * Two quick taps on the star. A caller that read the article and then chose would have saved
+     * twice, because neither tap had seen the other's write. One statement cannot be caught out
+     * that way, so the second tap really does let it go.
+     */
+    @Test
+    fun `keeping twice leaves the article not kept, and still stored`() =
+        runTest {
+            dao.upsertArticles(listOf(article("a1")))
+
+            dao.toggleSaved("a1", Instant.parse("2026-08-01T00:00:00Z"))
+            dao.toggleSaved("a1", Instant.parse("2026-08-01T00:00:01Z"))
+
+            assertTrue(dao.observeSaved().first().isEmpty())
+            assertEquals("a1", dao.findArticle("a1")?.id)
+        }
+
+    @Test
+    fun `keeping an article that is not stored changes nothing`() =
+        runTest {
+            dao.toggleSaved("missing", Instant.parse("2026-08-01T00:00:00Z"))
+
+            assertTrue(dao.observeSaved().first().isEmpty())
+        }
+
+    /** Keeping is storage's answer, so an article that arrives claiming to be kept is not. */
+    @Test
+    fun `writing an article does not bring its own saved time`() =
+        runTest {
+            dao.upsertArticles(
+                listOf(article("a1").copy(savedAt = Instant.parse("2026-08-01T00:00:00Z")))
+            )
+
+            assertNull(dao.findArticle("a1")?.savedAt)
+        }
+
+    /** A refresh writes the same article again. It must not quietly unsave it. */
+    @Test
+    fun `writing an article again does not unsave it`() =
+        runTest {
+            dao.upsertArticles(listOf(article("a1")))
+            val savedAt = Instant.parse("2026-08-01T00:00:00Z")
+            dao.toggleSaved("a1", savedAt)
+
+            dao.upsertArticles(listOf(article("a1", title = "Corrected")))
+
+            assertEquals(savedAt, dao.findArticle("a1")?.savedAt)
         }
 
     private fun article(

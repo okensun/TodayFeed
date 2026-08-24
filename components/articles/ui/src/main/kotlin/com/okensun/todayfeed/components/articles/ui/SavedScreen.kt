@@ -31,6 +31,7 @@ fun SavedScreen(
         state = state,
         onRetry = viewModel::onRetry,
         onArticleClick = onArticleClick,
+        onToggleSave = viewModel::onToggleSave,
         modifier = modifier
     )
 }
@@ -48,11 +49,13 @@ internal fun SavedScreen(
     onRetry: () -> Unit,
     onArticleClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onToggleSave: (Article) -> Unit = {},
     listState: LazyListState = rememberLazyListState(),
 ) {
     when (state) {
         is ContentState.Loading -> LoadingState(modifier)
-        is ContentState.Content -> SavedList(state.value, listState, onArticleClick, modifier)
+        is ContentState.Content ->
+            SavedList(state.value, listState, onArticleClick, onToggleSave, modifier)
         is ContentState.Empty -> EmptySaved(modifier)
         is ContentState.Error ->
             ErrorState(
@@ -68,7 +71,7 @@ internal fun SavedScreen(
             if (cached == null) {
                 OfflineState(onRetry = onRetry, modifier = modifier)
             } else {
-                SavedList(cached, listState, onArticleClick, modifier)
+                SavedList(cached, listState, onArticleClick, onToggleSave, modifier)
             }
         }
     }
@@ -87,11 +90,16 @@ private fun SavedList(
     articles: List<Article>,
     listState: LazyListState,
     onArticleClick: (String) -> Unit,
+    onToggleSave: (Article) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
-        items(articles) { article ->
-            ArticleRowCard(article = article, onClick = { onArticleClick(article.id) })
+        items(articles, key = { it.id }) { article ->
+            ArticleRowCard(
+                article = article,
+                onClick = { onArticleClick(article.id) },
+                onToggleSave = { onToggleSave(article) }
+            )
         }
     }
 }

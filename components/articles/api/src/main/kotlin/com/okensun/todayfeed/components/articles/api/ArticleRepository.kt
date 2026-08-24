@@ -16,9 +16,16 @@ interface ArticleRepository {
      */
     fun observeArticles(): Flow<PagingData<Article>>
 
-    /** Only what the reader saved. Readable with no network once saved. */
+    /** Only what the reader saved, most recently saved first. Readable with no network. */
     fun observeSavedArticles(): Flow<List<Article>>
 
     /** One article from what is stored, or null when nothing has that id. */
     suspend fun findArticle(id: String): Article?
+
+    /**
+     * Keeps this article, or lets it go if it was already kept. One call rather than a choice the
+     * caller makes: a caller can only go by what it last saw, and two quick taps see the same
+     * answer. An id that is not stored changes nothing.
+     */
+    suspend fun toggleSaved(id: String)
 }

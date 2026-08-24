@@ -17,4 +17,6 @@ internal data class ArticleEntity(
     val source: String,
     val imageUrl: String?,
     val publishedAt: Instant,
+    /** When the reader saved it, or null when they have not. Also the order of the Saved tab. */
+    val savedAt: Instant? = null,
 )

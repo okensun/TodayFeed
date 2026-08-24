@@ -98,6 +98,39 @@ class ArticleDetailScreenTest {
         assertEquals(1, backs)
     }
 
+    @Test
+    fun `the article screen shows whether it is saved and can toggle it`() {
+        var toggles = 0
+        compose.setContent {
+            TodayFeedTheme {
+                ArticleDetailScreen(
+                    state = ContentState.Content(article),
+                    onBack = {},
+                    onToggleSave = { toggles++ }
+                )
+            }
+        }
+
+        compose.onNodeWithContentDescription("Save").performClick()
+
+        assertEquals(1, toggles)
+    }
+
+    @Test
+    fun `an article already saved says so`() {
+        setState(ContentState.Content(article.copy(saved = true)))
+
+        compose.onNodeWithContentDescription("Saved").assertIsDisplayed()
+    }
+
+    /** Nothing to keep on a screen that could not find the article. */
+    @Test
+    fun `a missing article offers nothing to save`() {
+        setState(ContentState.Empty)
+
+        compose.onNodeWithContentDescription("Save").assertDoesNotExist()
+    }
+
     private fun setState(
         state: ContentState<Article>,
         onBack: () -> Unit = {},

@@ -129,6 +129,24 @@ The fix is mechanical rather than attitudinal, and is now in `AGENTS.md`: **read
   "0 Android artifacts" from a command that had errored. The answer "the command broke" was wearing
   the answer "none".
 
+### 8. A screenshot of a screen the app had already left
+
+I installed the app on a phone to watch the star turn on and off. I took a screenshot, read the
+star's position off it, tapped there twice, and got back a filled star. I was one sentence from
+calling that proof.
+
+The screenshot was of the article screen, and by the time the taps landed the app had gone back to
+the feed. I still cannot say what those two taps hit. I then explained the filled star as one the
+reader had saved in an earlier test, which was a second claim with nothing behind it. To settle
+that I copied the database off the phone, and the copy came back on the old schema with its write
+log not applied, so it had no `savedAt` column to read. A third tap, meant for the Saved tab, hit
+the navigation bar and left the app.
+
+Tapping the right place did show the real thing: outline, filled, outline, with the other rows
+untouched. Three wrong taps is the small part. The part worth keeping is that a screenshot is the
+most convincing evidence in this file, and my explanation of the first wrong one was a guess
+wearing the clothes of a finding.
+
 ### And two more the reviewer found
 
 A subagent review of the first implementation pull request found a comment that justified a bug.

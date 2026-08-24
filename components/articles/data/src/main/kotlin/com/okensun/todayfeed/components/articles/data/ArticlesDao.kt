@@ -3,8 +3,14 @@ package com.okensun.todayfeed.components.articles.data
 import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
+import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 
+// A DAO is a list of queries, not a class doing too much, and the rule counting them is aimed
+// at the second.
+@Suppress("TooManyFunctions")
 @Dao
 internal interface ArticlesDao {
     /**
@@ -21,8 +27,45 @@ internal interface ArticlesDao {
     @Query("SELECT COUNT(*) FROM articles WHERE id IN (:ids)")
     suspend fun countStored(ids: List<String>): Int
 
+    /**
+     * Writes what the source said and keeps whatever `savedAt` the row already had. A plain upsert
+     * replaces every column, so one refresh would quietly unsave everything the reader had kept.
+     *
+     * The `savedAt` on the entities handed in is dropped. Keeping is storage's answer and
+     * [toggleSaved] is the only thing that changes it, so a caller cannot bring its own.
+     */
+    @Transaction
+    suspend fun upsertArticles(articles: List<ArticleEntity>) {
+        val saved = savedTimes(articles.map { it.id }).associate { it.id to it.savedAt }
+        upsertAll(articles.map { it.copy(savedAt = saved[it.id]) })
+    }
+
+    @Query("SELECT id, savedAt FROM articles WHERE id IN (:ids)")
+    suspend fun savedTimes(ids: List<String>): List<SavedTime>
+
     @Upsert
-    suspend fun upsertArticles(articles: List<ArticleEntity>)
+    suspend fun upsertAll(articles: List<ArticleEntity>)
+
+    /**
+     * Turns keeping on, or off if it was already on, in one statement. A caller that read the
+     * article first and then chose could only go by what it last saw, and two quick taps both saw
+     * the same answer, so both saved. The time is also the order the Saved tab reads in.
+     */
+    @Query(
+        "UPDATE articles SET savedAt = CASE WHEN savedAt IS NULL THEN :now ELSE NULL END " +
+            "WHERE id = :id"
+    )
+    suspend fun toggleSaved(
+        id: String,
+        now: Instant,
+    )
+
+    /**
+     * Nothing here deletes, and nothing should: an article with a `savedAt` is the reader's, not
+     * the cache's. Any tidying added later has to exclude these rows. See DECISIONS.md.
+     */
+    @Query("SELECT * FROM articles WHERE savedAt IS NOT NULL ORDER BY savedAt DESC")
+    fun observeSaved(): Flow<List<ArticleEntity>>
 
     @Query("SELECT * FROM feed_metadata WHERE id = 0")
     suspend fun findMetadata(): FeedMetadataEntity?
@@ -38,3 +81,9 @@ internal interface ArticlesDao {
         hasMore: Boolean,
     )
 }
+
+/** Just enough of a row to carry the reader's decision through a refresh. */
+internal data class SavedTime(
+    val id: String,
+    val savedAt: Instant?,
+)

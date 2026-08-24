@@ -3,6 +3,9 @@ package com.okensun.todayfeed.components.articles.data
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.SQLiteConnection
+import androidx.sqlite.execSQL
 import com.okensun.todayfeed.core.database.Converters
 
 /**
@@ -12,10 +15,21 @@ import com.okensun.todayfeed.core.database.Converters
  */
 @Database(
     entities = [ArticleEntity::class, FeedMetadataEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
 internal abstract class ArticlesDatabase : RoomDatabase() {
     abstract fun dao(): ArticlesDao
 }
+
+/**
+ * One nullable column. A destructive fallback would be shorter and would throw away exactly what
+ * this version added the ability to keep.
+ */
+internal val MIGRATION_1_2 =
+    object : Migration(1, 2) {
+        override fun migrate(connection: SQLiteConnection) {
+            connection.execSQL("ALTER TABLE articles ADD COLUMN savedAt INTEGER")
+        }
+    }

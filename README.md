@@ -90,6 +90,12 @@ which is how often the source says it re-reads. It reports that as `interval` in
 The weather is held in memory rather than in a database, so a cold start with no network shows
 the feed without the card rather than yesterday's weather as if it were now.
 
+### What the reader keeps is not what the policy decides
+
+Saving is the one decision the reader makes rather than the app. A saved article stays until they
+unsave it: no refresh, no expiry and no allowance touches it, and it opens with no network. The
+policy above decides when to ask the source for more; it has no say over what was kept.
+
 ### When it calls the network
 
 It does:

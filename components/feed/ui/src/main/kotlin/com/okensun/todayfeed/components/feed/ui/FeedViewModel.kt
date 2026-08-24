@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.feed.ui
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -23,7 +24,7 @@ import javax.inject.Inject
 class FeedViewModel
     @Inject
     constructor(
-        articles: ArticleRepository,
+        private val repository: ArticleRepository,
         observeSections: ObserveFeedSections,
         observeOffline: ObserveOffline,
         observeNetworkReturned: ObserveNetworkReturned,
@@ -34,7 +35,7 @@ class FeedViewModel
         }
 
         /** `cachedIn` so the loaded pages survive the activity being recreated. */
-        val articles: Flow<PagingData<Article>> = articles.observeArticles().cachedIn(viewModelScope)
+        val articles: Flow<PagingData<Article>> = repository.observeArticles().cachedIn(viewModelScope)
 
         val sections: StateFlow<List<FeedSection>> =
             observeSections()
@@ -60,6 +61,17 @@ class FeedViewModel
         fun onRefreshSections() =
             viewModelScope.launch {
                 refreshSections()
+            }
+
+        fun onToggleSave(article: Article) =
+            viewModelScope.launch {
+                try {
+                    repository.toggleSaved(article.id)
+                } catch (ignored: SQLiteException) {
+                    // Storage is full or broken. There is nothing to put right, because what the
+                    // star shows is read back from storage and so it never moved. Uncaught here
+                    // it would take the app down instead.
+                }
             }
 
         private companion object {
