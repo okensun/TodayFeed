@@ -107,7 +107,12 @@
 - [x] 6.4 Wire the detail destination. Both the Reading and Saved screens open it through an
       `onArticleClick(id)` callback owned by `:app`, and it closes on both the system back
       gesture and the in-app back button. Verify: the spec's open and return scenarios pass,
-      and no component module mentions a route type
+      and no component module mentions a route type.
+      CORRECTED 2026-08-24. The in-app back button reached only the states that go wrong. On a
+      normal article there was nothing on screen to leave with, so the system gesture was the
+      only way out. Reading the code answered "is the callback passed down", which is not the
+      question the spec asks. A bar now sits above every state, and a view test clicks it on
+      the content state
 - [x] 6.5 Handle an unknown article id on the detail screen by showing the error state with a
       way out. Verify: navigating to a made-up id does not crash the app
 - [ ] 6.6 Handle a system theme change while the app is open. Verify: the current destination

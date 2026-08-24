@@ -2,6 +2,7 @@ package com.okensun.todayfeed.components.articles.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.okensun.todayfeed.components.articles.api.Article
@@ -25,6 +26,21 @@ class ArticleDetailScreenTest {
         compose.onNodeWithText(article.title).assertIsDisplayed()
         compose.onNodeWithText(article.source).assertIsDisplayed()
         compose.onNodeWithText(article.summary).assertIsDisplayed()
+    }
+
+    /**
+     * The spec asks for a way back inside the app, not only the system gesture. What this covers
+     * is a back action that exists on the states that go wrong and nowhere else, which is what
+     * reading an article looked like before.
+     */
+    @Test
+    fun `content offers a way back that calls back`() {
+        var backs = 0
+        setState(ContentState.Content(article), onBack = { backs++ })
+
+        compose.onNodeWithContentDescription("Back").performClick()
+
+        assertEquals(1, backs)
     }
 
     @Test

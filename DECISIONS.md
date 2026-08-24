@@ -308,6 +308,21 @@ plain `List<FeedItem>` composed in `feed:domain` can have anything inserted anyw
 Paging 3 costs that flexibility. It is a flexibility for a feature that was cut, so the exchange
 is worth it here — but it is worth writing down rather than discovering later.
 
+### One hand-drawn icon, not the Material icon library — decided
+
+**Picked.** The back arrow on the detail screen is an `ImageVector` in `:core:designsystem`. The
+app needs one glyph.
+
+**Considered instead.** `androidx.compose.material:material-icons-core`, which holds the standard
+`ArrowBack`.
+
+**Trade-off.** Taking the icon from the library is the ordinary answer and costs no code of our
+own. But the Compose bill of materials pins the icon libraries at 1.7.8 while the rest of Compose
+is on 1.12, so they are frozen rather than maintained. Adding a frozen artifact for one path, to a
+project whose dependency list is meant to be defensible one line at a time, is worse than a path a
+reader can check against the Material spec. The bottom bar names its tabs in text for the same
+reason: nothing here has needed an icon set.
+
 ### Core library desugaring, so `java.time` works on API 24 — decided
 
 **Picked.** `isCoreLibraryDesugaringEnabled` with `desugar_jdk_libs`, set once in the Android
