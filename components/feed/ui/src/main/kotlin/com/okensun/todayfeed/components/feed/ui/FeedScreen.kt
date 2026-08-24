@@ -2,18 +2,21 @@ package com.okensun.todayfeed.components.feed.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -53,6 +56,7 @@ fun FeedScreen(
  * Stateless form. This module is the only one allowed to depend on other components' ui modules,
  * because drawing their cards in one list is its whole job.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun FeedScreen(
     articles: Flow<PagingData<Article>>,
@@ -74,51 +78,72 @@ internal fun FeedScreen(
             )
         // Offline arrives in pass 3, once the connection is read for real.
         is ContentState.Offline, is ContentState.Content ->
-            LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
-                // A refresh with content on screen is a marker, not a screen: the reader carries
-                // on reading while it happens.
-                if (paged.loadState.refresh is LoadState.Loading) {
-                    item(key = REFRESHING) { Refreshing() }
-                }
-                sections.forEach { section ->
-                    item(key = section.key()) { Section(section) }
-                }
-                // Keyed on the article's own id. Without a key LazyColumn keys by index, so a
-                // refresh that upserts newer articles would move every row and throw the reader's
-                // position off by however many arrived — the opposite of keeping their place.
-                items(
-                    count = paged.itemCount,
-                    key = { index -> paged.peek(index)?.id ?: index }
-                ) { index ->
-                    paged[index]?.let { article ->
-                        ArticleRowCard(
-                            article = article,
-                            onClick = { onArticleClick(article.id) }
-                        )
+            RefreshableFeed(
+                refreshing = paged.loadState.refresh is LoadState.Loading,
+                onRefresh = paged::refresh,
+                modifier = modifier
+            ) {
+                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                    sections.forEach { section ->
+                        item(key = section.key()) { Section(section) }
                     }
-                }
-                when (val append = paged.loadState.append) {
-                    is LoadState.Loading -> item(key = APPENDING) { Appending() }
-                    // The failure belongs at the end of the list. Blanking what the reader holds
-                    // because the next page did not arrive loses more than it explains.
-                    is LoadState.Error ->
-                        item(key = APPEND_FAILED) {
-                            AppendFailed(append.error.message, paged::retry)
+                    // Keyed on the article's own id. Without a key LazyColumn keys by index, so a
+                    // refresh that upserts newer articles would move every row and throw the reader's
+                    // position off by however many arrived — the opposite of keeping their place.
+                    items(
+                        count = paged.itemCount,
+                        key = { index -> paged.peek(index)?.id ?: index }
+                    ) { index ->
+                        paged[index]?.let { article ->
+                            ArticleRowCard(
+                                article = article,
+                                onClick = { onArticleClick(article.id) }
+                            )
                         }
-                    is LoadState.NotLoading -> Unit
+                    }
+                    when (val append = paged.loadState.append) {
+                        is LoadState.Loading -> item(key = APPENDING) { Appending() }
+                        // The failure belongs at the end of the list. Blanking what the reader holds
+                        // because the next page did not arrive loses more than it explains.
+                        is LoadState.Error ->
+                            item(key = APPEND_FAILED) {
+                                AppendFailed(append.error.message, paged::retry)
+                            }
+                        is LoadState.NotLoading -> Unit
+                    }
                 }
             }
     }
 }
 
+/** `refresh()` skips `initialize()`, which is where the freshness policy lives, so a pull asks
+ * the source whatever the allowance says. That is what a pull is for. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Refreshing() =
-    LinearProgressIndicator(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = REFRESHING }
-    )
+private fun RefreshableFeed(
+    refreshing: Boolean,
+    onRefresh: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    val state = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = onRefresh,
+        modifier = modifier.fillMaxSize(),
+        state = state,
+        indicator = {
+            PullToRefreshDefaults.Indicator(
+                state = state,
+                isRefreshing = refreshing,
+                modifier =
+                    Modifier
+                        .align(Alignment.TopCenter)
+                        .semantics { contentDescription = REFRESHING }
+            )
+        }
+    ) { content() }
+}
 
 @Composable
 private fun Appending() =
