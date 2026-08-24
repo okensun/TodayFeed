@@ -45,7 +45,7 @@ each is in `DECISIONS.md`.
 
 - **The `serviceCard` component** (DummyJSON promo cards). Cut for time. The heterogeneous
   feed requirement needs articles plus one more source, and the weather card is that source,
-  so cutting this leaves every must-have intact.
+  reading Open-Meteo for real, so cutting this leaves every must-have intact.
 - **Search and filter.** A nice-to-have that needs debounce handling and its own empty-result
   state. Not worth 1.5 hours against the freshness policy.
 - **Animations and transitions.** Pure polish. First thing cut.

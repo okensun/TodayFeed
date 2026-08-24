@@ -82,10 +82,13 @@ plain function in `:core:freshness`, and it has five answers:
 
 Spaceflight News states its own: `cache-control: max-age=600`, which is ten minutes. Measured on
 2026-08-24. That figure wins, because a number the source states is a fact while ours is a
-judgement. Our own figure, fifteen minutes, is used only when a source states none. This source
-always states one, so the fallback has never yet been needed.
+judgement. Our own figure is used only when a source states none. Spaceflight News always states one, so
+ours never applies there. Open-Meteo states none, so ours is what holds for the weather.
 
-The weather card is still a fixed value held in memory, so none of this applies to it yet.
+Open-Meteo states nothing, so our own figure is the one that counts there: fifteen minutes,
+which is how often the source says it re-reads. It reports that as `interval` in its own answer.
+The weather is held in memory rather than in a database, so a cold start with no network shows
+the feed without the card rather than yesterday's weather as if it were now.
 
 ### What the reader keeps is not what the policy decides
 
@@ -134,6 +137,10 @@ Written as they are found.
   method with an empty body, because saving arrives in the next slice. The feed's retry and pull
   to refresh are real. The detail screen has nothing to reload, so its button says Go back and
   leaves the screen.
+- **The weather is always Taipei.** The coordinates are fixed, so the app asks for no location
+  permission. Reading a coarse location would mean a permission dialog on first launch, a path
+  for when it is refused, and either reverse geocoding or a card that cannot name the place. None
+  of that is what the brief asks for, and "clean checkout, one command" is worth more here.
 - **A metered connection is read but never tested on one.** `NET_CAPABILITY_NOT_METERED` decides
   it, and wifi and aeroplane mode were both checked on a Pixel 6. The phone has no SIM, so
   mobile data reporting itself as metered is unverified.

@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.feed.ui
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -8,8 +9,10 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
@@ -18,7 +21,11 @@ import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.weather.api.Weather
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -204,6 +211,105 @@ class FeedScreenTest {
         compose.onNodeWithText(OUT_OF_DATE).assertIsDisplayed()
     }
 
+    /**
+     * The weather arriving after the reader is already looking. Without a nudge the list holds
+     * its anchor and the card is inserted above the screen, where nobody finds it.
+     */
+    @Test
+    fun `a section that arrives late is brought into view at the top`() {
+        var sections by mutableStateOf(emptyList<FeedSection>())
+        compose.setContent {
+            TodayFeedTheme {
+                FeedScreen(
+                    articles = flowOf(PagingData.from((1..20).map { article("a$it", "Article $it") })),
+                    sections = sections,
+                    offline = false,
+                    onArticleClick = {}
+                )
+            }
+        }
+
+        sections = listOf(hero)
+
+        compose.onNodeWithText("Taipei").assertIsDisplayed()
+    }
+
+    /** The other half: a reader who has scrolled away is not dragged back to the top. */
+    @Test
+    fun `a section that arrives late does not move a reader who has scrolled`() {
+        var sections by mutableStateOf(emptyList<FeedSection>())
+        val listState = LazyListState()
+        compose.setContent {
+            TodayFeedTheme {
+                FeedScreen(
+                    articles = flowOf(PagingData.from((1..20).map { article("a$it", "Article $it") })),
+                    sections = sections,
+                    offline = false,
+                    onArticleClick = {},
+                    listState = listState
+                )
+            }
+        }
+        compose.runOnIdle { }
+        compose.waitForIdle()
+        runBlocking { listState.scrollToItem(10) }
+        compose.waitForIdle()
+
+        sections = listOf(hero)
+        compose.waitForIdle()
+
+        assertTrue(
+            "first visible was ${listState.firstVisibleItemIndex}",
+            listState.firstVisibleItemIndex > 1
+        )
+    }
+
+    /**
+     * The half of the network-returned fix that lives on the screen. The repository knows what to
+     * do when asked; nothing else checks that anybody asks.
+     */
+    @Test
+    fun `the network coming back asks the sections again`() {
+        var asked = 0
+        // Buffered so the test can hand a value over without waiting for the collector, which
+        // runs on the thread the test is holding.
+        val returned = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        show(
+            articles = listOf(article("a1", "Article one")),
+            refreshWhen = returned,
+            onRefreshSections = { asked++ }
+        )
+
+        returned.tryEmit(Unit)
+        compose.waitForIdle()
+
+        assertEquals(1, asked)
+    }
+
+    @Test
+    fun `pulling the list down asks the sections again`() {
+        var asked = 0
+        show(articles = listOf(article("a1", "Article one")), onRefreshSections = { asked++ })
+
+        compose.onRoot().performTouchInput {
+            swipeDown(startY = top + 10f, endY = bottom - 10f, durationMillis = 400)
+        }
+        compose.waitForIdle()
+
+        assertEquals(1, asked)
+    }
+
+    /** The star is drawn by the articles component but tapped here, which is its own wiring. */
+    @Test
+    fun `tapping the star in the feed passes the article back`() {
+        var toggled: Article? = null
+        show(articles = listOf(article("a9", "Article nine")), onToggleSave = { toggled = it })
+
+        compose.onNodeWithContentDescription("Save").performClick()
+
+        assertEquals("a9", toggled?.id)
+    }
+
     @Test
     fun `offline with nothing stored says so and offers a retry`() {
         show(articles = emptyList(), offline = true)
@@ -222,6 +328,9 @@ class FeedScreenTest {
         append: LoadState = LoadState.NotLoading(endOfPaginationReached = true),
         offline: Boolean = false,
         onArticleClick: (String) -> Unit = {},
+        onRefreshSections: () -> Unit = {},
+        onToggleSave: (Article) -> Unit = {},
+        refreshWhen: Flow<Unit> = emptyFlow(),
     ) = compose.setContent {
         TodayFeedTheme {
             FeedScreen(
@@ -239,7 +348,10 @@ class FeedScreenTest {
                     ),
                 sections = sections,
                 offline = offline,
-                onArticleClick = onArticleClick
+                onArticleClick = onArticleClick,
+                onRefreshSections = onRefreshSections,
+                onToggleSave = onToggleSave,
+                refreshWhen = refreshWhen
             )
         }
     }

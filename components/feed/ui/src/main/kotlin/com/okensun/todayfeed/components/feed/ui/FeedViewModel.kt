@@ -11,6 +11,7 @@ import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.feed.domain.ObserveFeedSections
 import com.okensun.todayfeed.components.feed.domain.ObserveNetworkReturned
 import com.okensun.todayfeed.components.feed.domain.ObserveOffline
+import com.okensun.todayfeed.components.feed.domain.RefreshSections
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,7 +28,12 @@ class FeedViewModel
         observeSections: ObserveFeedSections,
         observeOffline: ObserveOffline,
         observeNetworkReturned: ObserveNetworkReturned,
+        private val refreshSections: RefreshSections,
     ) : ViewModel() {
+        init {
+            onRefreshSections()
+        }
+
         /** `cachedIn` so the loaded pages survive the activity being recreated. */
         val articles: Flow<PagingData<Article>> = repository.observeArticles().cachedIn(viewModelScope)
 
@@ -50,6 +56,12 @@ class FeedViewModel
 
         /** The screen asks again when this fires, because nothing else will. */
         val networkReturned: Flow<Unit> = observeNetworkReturned()
+
+        /** The paged articles refresh themselves; the sections have to be asked. */
+        fun onRefreshSections() =
+            viewModelScope.launch {
+                refreshSections()
+            }
 
         fun onToggleSave(article: Article) =
             viewModelScope.launch {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
@@ -57,6 +58,7 @@ fun FeedScreen(
         offline = offline,
         refreshWhen = viewModel.networkReturned,
         onArticleClick = onArticleClick,
+        onRefreshSections = viewModel::onRefreshSections,
         onToggleSave = viewModel::onToggleSave,
         modifier = modifier
     )
@@ -74,21 +76,18 @@ internal fun FeedScreen(
     offline: Boolean,
     onArticleClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onRefreshSections: () -> Unit = {},
     onToggleSave: (Article) -> Unit = {},
     refreshWhen: Flow<Unit> = emptyFlow(),
     listState: LazyListState = rememberLazyListState(),
 ) {
     val paged = articles.collectAsLazyPagingItems()
 
-    // Watched with the lifecycle rather than with the composition. A composition outlives the
-    // app going to the background, so on its own it would keep the platform callback registered
-    // and fetch when the connection came back with nobody looking.
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(refreshWhen, paged, lifecycle) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            refreshWhen.collect { paged.refresh() }
-        }
+    RefreshOn(refreshWhen) {
+        paged.refresh()
+        onRefreshSections()
     }
+    ShowNewSections(sections.size, listState)
 
     val state = feedContentState(paged.loadState.refresh, paged.itemCount, sections.isNotEmpty(), offline)
     when (state) {
@@ -106,7 +105,10 @@ internal fun FeedScreen(
         is ContentState.Offline, is ContentState.Content ->
             RefreshableFeed(
                 refreshing = paged.loadState.refresh is LoadState.Loading,
-                onRefresh = paged::refresh,
+                onRefresh = {
+                    paged.refresh()
+                    onRefreshSections()
+                },
                 modifier = modifier
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
@@ -135,16 +137,7 @@ internal fun FeedScreen(
                                 )
                             }
                         }
-                        when (val append = paged.loadState.append) {
-                            is LoadState.Loading -> item(key = APPENDING) { Appending() }
-                            // The failure belongs at the end of the list. Blanking what the reader holds
-                            // because the next page did not arrive loses more than it explains.
-                            is LoadState.Error ->
-                                item(key = APPEND_FAILED) {
-                                    AppendFailed(append.error.message, paged::retry)
-                                }
-                            is LoadState.NotLoading -> Unit
-                        }
+                        appendState(paged.loadState.append, paged::retry)
                     }
                 }
             }
@@ -154,6 +147,40 @@ internal fun FeedScreen(
 /** `refresh()` skips `initialize()`, which is where the freshness policy lives, so a pull asks
  * the source whatever the allowance says. That is what a pull is for. */
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * A section arriving is inserted above whatever the list is anchored on, so a reader sitting at
+ * the top would never see it: the list holds its place, which is what task 2.2 asked it to do.
+ * A reader who has scrolled away is left alone, because being moved is worse than being late.
+ */
+@Composable
+private fun ShowNewSections(
+    count: Int,
+    listState: LazyListState,
+) =
+    LaunchedEffect(count, listState) {
+        if (count > 0 && listState.firstVisibleItemIndex <= count) {
+            listState.scrollToItem(0)
+        }
+    }
+
+/**
+ * Watched with the lifecycle rather than with the composition. A composition outlives the app
+ * going to the background, so on its own it would keep the platform callback registered and
+ * fetch when the connection came back with nobody looking.
+ */
+@Composable
+private fun RefreshOn(
+    signal: Flow<Unit>,
+    refresh: () -> Unit,
+) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(signal, refresh, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            signal.collect { refresh() }
+        }
+    }
+}
+
 @Composable
 private fun RefreshableFeed(
     refreshing: Boolean,
@@ -221,6 +248,20 @@ private const val COULD_NOT_LOAD_MORE = "More articles could not be loaded."
 
 // The same word as the full screen error, so one action does not have two names.
 private const val TRY_AGAIN = "Try again"
+
+/**
+ * The failure belongs at the end of the list. Blanking what the reader holds because the next
+ * page did not arrive loses more than it explains.
+ */
+private fun LazyListScope.appendState(
+    append: LoadState,
+    onRetry: () -> Unit,
+) = when (append) {
+    is LoadState.Loading -> item(key = APPENDING) { Appending() }
+    is LoadState.Error ->
+        item(key = APPEND_FAILED) { AppendFailed(append.error.message, onRetry) }
+    is LoadState.NotLoading -> Unit
+}
 
 @Composable
 private fun Section(section: FeedSection) =
