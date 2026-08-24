@@ -5,11 +5,14 @@ import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
+import androidx.paging.PagingData
 import com.okensun.todayfeed.components.articles.api.Article
-import com.okensun.todayfeed.components.feed.domain.FeedItem
+import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.weather.api.Weather
-import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -18,115 +21,110 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.Instant
 
-/**
- * View tests: given a state, does the screen draw the right thing and do its callbacks fire.
- * They run on the JVM through Robolectric, so no device is involved.
- */
 @RunWith(RobolectricTestRunner::class)
 class FeedScreenTest {
     @get:Rule
     val compose = createComposeRule()
 
     @Test
-    fun `content puts the weather hero above the article titles`() {
-        setState(ContentState.Content(feed))
+    fun `sections are drawn above the articles`() {
+        show(articles = listOf(article("a1", "Article one")), sections = listOf(hero))
 
-        val hero = compose.onNodeWithText("Taipei").getBoundsInRoot()
-        val article = compose.onNodeWithText("Article one").getBoundsInRoot()
+        val section = compose.onNodeWithText("Taipei").getBoundsInRoot()
+        val first = compose.onNodeWithText("Article one").getBoundsInRoot()
 
-        assertTrue("hero at ${hero.top}, article at ${article.top}", hero.top < article.top)
+        assertTrue("section at ${section.top}, article at ${first.top}", section.top < first.top)
     }
 
     @Test
-    fun `loading says so and shows no content`() {
-        setState(ContentState.Loading)
+    fun `loading says so and shows no articles`() {
+        show(articles = emptyList(), refresh = LoadState.Loading)
 
         compose.onNodeWithText("Loading").assertIsDisplayed()
-        compose.onNodeWithText("Article one").assertDoesNotExist()
     }
 
     @Test
-    fun `empty says there is nothing to read`() {
-        setState(ContentState.Empty)
+    fun `nothing at all says there is nothing to read`() {
+        show(articles = emptyList())
 
         compose.onNodeWithText("Nothing to read yet").assertIsDisplayed()
-        compose.onNodeWithText("Article one").assertDoesNotExist()
     }
 
     @Test
-    fun `error offers a retry that calls back`() {
-        var retries = 0
-        setState(ContentState.Error("Could not reach the server."), onRetry = { retries++ })
+    fun `a failure with nothing loaded offers a retry`() {
+        show(articles = emptyList(), refresh = LoadState.Error(RuntimeException("no network")))
 
-        compose.onNodeWithText("Could not reach the server.").assertIsDisplayed()
-        compose.onNodeWithText("Try again").performClick()
-
-        assertEquals(1, retries)
+        compose.onNodeWithText("no network").assertIsDisplayed()
+        compose.onNodeWithText("Try again").assertIsDisplayed()
     }
 
+    /** A weather card with no articles shows the weather card rather than an empty screen. */
     @Test
-    fun `offline with nothing cached offers a retry that calls back`() {
-        var retries = 0
-        setState(ContentState.Offline(null), onRetry = { retries++ })
+    fun `a section with no articles is shown, not the empty state`() {
+        show(articles = emptyList(), sections = listOf(hero))
 
-        compose.onNodeWithText("You are offline").assertIsDisplayed()
-        compose.onNodeWithText("Try again").performClick()
-
-        assertEquals(1, retries)
-    }
-
-    @Test
-    fun `offline with cached content shows the content and no offline notice`() {
-        setState(ContentState.Offline(feed))
-
-        compose.onNodeWithText("Article one").assertIsDisplayed()
         compose.onNodeWithText("Taipei").assertIsDisplayed()
-        compose.onNodeWithText("You are offline").assertDoesNotExist()
-        compose.onNodeWithText("Something went wrong").assertDoesNotExist()
+        compose.onNodeWithText("Nothing to read yet").assertDoesNotExist()
     }
 
     @Test
     fun `tapping an article passes its id`() {
         var clicked: String? = null
-        setState(ContentState.Content(feed), onArticleClick = { clicked = it })
+        show(articles = listOf(article("a9", "Article nine")), onArticleClick = { clicked = it })
 
-        compose.onNodeWithText("Article one").performClick()
+        compose.onNodeWithText("Article nine").performClick()
 
-        assertEquals("a1", clicked)
+        assertEquals("a9", clicked)
     }
 
-    private fun setState(
-        state: ContentState<List<FeedItem>>,
-        onRetry: () -> Unit = {},
+    private fun show(
+        articles: List<Article>,
+        sections: List<FeedSection> = emptyList(),
+        refresh: LoadState = LoadState.NotLoading(endOfPaginationReached = true),
         onArticleClick: (String) -> Unit = {},
     ) = compose.setContent {
         TodayFeedTheme {
-            FeedScreen(state = state, onRetry = onRetry, onArticleClick = onArticleClick)
+            FeedScreen(
+                articles =
+                    flowOf(
+                        PagingData.from(
+                            data = articles,
+                            sourceLoadStates =
+                                LoadStates(
+                                    refresh = refresh,
+                                    prepend = LoadState.NotLoading(true),
+                                    append = LoadState.NotLoading(true)
+                                )
+                        )
+                    ),
+                sections = sections,
+                onArticleClick = onArticleClick
+            )
         }
     }
 
     private companion object {
-        val feed =
-            listOf(
-                FeedItem.WeatherHero(
-                    Weather(
-                        placeName = "Taipei",
-                        temperatureCelsius = 30.0,
-                        condition = "Cloudy",
-                        highCelsius = 31.0,
-                        lowCelsius = 26.0
-                    )
-                ),
-                FeedItem.ArticleRow(
-                    Article(
-                        id = "a1",
-                        title = "Article one",
-                        summary = "Summary one",
-                        source = "Spaceflight News",
-                        imageUrl = null,
-                        publishedAt = Instant.EPOCH
-                    )
+        val hero =
+            FeedSection.WeatherHero(
+                Weather(
+                    placeName = "Taipei",
+                    temperatureCelsius = 30.0,
+                    condition = "Cloudy",
+                    highCelsius = 31.0,
+                    lowCelsius = 26.0
                 )
             )
+
+        fun article(
+            id: String,
+            title: String,
+        ) = Article(
+            id = id,
+            title = title,
+            summary = "Summary $id",
+            source = "Spaceflight News",
+            imageUrl = null,
+            publishedAt = Instant.EPOCH
+        )
     }
 }

@@ -70,8 +70,8 @@ each is in `DECISIONS.md`.
   would be a name that lies.
 - **Background refresh with WorkManager.** Refresh happens only at moments the user can see.
   Spending the user's mobile data while they are not looking is what the brief warns against.
-- **A `domain` module for every component.** Only `articles` and `feed` get one. A `domain`
-  module exists when logic has no single model to belong to, which means it coordinates more
-  than one repository or source.
+- **Every layer of every component as a module.** The four layers are the shape, but a layer is
+  created only when there is something to put in it. A `domain` module exists when logic has no
+  single model to belong to, which means it coordinates more than one repository or source.
 - **Typed project accessors and a mocking library.** String project paths and hand-written
   fakes instead.

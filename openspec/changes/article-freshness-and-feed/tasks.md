@@ -13,33 +13,37 @@
 
 ## 1. Real articles on the screen — about two and a quarter hours
 
-- [ ] 1.1 Add `Connection`, `Decision` and `decide` to `:core:freshness`, with the five cases from
+- [x] 1.1 Add `Connection`, `Decision` and `decide` to `:core:freshness`, with the five cases from
       design.md. Verify: `./gradlew :core:freshness:dependencies` shows no Android, no Room, no
       Retrofit and no paging artifact
-- [ ] 1.2 Write the truth table for `decide` first, using the existing `FakeClock`: nothing
-      stored, nothing stored and offline, stored and offline, within the allowance, past it.
-      Verify: they fail because `decide` is empty, not because they are wrong
-- [ ] 1.3 Implement `decide` in the order from design.md. Verify: the table passes, and a test
+- [x] 1.2 Write the truth table for `decide` first: nothing stored, nothing stored and offline,
+      stored and offline, within the allowance, past it. Verify: they fail because `decide` is
+      empty, not because they are wrong.
+      No `FakeClock` is involved, which this task originally assumed. `decide` takes `now` as a
+      parameter, so its tests need only two `Instant` constants — and `:core:testing` depends on
+      `:core:freshness`, so using the fake here would have been circular anyway. The pure
+      function paid for itself immediately
+- [x] 1.3 Implement `decide` in the order from design.md. Verify: the table passes, and a test
       shows a stated server maximum age replaces our figure
-- [ ] 1.4 Check the boundary. Verify: tests at exactly the allowance, one second before and one
+- [x] 1.4 Check the boundary. Verify: tests at exactly the allowance, one second before and one
       second after, so an off-by-one cannot hide
-- [ ] 1.5 Add `Connectivity` to `:core:freshness` and `FakeConnectivity` to `:core:testing`.
+- [x] 1.5 Add `Connectivity` to `:core:freshness` and `FakeConnectivity` to `:core:testing`.
       Verify: a test moves the fake from unmetered to offline and the flow emits both
-- [ ] 1.6 Add the `articles` table keyed on the article id, the single-row `feed_metadata` table,
+- [x] 1.6 Add the `articles` table keyed on the article id, the single-row `feed_metadata` table,
       a DAO whose article query returns a `PagingSource`, and the database. Verify: a Room test
       writes the same article twice with different content and reads back one row holding the
       newer content
-- [ ] 1.7 Add the Retrofit service for `/v4/articles/` and its response types. Verify: a test
+- [x] 1.7 Add the Retrofit service for `/v4/articles/` and its response types. Verify: a test
       decodes a saved copy of a real response body, taken from the API rather than written by hand
-- [ ] 1.8 Read `Cache-Control: max-age` off the response and store it with the metadata. Verify: a
+- [x] 1.8 Read `Cache-Control: max-age` off the response and store it with the metadata. Verify: a
       test parses a real header value, and a response without the header yields no stated age
-- [ ] 1.9 Add the `RemoteMediator` with `decide` in `initialize()` and a `REFRESH` branch that
+- [x] 1.9 Add the `RemoteMediator` with `decide` in `initialize()` and a `REFRESH` branch that
       fetches one page and upserts. Verify: a test with a counting fake source shows
       `SKIP_INITIAL_REFRESH` inside the allowance and `LAUNCH_INITIAL_REFRESH` past it, with
       **zero** requests in the first case
-- [ ] 1.10 Build the `Pager` and expose `Flow<PagingData<Article>>` from the repository, mapping
+- [x] 1.10 Build the `Pager` and expose `Flow<PagingData<Article>>` from the repository, mapping
       entities to the `api` model. Verify: a test collects one page of articles
-- [ ] 1.11 Draw it: the feed screen takes the paging flow, delete the placeholder state, bind in
+- [x] 1.11 Draw it: the feed screen takes the paging flow, delete the placeholder state, bind in
       `:app` and delete the in-memory repository. Verify: `assembleDebug` passes, only `:app`
       names a data module, and the app shows real articles on a device
 
@@ -75,12 +79,16 @@
       `Offline(cached)`. Verify: a unit test covers both offline branches
 - [ ] 3.3 Show the out-of-date marker when offline with content. Verify: a view test shows the
       marker with content present and offline, and none when online
-- [ ] 3.4 Drop the marker when the network returns, from `Connectivity.observe()`. Verify: a test
+- [ ] 3.4 Drop the marker when the network returns, from `Connectivity.observe()`, **and refresh**.
+      A review of pass 1 found this is not only cosmetic: `initialize()` runs once per pager, so a
+      reader who starts offline with an empty cache never retries without it. Verify: a test
       moves the fake back to unmetered and shows the marker clears
-- [ ] 3.5 Add `FeedSection` and `ObserveFeedSections` to `:components:feed:domain`, replacing
-      `ObserveFeed`. Verify: `./gradlew :components:feed:domain:dependencies` shows no paging
+- [x] 3.5 Add `FeedSection` and `ObserveFeedSections` to `:components:feed:domain`, replacing
+      `ObserveFeed`. **Pulled into pass 1**: the moment the feed became a paged stream, the old
+      combined list stopped compiling, and leaving it out would have removed the weather card from
+      the screen — a visible regression in the middle of a slice. Verify: `./gradlew :components:feed:domain:dependencies` shows no paging
       artifact, and tests cover the ordering and the missing-source case
-- [ ] 3.6 Draw the sections above the paged articles. Verify: a view test shows a section and
+- [x] 3.6 Draw the sections above the paged articles. **Pulled into pass 1** for the same reason. Verify: a view test shows a section and
       articles together, and that no articles with a section present shows the section rather
       than the empty state
 - [ ] 3.7 Write the freshness section of the README, describing what exists at this point.

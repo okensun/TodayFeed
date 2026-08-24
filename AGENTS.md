@@ -36,7 +36,8 @@ first build.
 ## Architecture
 
 Component-based Clean Architecture. A **component** is one area of subject matter, not one
-screen. Each component owns its own layers, and the build enforces the layering.
+screen. Each component owns its own layers, and the build enforces the layering. Not every
+component has all four, because a layer with nothing to hold is not created.
 
 | Layer | Holds | May depend on |
 |---|---|---|
@@ -54,7 +55,7 @@ screen. Each component owns its own layers, and the build enforces the layering.
 :core:database                    shared Room settings and type converters. No tables.
 :core:freshness                   the per-source freshness policy. Plain Kotlin.
 :core:testing                     FakeClock, shared fakes, coroutine test rules
-:components:articles:{api,domain,data,ui}   Spaceflight News
+:components:articles:{api,data,ui}          Spaceflight News
 :components:weather:{api,data,ui}           Open-Meteo
 :components:feed:{domain,ui}                puts the feed together, owns the Reading screen
 ```
@@ -103,6 +104,19 @@ grep -rn "components:[a-z]*:data" --include=build.gradle.kts .    # only app sho
   | grep -iE "room|retrofit"                                      # should print nothing
 ```
 
+Do not check "no Android in `api`" by grepping for `androidx`. `paging-common` resolves to a
+plain JVM variant that pulls `androidx.annotation-jvm` and `androidx.arch.core`, neither of which
+is Android, so that grep now reports a violation that is not one. The real guarantee is that
+`todayfeed.jvm` never applies the Android plugin, so an `android.*` import in an `api` or
+`domain` module does not compile. Check that, not the group name.
+
+Also: a grep over a Gradle task's output reports zero when the task itself failed. Check the exit
+status, or the answer is "the command broke" wearing the answer "none".
+
+And a build that finishes `in 1s` with everything up to date verified nothing. It means Gradle saw
+no changes, not that the code is good. If a file changed after the last real build, run one — or
+let CI be the first thing that compiles it, and expect to be told.
+
 ### Where screens live
 
 Reading is `:components:feed:ui`. Article detail and Saved are `:components:articles:ui`.
@@ -110,11 +124,21 @@ The navigation graph is in `:app`, and routes are `@Serializable` types rather t
 strings. Components hand out callbacks such as `onArticleClick(id)` and never a
 destination, so no component knows where another component's screens are.
 
-### A `domain` module only when logic has no model to own it
+### The four layers are the shape, and a layer with nothing to hold is not created
 
-Only `articles` and `feed` have one. The test is whether the logic coordinates more than
-one repository or source. Smaller logic belongs on the model in `api` or in the `data`
-mapper. Do not add a `domain` module that only passes calls along.
+The table above describes every component. That is the shape to expect. A layer is only
+created when there is something to put in it, so a component with no use case has no `domain`
+module. The test for `domain` is whether the logic coordinates more than one repository or
+source. Smaller logic belongs on the model in `api` or in the `data` mapper. Never add a module
+that only passes calls along.
+
+**Never depend on a module you take nothing from.** An unused dependency claims two modules are
+related when they are not, and nothing fails while it is wrong, so it can sit there for months.
+An empty module is the worst case, because the dependency then also keeps the module alive.
+
+```bash
+for d in components/*/*/; do [ -d "${d}src" ] || echo "empty module: $d"; done   # prints nothing
+```
 
 ## Convention plugins
 
@@ -140,7 +164,7 @@ each holds its layer's dependency rules so a new component inherits them.
 4. Register all three in `settings.gradle.kts`.
 5. Bind the data implementations from `:app`, which is the only module allowed to see them.
 
-Add a `domain` module only if the test above says you need one.
+Create a `domain` module only when there is something to put in it. See the rule above.
 
 ## Code style
 
@@ -194,9 +218,11 @@ Robolectric emulates the Android level named in `core/testing/src/main/resources
 currently 36. It is pinned because Robolectric has no jar for `compileSdk` 37 yet. Raise it when
 one ships.
 
-Any module with test source files must contain at least one `@Test`. Gradle fails a test task
-that compiles test classes and then discovers no test, and that check is worth keeping. A
-module with no test sources at all is fine: its test task reports no source and passes.
+Gradle's no-tests-discovered check is switched off for `data` and `ui` modules. Turning on
+Android resources for unit tests, which Room and Compose tests both need, makes Gradle see test
+sources in every module that applies those plugins, so the check fires on modules that simply
+have no tests yet. It is meant to catch tests that exist but are not found. Forcing a token test
+into a module with nothing worth testing is worse than losing the warning.
 
 One seam is not covered: nothing tests the stateful overload of a screen, which is where the
 view model is found and its callbacks are passed down. A screen could stop passing
@@ -240,6 +266,11 @@ A reviewer subagent reads the diff for the branch. It gets the description and t
 requirements, and deliberately **not** the session history, so it does not inherit the
 author's blind spots. It returns strengths, then issues split into Critical, Important and
 Minor, then a clear verdict on whether the branch can merge.
+
+Read `git diff --stat main..HEAD` before writing a pull request body. Four times in one day a
+body claimed something its own diff contradicted — "planning only" over three build files,
+"covers every state" missing three. The body gets written after the work, by which time what is
+in the branch is no longer fresh, so look rather than remember.
 
 Whatever needs fixing is then posted as an **inline comment on the exact line**, two to
 three lines long: the problem, then the fix. No summary comment at the top of the pull
