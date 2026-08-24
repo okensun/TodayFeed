@@ -15,6 +15,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -22,7 +23,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -36,6 +40,7 @@ import com.okensun.todayfeed.core.designsystem.ErrorState
 import com.okensun.todayfeed.core.designsystem.LoadingState
 import com.okensun.todayfeed.core.designsystem.OfflineState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /** Stateful form: finds the view model and nothing else. */
 @Composable
@@ -50,6 +55,7 @@ fun FeedScreen(
         articles = viewModel.articles,
         sections = sections,
         offline = offline,
+        refreshWhen = viewModel.networkReturned,
         onArticleClick = onArticleClick,
         modifier = modifier
     )
@@ -67,9 +73,20 @@ internal fun FeedScreen(
     offline: Boolean,
     onArticleClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    refreshWhen: Flow<Unit> = emptyFlow(),
     listState: LazyListState = rememberLazyListState(),
 ) {
     val paged = articles.collectAsLazyPagingItems()
+
+    // Watched with the lifecycle rather than with the composition. A composition outlives the
+    // app going to the background, so on its own it would keep the platform callback registered
+    // and fetch when the connection came back with nobody looking.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(refreshWhen, paged, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            refreshWhen.collect { paged.refresh() }
+        }
+    }
 
     val state = feedContentState(paged.loadState.refresh, paged.itemCount, sections.isNotEmpty(), offline)
     when (state) {
@@ -90,37 +107,41 @@ internal fun FeedScreen(
                 onRefresh = paged::refresh,
                 modifier = modifier
             ) {
-                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
-                    // Above the sections, so it is read before what it is describing.
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Outside the list on purpose. As a list item it would sit above the anchor
+                    // that keeps the reader's place, so losing the network would show nothing
+                    // until they scrolled up to find it.
                     if (offline) {
-                        item(key = OUT_OF_DATE) { OutOfDate() }
+                        OutOfDate()
                     }
-                    sections.forEach { section ->
-                        item(key = section.key()) { Section(section) }
-                    }
-                    // Keyed on the article's own id. Without a key LazyColumn keys by index, so a
-                    // refresh that upserts newer articles would move every row and throw the reader's
-                    // position off by however many arrived — the opposite of keeping their place.
-                    items(
-                        count = paged.itemCount,
-                        key = { index -> paged.peek(index)?.id ?: index }
-                    ) { index ->
-                        paged[index]?.let { article ->
-                            ArticleRowCard(
-                                article = article,
-                                onClick = { onArticleClick(article.id) }
-                            )
+                    LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                        sections.forEach { section ->
+                            item(key = section.key()) { Section(section) }
                         }
-                    }
-                    when (val append = paged.loadState.append) {
-                        is LoadState.Loading -> item(key = APPENDING) { Appending() }
-                        // The failure belongs at the end of the list. Blanking what the reader holds
-                        // because the next page did not arrive loses more than it explains.
-                        is LoadState.Error ->
-                            item(key = APPEND_FAILED) {
-                                AppendFailed(append.error.message, paged::retry)
+                        // Keyed on the article's own id. Without a key LazyColumn keys by index, so a
+                        // refresh that upserts newer articles would move every row and throw the reader's
+                        // position off by however many arrived — the opposite of keeping their place.
+                        items(
+                            count = paged.itemCount,
+                            key = { index -> paged.peek(index)?.id ?: index }
+                        ) { index ->
+                            paged[index]?.let { article ->
+                                ArticleRowCard(
+                                    article = article,
+                                    onClick = { onArticleClick(article.id) }
+                                )
                             }
-                        is LoadState.NotLoading -> Unit
+                        }
+                        when (val append = paged.loadState.append) {
+                            is LoadState.Loading -> item(key = APPENDING) { Appending() }
+                            // The failure belongs at the end of the list. Blanking what the reader holds
+                            // because the next page did not arrive loses more than it explains.
+                            is LoadState.Error ->
+                                item(key = APPEND_FAILED) {
+                                    AppendFailed(append.error.message, paged::retry)
+                                }
+                            is LoadState.NotLoading -> Unit
+                        }
                     }
                 }
             }

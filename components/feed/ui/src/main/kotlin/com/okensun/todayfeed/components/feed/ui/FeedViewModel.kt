@@ -8,6 +8,7 @@ import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.components.articles.api.ArticleRepository
 import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.feed.domain.ObserveFeedSections
+import com.okensun.todayfeed.components.feed.domain.ObserveNetworkReturned
 import com.okensun.todayfeed.components.feed.domain.ObserveOffline
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
@@ -23,6 +24,7 @@ class FeedViewModel
         articles: ArticleRepository,
         observeSections: ObserveFeedSections,
         observeOffline: ObserveOffline,
+        observeNetworkReturned: ObserveNetworkReturned,
     ) : ViewModel() {
         /** `cachedIn` so the loaded pages survive the activity being recreated. */
         val articles: Flow<PagingData<Article>> = articles.observeArticles().cachedIn(viewModelScope)
@@ -43,6 +45,9 @@ class FeedViewModel
                     started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
                     initialValue = false
                 )
+
+        /** The screen asks again when this fires, because nothing else will. */
+        val networkReturned: Flow<Unit> = observeNetworkReturned()
 
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L

@@ -38,8 +38,8 @@ internal class ArticlesRemoteMediator(
                 connection = connectivity.current(),
                 now = clock.instant()
             )
-        // A skip is right, but `initialize()` runs once per pager, so a reader who started
-        // offline sees an empty feed until the process restarts. Task 3.4 closes it.
+        // A skip is right, but `initialize()` runs once per pager, so nothing here asks again.
+        // The screen watching for the network to return is what covers that.
         return if (decision.wantsNetwork) {
             InitializeAction.LAUNCH_INITIAL_REFRESH
         } else {
