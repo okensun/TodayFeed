@@ -102,3 +102,45 @@ val UnsavedStar: ImageVector by lazy {
     }
     star.build()
 }
+
+/**
+ * Shown where a picture was meant to be and did not arrive, whether it failed, timed out or the
+ * address was wrong. Still, because it is an answer rather than a wait.
+ */
+@Suppress("MagicNumber")
+val NoPicture: ImageVector by lazy {
+    val broken =
+        ImageVector.Builder(
+            name = "NoPicture",
+            defaultWidth = 24.dp,
+            defaultHeight = 24.dp,
+            viewportWidth = 24f,
+            viewportHeight = 24f
+        )
+    broken.path(fill = SolidColor(Color.Black)) {
+        moveTo(21f, 5f)
+        verticalLineToRelative(6.59f)
+        lineToRelative(-3f, -3.01f)
+        lineToRelative(-4f, 4.01f)
+        lineToRelative(-4f, -4f)
+        lineToRelative(-4f, 4f)
+        lineToRelative(-3f, -3.01f)
+        verticalLineTo(5f)
+        curveToRelative(0f, -1.1f, 0.9f, -2f, 2f, -2f)
+        horizontalLineToRelative(14f)
+        curveToRelative(1.1f, 0f, 2f, 0.9f, 2f, 2f)
+        close()
+        moveTo(18f, 11.42f)
+        lineToRelative(3f, 3.01f)
+        verticalLineTo(19f)
+        curveToRelative(0f, 1.1f, -0.9f, 2f, -2f, 2f)
+        horizontalLineTo(5f)
+        curveToRelative(-1.1f, 0f, -2f, -0.9f, -2f, -2f)
+        verticalLineToRelative(-6.58f)
+        lineToRelative(3f, 2.99f)
+        lineToRelative(4f, -4f)
+        lineToRelative(4f, 4f)
+        close()
+    }
+    broken.build()
+}

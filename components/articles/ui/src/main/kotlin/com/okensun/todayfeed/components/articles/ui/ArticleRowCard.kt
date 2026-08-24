@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -13,9 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.core.designsystem.ArticleImage
 import com.okensun.todayfeed.core.designsystem.SavedStar
 import com.okensun.todayfeed.core.designsystem.UnsavedStar
 
@@ -37,6 +40,18 @@ fun ArticleRowCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.Top
         ) {
+            ArticleImage(
+                url = article.imageUrl,
+                // The title says what the picture shows, so repeating it would only be noise
+                // for a screen reader.
+                contentDescription = null,
+                modifier =
+                    Modifier
+                        .size(72.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        // On the picture, so a card without one keeps the layout it had.
+                        .padding(end = 12.dp)
+            )
             // The text takes what is left, so a long title wraps rather than pushing the star
             // off the card.
             Column(modifier = Modifier.weight(1f)) {

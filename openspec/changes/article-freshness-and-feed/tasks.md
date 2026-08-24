@@ -132,15 +132,27 @@
 
 ## 4. Pictures — about forty five minutes
 
-- [ ] 4.1 Add Coil to the version catalog and an `ArticleImage` composable to
+- [x] 4.1 Add Coil to the version catalog and an `ArticleImage` composable to
       `:core:designsystem` that falls back to the text-only layout while loading and on failure.
       Verify: a view test with no picture and one with an unreachable URL both still show the
-      article's title
-- [ ] 4.2 Put the thumbnail on the article card and a wide picture at the top of the detail
+      article's title. An article that has a picture holds its place from the first frame and
+      breathes while it waits, so nothing moves when the picture lands; an article with no
+      picture draws nothing, which is known at once. A picture that never arrives leaves the
+      no-picture mark rather than collapsing, because a row that changes shape late is worse, and
+      a square still breathing after it has given up says the wrong thing. Two earlier versions
+      were wrong the other two ways: one reserved space it never gave up, and one gave it up so
+      late that every row jumped. The tests cover all three answers: no mark for an article that
+      never had a picture, the mark for one whose fetch cannot happen, and the title in both
+- [x] 4.2 Put the thumbnail on the article card and a wide picture at the top of the detail
       screen. Verify: previews in both themes, and by hand that a card without a picture keeps
-      its layout
-- [ ] 4.3 Check a slow picture does not block the card. Verify by hand with a throttled
-      connection: the title and source appear immediately and the picture arrives later
+      its layout. Coil fetches through the shared `OkHttpClient`, wired in `:app` because
+      `:core:designsystem` may not see `:core:network`, and taken lazily so a cold start does not
+      build it before the first frame. The previews do not show a picture: `previewArticle` has
+      no URL, and a preview does not fetch one
+- [x] 4.3 Check a slow picture does not block the card. Verify by hand with a throttled
+      connection: the title and source appear immediately and the picture arrives later. Recorded
+      on an emulator at EDGE speed: titles were on screen at nine seconds, thumbnails at twenty,
+      and the rows did not move when they arrived
 
 ## 5. The metered behaviour, and the numbers — about one and a quarter hours
 

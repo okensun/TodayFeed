@@ -20,6 +20,7 @@ lifecycle = "2.9.4"
 hilt = "2.60.1"
 hiltNavigationCompose = "1.4.0"
 
+coil = "3.5.0"
 room = "2.8.4"
 retrofit = "3.0.0"
 okhttp = "5.5.0"
@@ -44,6 +45,11 @@ compose-ui = { group = "androidx.compose.ui", name = "ui" }
 compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+
+# Pictures. The okhttp artifact makes Coil share the client this project already builds, so the
+# connection pool and the timeouts are the same ones every other request uses.
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
+coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
