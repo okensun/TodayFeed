@@ -203,6 +203,9 @@ content, show the content. Only `Offline(null)` is a dead end, and even then it 
 Say what the code means now, or warn about this code's own behaviour. Never narrate the
 change, never restate the code, and never leave commented-out code. Git records history.
 
+**At most three lines.** A longer comment is not read. If three lines will not carry the
+reason, the reason belongs in `DECISIONS.md` and the comment points at it.
+
 ## Testing
 
 Hand-written fakes, no mocking library. Shared fakes live in `:core:testing`, including

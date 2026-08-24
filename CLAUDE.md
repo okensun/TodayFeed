@@ -32,6 +32,7 @@ posted as inline comments on the exact line. See AGENTS.md.
 
 ## Comments
 
+- At most three lines. Longer than that and nobody reads it; put the reason in `DECISIONS.md`.
 - Say what the code means now, or warn about this code's own behaviour.
 - Never narrate the change ("previously", "now uses"). Git records history.
 - Never restate the code, and never leave commented-out code.
