@@ -7,6 +7,7 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
 import androidx.room.Room
+import com.okensun.todayfeed.core.freshness.Connection
 import com.okensun.todayfeed.core.testing.FakeClock
 import com.okensun.todayfeed.core.testing.FakeConnectivity
 import kotlinx.coroutines.CancellationException
@@ -144,6 +145,39 @@ class ArticlesRemoteMediatorTest {
 
             assertTrue((result as RemoteMediator.MediatorResult.Success).endOfPaginationReached)
             assertEquals(false, dao.findMetadata()?.hasMore)
+        }
+
+    /**
+     * Task 3.1. With no connection there is nothing to ask. What is stored is what the screen
+     * shows, so this is a success with nothing added rather than an error.
+     */
+    @Test
+    fun `with no connection a refresh asks for nothing and keeps what is stored`() =
+        runTest {
+            service.enqueue(page(1..2, hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+            service.requests.clear()
+
+            connectivity.set(Connection.Offline)
+            val result = mediator.load(LoadType.REFRESH, noState())
+
+            assertEquals(emptyList<Int>(), service.requests.map { it.offset })
+            assertTrue(result is RemoteMediator.MediatorResult.Success)
+            assertEquals(listOf("2", "1"), storedNewestFirst())
+        }
+
+    @Test
+    fun `with no connection an append asks for nothing`() =
+        runTest {
+            service.enqueue(page(1..2, hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+            service.requests.clear()
+
+            connectivity.set(Connection.Offline)
+            val result = mediator.load(LoadType.APPEND, noState())
+
+            assertEquals(emptyList<Int>(), service.requests.map { it.offset })
+            assertTrue(result is RemoteMediator.MediatorResult.Success)
         }
 
     /**

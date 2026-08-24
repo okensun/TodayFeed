@@ -88,8 +88,10 @@
 
 ## 3. Offline, sections, and the write-up — about one and a quarter hours
 
-- [ ] 3.1 Make the mediator return success without fetching when offline. Verify: a test with the
-      fake connectivity offline makes **zero** requests and the stored articles still come through
+- [x] 3.1 Make the mediator return success without fetching when offline. Verify: a test with the
+      fake connectivity offline makes **zero** requests and the stored articles still come through.
+      Checked for both a refresh and an append. The check sits above the `when` over `LoadType`,
+      so that stays exhaustive and a new load type still has to be written out
 - [ ] 3.2 Add the offline branch to the state derivation, so content plus offline gives
       `Offline(cached)`. Verify: a unit test covers both offline branches
 - [ ] 3.3 Show the out-of-date marker when offline with content. Verify: a view test shows the
