@@ -20,7 +20,7 @@ class SavedViewModel
     ) : ViewModel() {
         val state: StateFlow<ContentState<List<Article>>> =
             articles
-                .observeSaved()
+                .observeSavedArticles()
                 .map { saved ->
                     if (saved.isEmpty()) ContentState.Empty else ContentState.Content(saved)
                 }.stateIn(

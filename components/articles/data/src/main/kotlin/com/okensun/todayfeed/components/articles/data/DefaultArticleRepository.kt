@@ -29,7 +29,7 @@ internal class DefaultArticleRepository
         private val clock: Clock,
     ) : ArticleRepository {
         @OptIn(ExperimentalPagingApi::class)
-        override fun pagedFeed(): Flow<PagingData<Article>> =
+        override fun observeArticles(): Flow<PagingData<Article>> =
             Pager(
                 config =
                     PagingConfig(
@@ -50,9 +50,9 @@ internal class DefaultArticleRepository
             ).flow.map { page -> page.map { it.toArticle() } }
 
         // Saving arrives in slice 3. Until then nothing is saved, which is what this says.
-        override fun observeSaved(): Flow<List<Article>> = flowOf(emptyList())
+        override fun observeSavedArticles(): Flow<List<Article>> = flowOf(emptyList())
 
-        override suspend fun article(id: String): Article? = database.dao().article(id)?.toArticle()
+        override suspend fun findArticle(id: String): Article? = database.dao().findArticle(id)?.toArticle()
 
         private companion object {
             const val PREFETCH_DISTANCE = 5

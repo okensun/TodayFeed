@@ -175,6 +175,10 @@ function, at most 15 functions per class. Config is in `config/detekt/detekt.yml
 
 - Kotlin sources go in `src/main/kotlin`.
 - Packages are `com.okensun.todayfeed.<component>.<layer>`.
+- A repository or DAO method starts with a verb, and the verb says which kind of call it is:
+  `observe` returns a `Flow`, `find` is a one-shot `suspend` that returns null when there is
+  nothing. A bare noun says neither. Do not borrow another component's word either: an article
+  repository has no `feed`, because the feed is the mixed list `:components:feed` builds.
 - `StateFlow` for state that always has a value, not `SharedFlow(replay = 1)`.
 - Collect flows in `repeatOnLifecycle`. Cancel the scope, not child jobs.
 - Nothing blocking on the main thread. No expensive work in `init` or in composition.

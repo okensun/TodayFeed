@@ -10,14 +10,15 @@ import kotlinx.coroutines.flow.Flow
  */
 interface ArticleRepository {
     /**
-     * The feed, newest first, as a paged stream. Paging works out which window to hold; what is
-     * on screen always comes from what is stored.
+     * Every stored article, newest first, as a paged stream. It is not called the feed, because
+     * the feed is the mixed list `:components:feed` builds and this is only one part of it.
+     * Paging works out which window to hold; what is on screen always comes from what is stored.
      */
-    fun pagedFeed(): Flow<PagingData<Article>>
+    fun observeArticles(): Flow<PagingData<Article>>
 
     /** Only what the reader saved. Readable with no network once saved. */
-    fun observeSaved(): Flow<List<Article>>
+    fun observeSavedArticles(): Flow<List<Article>>
 
     /** One article from what is stored, or null when nothing has that id. */
-    suspend fun article(id: String): Article?
+    suspend fun findArticle(id: String): Article?
 }
