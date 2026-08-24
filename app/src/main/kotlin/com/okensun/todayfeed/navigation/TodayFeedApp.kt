@@ -1,5 +1,9 @@
 package com.okensun.todayfeed.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -22,15 +26,24 @@ import com.okensun.todayfeed.components.feed.ui.FeedScreen
 @Composable
 fun TodayFeedApp() {
     val navController = rememberNavController()
-    val backStackEntry by navController.currentBackStackEntryAsState()
-    val destination = backStackEntry?.destination
-    val onReading = destination?.hasRoute(ReadingRoute::class) == true
-    val onSaved = destination?.hasRoute(SavedRoute::class) == true
 
     Scaffold(
         bottomBar = {
+            // The back stack is read here rather than outside this lambda. A state read
+            // recomposes the function that reads it, and only the bar needs these values.
+            val backStackEntry by navController.currentBackStackEntryAsState()
+            val destination = backStackEntry?.destination
+            val onReading = destination?.hasRoute(ReadingRoute::class) == true
+            val onSaved = destination?.hasRoute(SavedRoute::class) == true
+
             // The bar only shows on the two top level destinations, so detail is full screen.
-            if (onReading || onSaved) {
+            // It fades over the same time as the destination it is leaving with. Both are told
+            // to change at the same moment, so sharing the duration is what keeps them together.
+            AnimatedVisibility(
+                visible = onReading || onSaved,
+                enter = fadeIn(tween(TRANSITION_MILLIS)),
+                exit = fadeOut(tween(TRANSITION_MILLIS))
+            ) {
                 NavigationBar {
                     NavigationBarItem(
                         selected = onReading,
@@ -49,7 +62,10 @@ fun TodayFeedApp() {
         NavHost(
             navController = navController,
             startDestination = ReadingRoute,
-            modifier = Modifier.padding(padding)
+            modifier = Modifier.padding(padding),
+            // Stated rather than left to the library, because the bar above has to match it.
+            enterTransition = { fadeIn(tween(TRANSITION_MILLIS)) },
+            exitTransition = { fadeOut(tween(TRANSITION_MILLIS)) }
         ) {
             composable<ReadingRoute> {
                 FeedScreen(
@@ -69,6 +85,9 @@ fun TodayFeedApp() {
         }
     }
 }
+
+/** How long a destination takes to arrive or leave, and therefore how long the bar takes. */
+private const val TRANSITION_MILLIS = 700
 
 /**
  * Tapping the current tab must not stack another copy of it, and leaving a tab must keep
