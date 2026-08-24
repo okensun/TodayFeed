@@ -23,7 +23,7 @@ class FeedViewModel
         observeSections: ObserveFeedSections,
     ) : ViewModel() {
         /** `cachedIn` so the loaded pages survive the activity being recreated. */
-        val articles: Flow<PagingData<Article>> = articles.pagedFeed().cachedIn(viewModelScope)
+        val articles: Flow<PagingData<Article>> = articles.observeArticles().cachedIn(viewModelScope)
 
         val sections: StateFlow<List<FeedSection>> =
             observeSections()

@@ -27,7 +27,7 @@ class ArticleDetailViewModel
 
         init {
             viewModelScope.launch {
-                val article = articles.article(articleId)
+                val article = articles.findArticle(articleId)
                 _state.value =
                     when (article) {
                         null -> ContentState.Error("That article could not be found.")

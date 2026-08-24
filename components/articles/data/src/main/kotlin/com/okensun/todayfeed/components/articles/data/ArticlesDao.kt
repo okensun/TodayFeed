@@ -12,7 +12,7 @@ internal interface ArticlesDao {
     fun pagedArticles(): PagingSource<Int, ArticleEntity>
 
     @Query("SELECT * FROM articles WHERE id = :id")
-    suspend fun article(id: String): ArticleEntity?
+    suspend fun findArticle(id: String): ArticleEntity?
 
     /** How many of these are already stored. This is what tells a refresh it has reached back far enough. */
     @Query("SELECT COUNT(*) FROM articles WHERE id IN (:ids)")
@@ -22,7 +22,7 @@ internal interface ArticlesDao {
     suspend fun upsertArticles(articles: List<ArticleEntity>)
 
     @Query("SELECT * FROM feed_metadata WHERE id = 0")
-    suspend fun metadata(): FeedMetadataEntity?
+    suspend fun findMetadata(): FeedMetadataEntity?
 
     @Upsert
     suspend fun upsertMetadata(metadata: FeedMetadataEntity)

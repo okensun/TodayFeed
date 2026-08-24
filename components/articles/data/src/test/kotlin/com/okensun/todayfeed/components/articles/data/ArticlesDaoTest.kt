@@ -43,7 +43,7 @@ class ArticlesDaoTest {
             dao.upsertArticles(listOf(article("a1", title = "First title")))
             dao.upsertArticles(listOf(article("a1", title = "Corrected title")))
 
-            assertEquals("Corrected title", dao.article("a1")?.title)
+            assertEquals("Corrected title", dao.findArticle("a1")?.title)
             assertEquals(1, dao.countStored(listOf("a1")))
         }
 
@@ -83,7 +83,7 @@ class ArticlesDaoTest {
     @Test
     fun `metadata is one row and an Instant and a Duration survive it`() =
         runTest {
-            assertNull(dao.metadata())
+            assertNull(dao.findMetadata())
 
             dao.upsertMetadata(
                 FeedMetadataEntity(
@@ -102,7 +102,7 @@ class ArticlesDaoTest {
                 )
             )
 
-            val stored = dao.metadata()
+            val stored = dao.findMetadata()
             assertEquals(Instant.parse("2026-08-23T12:30:00Z"), stored?.lastRefreshedAt)
             assertNull(stored?.serverMaxAge)
             assertEquals(40, stored?.nextOffset)

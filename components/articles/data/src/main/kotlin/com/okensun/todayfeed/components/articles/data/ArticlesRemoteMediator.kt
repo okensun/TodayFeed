@@ -30,7 +30,7 @@ internal class ArticlesRemoteMediator(
      * test makes.
      */
     override suspend fun initialize(): InitializeAction {
-        val metadata = dao.metadata()
+        val metadata = dao.findMetadata()
         val decision =
             decide(
                 cachedAt = metadata?.lastRefreshedAt,
