@@ -67,8 +67,11 @@
       content already loaded stays `Content`. **Done in pass 1** as `feedContentState`, for the
       same reason 3.5 and 3.6 were pulled forward: a paged feed on screen needs a state to be in.
       Eight tests cover it
-- [ ] 2.5 Show the refreshing and appending indicators from `LoadState`. Verify: view tests supply
-      load states through `PagingData.from` and check each indicator
+- [x] 2.5 Show the refreshing and appending indicators from `LoadState`. Verify: view tests supply
+      load states through `PagingData.from` and check each indicator. A refresh with content on
+      screen marks it rather than replacing it, so only an empty screen gets the loading state.
+      Both indicators carry a content description, which is what a screen reader announces and
+      what the tests find them by
 - [ ] 2.6 Add pull to refresh, bypassing the policy. Verify by hand that pulling refreshes
       straight after a refresh; a view test shows the indicator follows the refresh load state
 - [ ] 2.7 Offer `retry()` for a failed append without losing what is loaded. Verify: a view test

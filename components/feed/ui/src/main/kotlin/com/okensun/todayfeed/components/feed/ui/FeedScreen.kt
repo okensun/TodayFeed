@@ -1,14 +1,22 @@
 package com.okensun.todayfeed.components.feed.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.okensun.todayfeed.components.articles.api.Article
@@ -63,6 +71,11 @@ internal fun FeedScreen(
         // Offline arrives in pass 3, once the connection is read for real.
         is ContentState.Offline, is ContentState.Content ->
             LazyColumn(state = listState, modifier = modifier.fillMaxSize()) {
+                // A refresh with content on screen is a marker, not a screen: the reader carries
+                // on reading while it happens.
+                if (paged.loadState.refresh is LoadState.Loading) {
+                    item(key = REFRESHING) { Refreshing() }
+                }
                 sections.forEach { section ->
                     item(key = section.key()) { Section(section) }
                 }
@@ -80,9 +93,35 @@ internal fun FeedScreen(
                         )
                     }
                 }
+                if (paged.loadState.append is LoadState.Loading) {
+                    item(key = APPENDING) { Appending() }
+                }
             }
     }
 }
+
+@Composable
+private fun Refreshing() =
+    LinearProgressIndicator(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = REFRESHING }
+    )
+
+@Composable
+private fun Appending() =
+    CircularProgressIndicator(
+        modifier =
+            Modifier
+                .padding(16.dp)
+                .semantics { contentDescription = APPENDING }
+    )
+
+// The indicators carry no text, so this is what a screen reader announces and what a view
+// test finds them by.
+private const val REFRESHING = "Refreshing"
+private const val APPENDING = "Loading more"
 
 @Composable
 private fun Section(section: FeedSection) =

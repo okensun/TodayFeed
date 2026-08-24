@@ -3,6 +3,7 @@ package com.okensun.todayfeed.components.feed.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.paging.LoadState
@@ -77,10 +78,49 @@ class FeedScreenTest {
         assertEquals("a9", clicked)
     }
 
+    /**
+     * A refresh with content already on screen is not the loading state: the reader keeps reading
+     * while it happens, so it is a marker rather than a screen.
+     */
+    @Test
+    fun `a refresh with articles on screen marks them rather than replacing them`() {
+        show(articles = listOf(article("a1", "Article one")), refresh = LoadState.Loading)
+
+        compose.onNodeWithContentDescription(REFRESHING).assertIsDisplayed()
+        compose.onNodeWithText("Article one").assertIsDisplayed()
+    }
+
+    @Test
+    fun `a refresh with nothing on screen is the loading state, not the marker`() {
+        show(articles = emptyList(), refresh = LoadState.Loading)
+
+        compose.onNodeWithText("Loading").assertIsDisplayed()
+        compose.onNodeWithContentDescription(REFRESHING).assertDoesNotExist()
+    }
+
+    @Test
+    fun `an append in progress is shown under the articles`() {
+        show(articles = listOf(article("a1", "Article one")), append = LoadState.Loading)
+
+        val last = compose.onNodeWithText("Article one").getBoundsInRoot()
+        val appending = compose.onNodeWithContentDescription(APPENDING).getBoundsInRoot()
+
+        assertTrue("article at ${last.top}, indicator at ${appending.top}", last.top < appending.top)
+    }
+
+    @Test
+    fun `with nothing loading neither indicator is drawn`() {
+        show(articles = listOf(article("a1", "Article one")))
+
+        compose.onNodeWithContentDescription(REFRESHING).assertDoesNotExist()
+        compose.onNodeWithContentDescription(APPENDING).assertDoesNotExist()
+    }
+
     private fun show(
         articles: List<Article>,
         sections: List<FeedSection> = emptyList(),
         refresh: LoadState = LoadState.NotLoading(endOfPaginationReached = true),
+        append: LoadState = LoadState.NotLoading(endOfPaginationReached = true),
         onArticleClick: (String) -> Unit = {},
     ) = compose.setContent {
         TodayFeedTheme {
@@ -93,7 +133,7 @@ class FeedScreenTest {
                                 LoadStates(
                                     refresh = refresh,
                                     prepend = LoadState.NotLoading(true),
-                                    append = LoadState.NotLoading(true)
+                                    append = append
                                 )
                         )
                     ),
@@ -104,6 +144,9 @@ class FeedScreenTest {
     }
 
     private companion object {
+        const val REFRESHING = "Refreshing"
+        const val APPENDING = "Loading more"
+
         val hero =
             FeedSection.WeatherHero(
                 Weather(
