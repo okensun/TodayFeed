@@ -40,8 +40,6 @@ fun ArticleRowCard(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.Top
         ) {
-            // The text takes what is left, so a long title wraps rather than pushing the star
-            // off the card.
             ArticleImage(
                 url = article.imageUrl,
                 // The title says what the picture shows, so repeating it would only be noise
@@ -51,8 +49,12 @@ fun ArticleRowCard(
                     Modifier
                         .size(72.dp)
                         .clip(MaterialTheme.shapes.small)
+                        // On the picture, so a card without one keeps the layout it had.
+                        .padding(end = 12.dp)
             )
-            Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+            // The text takes what is left, so a long title wraps rather than pushing the star
+            // off the card.
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = article.title,
                     style = MaterialTheme.typography.titleMedium,

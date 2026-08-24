@@ -154,7 +154,11 @@ private fun ArticleBody(
                     .height(200.dp)
                     .clip(MaterialTheme.shapes.medium)
         )
-        Text(text = article.title, style = MaterialTheme.typography.headlineSmall)
+        Text(
+            text = article.title,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(top = 16.dp)
+        )
         Text(
             text = article.source,
             style = MaterialTheme.typography.labelMedium,

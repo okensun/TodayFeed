@@ -13,8 +13,10 @@ import javax.inject.Inject
 class TodayFeedApplication :
     Application(),
     SingletonImageLoader.Factory {
+    // `Lazy`, so a cold start does not build the client and load the system trust store before
+    // the first frame. The fetcher reads it when a picture is actually wanted.
     @Inject
-    lateinit var client: OkHttpClient
+    lateinit var client: dagger.Lazy<OkHttpClient>
 
     /**
      * Pictures go through the client this project already builds, so they share its connection
@@ -23,6 +25,6 @@ class TodayFeedApplication :
     override fun newImageLoader(context: PlatformContext): ImageLoader =
         ImageLoader
             .Builder(context)
-            .components { add(OkHttpNetworkFetcherFactory(callFactory = { client })) }
+            .components { add(OkHttpNetworkFetcherFactory(callFactory = { client.get() })) }
             .build()
 }

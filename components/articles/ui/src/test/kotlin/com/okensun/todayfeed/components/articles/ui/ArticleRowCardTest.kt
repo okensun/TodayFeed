@@ -26,9 +26,13 @@ class ArticleRowCardTest {
         compose.onNodeWithText("European Spaceflight").assertIsDisplayed()
     }
 
-    /** The picture is the part that can fail. The words are the part that must not. */
+    /**
+     * An article that carries a picture still reads as one that does not until the picture
+     * arrives. This runs with no network fetcher on the classpath, so the request never leaves:
+     * that is the shape of a picture that never comes, not of one that fails a request.
+     */
     @Test
-    fun `an article whose picture cannot be loaded still shows its title`() {
+    fun `an article carrying a picture shows its title before the picture arrives`() {
         show(previewArticle("a2").copy(imageUrl = "https://example.invalid/missing.jpg"))
 
         compose.onNodeWithText(TITLE).assertIsDisplayed()
