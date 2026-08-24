@@ -13,7 +13,7 @@ android {
 
 dependencies {
     // Connectivity is declared in :core:freshness and read here, because reading the platform is
-    // this module's job. Pass 5 replaces the stand-in with the real NetworkCapabilities read.
+    // this module's job.
     api(project(":core:freshness"))
     api(libs.retrofit.core)
     api(libs.retrofit.kotlinx.serialization)

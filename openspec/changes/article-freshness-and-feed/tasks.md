@@ -104,10 +104,13 @@
       marker with content present and offline, and none when online, and a third that it sits
       above the articles it describes. Offline with nothing stored gets the offline screen and its
       retry instead
-- [ ] 3.4 Drop the marker when the network returns, from `Connectivity.observe()`, **and refresh**.
+- [x] 3.4 Drop the marker when the network returns, from `Connectivity.observe()`, **and refresh**.
       A review of pass 1 found this is not only cosmetic: `initialize()` runs once per pager, so a
       reader who starts offline with an empty cache never retries without it. Verify: a test
-      moves the fake back to unmetered and shows the marker clears
+      moves the fake back to unmetered and shows the marker clears. `ObserveNetworkReturned` holds
+      the transition so it is testable, and four tests cover it. Verified on a Pixel 6: leaving
+      aeroplane mode sends one request at `offset=0`. 5.1 was pulled forward to make any of this
+      reachable at all
 - [x] 3.5 Add `FeedSection` and `ObserveFeedSections` to `:components:feed:domain`, replacing
       `ObserveFeed`. **Pulled into pass 1**: the moment the feed became a paged stream, the old
       combined list stopped compiling, and leaving it out would have removed the weather card from
@@ -139,9 +142,12 @@
 Turns "we do not waste your data" from a claim into an assertion. First to be cut, because
 passes 1 to 3 are the must-haves and this is not one.
 
-- [ ] 5.1 Implement `Connectivity` in `:core:network` over `NetworkCapabilities`, reading
-      `NET_CAPABILITY_NOT_METERED` rather than the transport type. Verify by hand on a device:
-      wifi reports unmetered, mobile data reports metered, aeroplane mode reports offline
+- [x] 5.1 Implement `Connectivity` in `:core:network` over `NetworkCapabilities`, reading
+      `NET_CAPABILITY_NOT_METERED` rather than the transport type. **Pulled forward out of pass
+      5**: until it existed, 3.1 to 3.4 could not happen on a device at all, because the stand-in
+      always answered unmetered. Verified on a Pixel 6 for wifi and for aeroplane mode. Mobile
+      data is untested, that phone has no SIM. The rules are a plain function with three tests;
+      the platform read is the part the device checks
 - [ ] 5.2 Add `DataSaver` and `LocalDataSaver` to `:core:designsystem`. Verify:
       `./gradlew :core:designsystem:dependencies` shows no dependency on `:core:freshness`,
       because the mapping belongs to `:app`

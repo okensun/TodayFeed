@@ -1,11 +1,16 @@
 package com.okensun.todayfeed.components.feed.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
@@ -170,6 +175,33 @@ class FeedScreenTest {
         val first = compose.onNodeWithText("Article one").getBoundsInRoot()
 
         assertTrue("line at ${line.top}, article at ${first.top}", line.top < first.top)
+    }
+
+    /**
+     * The connection is lost while reading, which is not the same as opening the app offline. As
+     * a list item the line sat above the key the list anchors on, so it was added and then left
+     * off screen until the reader scrolled up to find it.
+     */
+    @Test
+    fun `losing the connection part way down the list still shows the line`() {
+        var offline by mutableStateOf(false)
+        val many = (1..20).map { article("a$it", "Article $it") }
+        compose.setContent {
+            TodayFeedTheme {
+                FeedScreen(
+                    articles = flowOf(PagingData.from(many)),
+                    sections = listOf(hero),
+                    offline = offline,
+                    onArticleClick = {}
+                )
+            }
+        }
+        compose.onNodeWithText("Article 1").performTouchInput { swipeUp() }
+        compose.waitForIdle()
+
+        offline = true
+
+        compose.onNodeWithText(OUT_OF_DATE).assertIsDisplayed()
     }
 
     @Test
