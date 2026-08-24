@@ -87,9 +87,8 @@ class ArticlesRemoteMediatorTest {
         }
 
     /**
-     * Scrolling reads older articles, which says nothing about whether the front of the feed has
-     * changed. If an append stamped the freshness time, a long read would keep buying silence and
-     * the reader would stop being told about anything new.
+     * Scrolling reads older articles, which says nothing about the front of the feed. Stamping
+     * the time here would let a long read keep buying silence.
      */
     @Test
     fun `an append does not make the feed look fresher`() =
@@ -115,9 +114,8 @@ class ArticlesRemoteMediatorTest {
         }
 
     /**
-     * Paging cancels an append when a refresh takes priority, and cancellation is not a failure.
-     * Turning it into an error leaves the reader a retry for a load that nothing was wrong with,
-     * and the append is the load this happens to, because refresh outranks it.
+     * A refresh outranks an append and cancels it. Cancellation is not a failure, and an error
+     * there offers a retry for a load nothing was wrong with.
      */
     @Test
     fun `a cancelled append is not turned into an error`() =
@@ -162,10 +160,84 @@ class ArticlesRemoteMediatorTest {
             service.enqueue(page(5..6, hasNext = true))
             mediator.load(LoadType.APPEND, noState())
 
-            service.enqueue(page(7..8, hasNext = true))
+            service.enqueue(page(listOf(8, 7), hasNext = true))
+            service.enqueue(page(listOf(6, 5), hasNext = true))
             mediator.load(LoadType.REFRESH, noState())
 
             assertEquals(listOf("8", "7", "6", "5", "4", "3", "2", "1"), storedNewestFirst())
+        }
+
+    /**
+     * Task 2.3. Time away leaves a gap between what the reader holds and what the source has.
+     * Walking until a page holds something familiar closes it without guessing its width.
+     */
+    @Test
+    fun `a refresh keeps asking until a page holds something already stored`() =
+        runTest {
+            service.enqueue(page(1..2, hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+            service.requests.clear()
+
+            service.enqueue(page(listOf(9, 8), hasNext = true))
+            service.enqueue(page(listOf(7, 6), hasNext = true))
+            service.enqueue(page(listOf(5, 2), hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+
+            assertEquals(listOf(0, 2, 4), service.requests.map { it.offset })
+            assertEquals(listOf("9", "8", "7", "6", "5", "2", "1"), storedNewestFirst())
+        }
+
+    @Test
+    fun `a refresh whose first page is already familiar asks once`() =
+        runTest {
+            service.enqueue(page(1..2, hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+            service.requests.clear()
+
+            service.enqueue(page(listOf(3, 2), hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+
+            assertEquals(listOf(0), service.requests.map { it.offset })
+        }
+
+    /**
+     * The cap stops a source that has moved on entirely from being read end to end in one
+     * refresh. It leaves a gap, which the appends after it fill from where the walk stopped.
+     */
+    @Test
+    fun `a refresh gives up after five pages rather than reading the whole source`() =
+        runTest {
+            service.enqueue(page(1..2, hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+            service.requests.clear()
+
+            repeat(6) { service.enqueue(page(listOf(100 - it * 2, 99 - it * 2), hasNext = true)) }
+            mediator.load(LoadType.REFRESH, noState())
+
+            assertEquals(listOf(0, 2, 4, 6, 8), service.requests.map { it.offset })
+        }
+
+    /**
+     * What the reader already holds moves down by however many articles arrived above it, so the
+     * next append starts below that rather than at the page the refresh happened to end on.
+     */
+    @Test
+    fun `the next append carries on below what the reader already had`() =
+        runTest {
+            service.enqueue(page(1..2, hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+            service.enqueue(page(3..4, hasNext = true))
+            mediator.load(LoadType.APPEND, noState())
+            service.requests.clear()
+
+            // Two arrive above what is held, and the second page meets a familiar article.
+            service.enqueue(page(listOf(9, 8), hasNext = true))
+            service.enqueue(page(listOf(4, 3), hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+            service.enqueue(page(listOf(0), hasNext = false))
+            mediator.load(LoadType.APPEND, noState())
+
+            assertEquals(listOf(0, 2, 6), service.requests.map { it.offset })
         }
 
     private suspend fun storedNewestFirst(): List<String> {
@@ -184,9 +256,14 @@ class ArticlesRemoteMediatorTest {
             leadingPlaceholderCount = 0
         )
 
-    /** Ids double as order: a higher number is a later article. */
     private fun page(
         ids: IntRange,
+        hasNext: Boolean,
+    ) = page(ids.toList(), hasNext)
+
+    /** Ids double as order: a higher number is a later article. */
+    private fun page(
+        ids: List<Int>,
         hasNext: Boolean,
     ) = ArticlesPage(
         count = ids.count(),

@@ -59,9 +59,12 @@
       still present with the two new ones on top. **The code landed in pass 1**, because real
       articles on screen already needed the choice between upsert and delete. Only the test was
       outstanding, and it had to wait for 2.1 to be able to load three pages
-- [ ] 2.3 Make `REFRESH` loop until a page contains an article already stored, capped at five
+- [x] 2.3 Make `REFRESH` loop until a page contains an article already stored, capped at five
       pages. Verify: a test with a source three days ahead makes at most five requests and leaves
-      no gap; a test where page zero contains something familiar makes exactly one
+      no gap; a test where page zero contains something familiar makes exactly one. The walk also
+      stops after one page when nothing was stored before, because there is then no gap to close.
+      Where the next append starts moves down by however many articles arrived above what the
+      reader holds, which is what the note left on 2.1 asked for
 - [x] 2.4 Derive `ContentState` from `loadState.refresh` and `itemCount` in a pure function, with
       `itemCount > 0` first. Verify: unit tests cover every branch, including that an error with
       content already loaded stays `Content`. **Done in pass 1** as `feedContentState`, for the
