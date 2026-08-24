@@ -9,7 +9,6 @@ import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.components.articles.api.ArticleRepository
 import com.okensun.todayfeed.core.freshness.Connectivity
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.time.Clock
 import javax.inject.Inject
@@ -49,8 +48,12 @@ internal class DefaultArticleRepository
                 pagingSourceFactory = { database.dao().pagedArticles() }
             ).flow.map { page -> page.map { it.toArticle() } }
 
-        // Saving arrives in slice 3. Until then nothing is saved, which is what this says.
-        override fun observeSavedArticles(): Flow<List<Article>> = flowOf(emptyList())
+        override fun observeSavedArticles(): Flow<List<Article>> =
+            database.dao().observeSaved().map { saved -> saved.map { it.toArticle() } }
+
+        override suspend fun save(id: String) = database.dao().setSaved(id, clock.instant())
+
+        override suspend fun unsave(id: String) = database.dao().setSaved(id, null)
 
         override suspend fun findArticle(id: String): Article? = database.dao().findArticle(id)?.toArticle()
 

@@ -2,6 +2,7 @@ package com.okensun.todayfeed.components.articles.data
 
 import androidx.paging.PagingSource
 import androidx.room.Room
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -138,6 +139,47 @@ class ArticlesDaoTest {
             assertNull(stored?.serverMaxAge)
             assertEquals(40, stored?.nextOffset)
             assertEquals(false, stored?.hasMore)
+        }
+
+    @Test
+    fun `saved articles come back most recently saved first, whatever they were published`() =
+        runTest {
+            dao.upsertArticles(
+                listOf(
+                    article("old", publishedAt = EPOCH.plus(Duration.ofDays(9))),
+                    article("new", publishedAt = EPOCH)
+                )
+            )
+
+            dao.setSaved("old", Instant.parse("2026-08-01T00:00:00Z"))
+            dao.setSaved("new", Instant.parse("2026-08-02T00:00:00Z"))
+
+            assertEquals(listOf("new", "old"), dao.observeSaved().first().map { it.id })
+        }
+
+    @Test
+    fun `unsaving takes it out of the saved list and leaves the article stored`() =
+        runTest {
+            dao.upsertArticles(listOf(article("a1")))
+            dao.setSaved("a1", Instant.parse("2026-08-01T00:00:00Z"))
+
+            dao.setSaved("a1", null)
+
+            assertTrue(dao.observeSaved().first().isEmpty())
+            assertEquals("a1", dao.findArticle("a1")?.id)
+        }
+
+    /** A refresh writes the same article again. It must not quietly unsave it. */
+    @Test
+    fun `writing an article again does not unsave it`() =
+        runTest {
+            dao.upsertArticles(listOf(article("a1")))
+            val savedAt = Instant.parse("2026-08-01T00:00:00Z")
+            dao.setSaved("a1", savedAt)
+
+            dao.upsertArticles(listOf(article("a1", title = "Corrected")))
+
+            assertEquals(savedAt, dao.findArticle("a1")?.savedAt)
         }
 
     private fun article(

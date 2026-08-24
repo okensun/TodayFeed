@@ -7,15 +7,16 @@ If time runs out, the cut order is section 4, then task 3.4. Sections 1 to 3 are
 
 ## 1. Storing the fact — about forty minutes
 
-- [ ] 1.1 Add `savedAt: Instant?` to `ArticleEntity` and bump the database to version 2 with an
+- [x] 1.1 Add `savedAt: Instant?` to `ArticleEntity` and bump the database to version 2 with an
       `ALTER TABLE` migration. Verify: a test opens a version 1 database holding an article,
       migrates it, and reads the same article back with a null `savedAt`
-- [ ] 1.2 Add `setSaved(id, savedAt)` and `observeSaved()` to the DAO, ordered by `savedAt`
+- [x] 1.2 Add `setSaved(id, savedAt)` and `observeSaved()` to the DAO, ordered by `savedAt`
       descending. Verify: a test saves two articles in a known order and reads them back most
-      recently saved first
-- [ ] 1.3 Note on the DAO that anything which ever deletes from `articles` must exclude rows with
+      recently saved first. A plain `@Upsert` was replaced: it rewrote every column, so one
+      refresh would have quietly unsaved everything. There is a test for that
+- [x] 1.3 Note on the DAO that anything which ever deletes from `articles` must exclude rows with
       a `savedAt`. Verify: the note is on the query it constrains, not at the top of the file
-- [ ] 1.4 Add `save(id)`, `unsave(id)` and the real `observeSavedArticles()` to the repository
+- [x] 1.4 Add `save(id)`, `unsave(id)` and the real `observeSavedArticles()` to the repository
       contract and its implementation. Verify: a test saves through the repository and sees the
       article arrive in the observed list, and unsaving removes it
 
