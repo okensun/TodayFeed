@@ -1,7 +1,7 @@
 package com.okensun.todayfeed.components.feed.domain
 
-import com.okensun.todayfeed.components.weather.api.Weather
 import com.okensun.todayfeed.components.weather.api.WeatherRepository
+import com.okensun.todayfeed.components.weather.api.models.Weather
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 

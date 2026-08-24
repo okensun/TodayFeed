@@ -31,7 +31,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.models.Article
 import com.okensun.todayfeed.components.articles.ui.ArticleRowCard
 import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.weather.ui.WeatherHeroCard

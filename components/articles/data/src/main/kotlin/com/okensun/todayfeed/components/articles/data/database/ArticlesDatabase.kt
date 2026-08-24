@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.data
+package com.okensun.todayfeed.components.articles.data.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

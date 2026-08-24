@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.models.Article
 import com.okensun.todayfeed.core.designsystem.ArticleImage
 import com.okensun.todayfeed.core.designsystem.SavedStar
 import com.okensun.todayfeed.core.designsystem.UnsavedStar

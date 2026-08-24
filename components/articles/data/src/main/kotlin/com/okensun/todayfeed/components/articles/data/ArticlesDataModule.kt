@@ -3,6 +3,9 @@ package com.okensun.todayfeed.components.articles.data
 import android.content.Context
 import androidx.room.Room
 import com.okensun.todayfeed.components.articles.api.ArticleRepository
+import com.okensun.todayfeed.components.articles.data.database.ArticlesDatabase
+import com.okensun.todayfeed.components.articles.data.database.MIGRATION_1_2
+import com.okensun.todayfeed.components.articles.data.network.ArticlesService
 import com.okensun.todayfeed.core.network.TodayFeedJson
 import dagger.Binds
 import dagger.Module

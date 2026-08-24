@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.ui
+package com.okensun.todayfeed.components.articles.ui.saved
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,7 +10,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.models.Article
+import com.okensun.todayfeed.components.articles.ui.ArticleRowCard
+import com.okensun.todayfeed.components.articles.ui.previewArticle
 import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.EmptyState
 import com.okensun.todayfeed.core.designsystem.ErrorState

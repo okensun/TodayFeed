@@ -17,9 +17,9 @@ import androidx.compose.ui.test.swipeUp
 import androidx.paging.LoadState
 import androidx.paging.LoadStates
 import androidx.paging.PagingData
-import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.models.Article
 import com.okensun.todayfeed.components.feed.domain.FeedSection
-import com.okensun.todayfeed.components.weather.api.Weather
+import com.okensun.todayfeed.components.weather.api.models.Weather
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow

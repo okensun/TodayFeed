@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.ui
+package com.okensun.todayfeed.components.articles.ui.saved
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.getBoundsInRoot
@@ -6,7 +6,8 @@ import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.models.Article
+import com.okensun.todayfeed.components.articles.ui.previewArticle
 import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import org.junit.Assert.assertEquals

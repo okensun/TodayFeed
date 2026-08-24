@@ -1,6 +1,6 @@
 package com.okensun.todayfeed.components.feed.domain
 
-import com.okensun.todayfeed.components.weather.api.Weather
+import com.okensun.todayfeed.components.weather.api.models.Weather
 
 /**
  * A block that sits above the article list rather than inside it.
