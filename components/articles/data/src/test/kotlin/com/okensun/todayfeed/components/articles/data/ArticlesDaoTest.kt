@@ -70,6 +70,38 @@ class ArticlesDaoTest {
             )
         }
 
+    /**
+     * Paging reads its windows with `LIMIT` and `OFFSET`, so an order with ties is not an order.
+     * Two rows that swap places between two queries appear twice or not at all at a page
+     * boundary. An article whose date will not parse is stored at the epoch, so ties are ordinary.
+     */
+    @Test
+    fun `articles published at the same instant come back in the same order every time`() =
+        runTest {
+            dao.upsertArticles(
+                listOf(
+                    article("b", publishedAt = EPOCH),
+                    article("d", publishedAt = EPOCH),
+                    article("a", publishedAt = EPOCH),
+                    article("c", publishedAt = EPOCH)
+                )
+            )
+
+            val first = idsNewestFirst()
+            val second = idsNewestFirst()
+
+            assertEquals(listOf("d", "c", "b", "a"), first)
+            assertEquals(first, second)
+        }
+
+    private suspend fun idsNewestFirst(): List<String> {
+        val page =
+            dao.pagedArticles().load(
+                PagingSource.LoadParams.Refresh(key = null, loadSize = 10, placeholdersEnabled = false)
+            )
+        return (page as PagingSource.LoadResult.Page).data.map { it.id }
+    }
+
     @Test
     fun `counting stored ids is how a refresh knows it has reached back far enough`() =
         runTest {
