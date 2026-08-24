@@ -43,8 +43,8 @@ asking a question rather than from me spotting a bug.
 
 ## The pattern: claims running ahead of evidence
 
-This is the one thing I would want a reader to take from this file. Seven separate corrections,
-all the same shape.
+This is the one thing I would want a reader to take from this file. Every correction below has
+the same shape.
 
 ### 1. Three false claims about Paging 3, killed by a thirty-minute spike
 
@@ -142,6 +142,30 @@ The second review found that `ContentState.Loading` was untested on all three sc
 test named "rounds the temperature down" blessed `toInt()`, which truncates toward zero — so
 `-3.7` rendered as `-3`, rounded *up*, and Open-Meteo returns negatives.
 
+### And three the reviews did not find
+
+None of these came from a test or from a review. Two came from asking why the code was shaped the
+way it is, and one from opening an article.
+
+- **An empty module, defended by sixteen lines of prose.** `:components:articles:domain` held no
+  code at all. Three reasons had been written down for it. Choosing Paging 3 moved two of them into
+  the remote mediator, which lives in `data`, and the third was a single repository call, which
+  coordinates nothing. The decision record went on defending it, so the dead weight sat in the
+  document rather than in the build. Three unused dependencies came out with it, and not one of
+  them could ever have failed a build.
+- **A rule written as a list, which goes stale.** My replacement for that entry said "only `feed`
+  has a `domain` module". That is a list. It needs editing the next time a component arrives, which
+  is the same failure as the entry it replaced. The rule it became has no list: the four layers are
+  the shape, and a layer with nothing to hold is not created.
+- **A requirement marked done, verified by reading the code.** The spec asks for a way out of the
+  detail screen inside the app. `onBack` was passed down, and it was used — on the three states
+  that go wrong. On a normal article there was nothing to tap. Every code-shaped check passed, and
+  so did 67 unit tests, because none of them asked what was on the screen.
+
+What the three have in common is that none of them is visible in the code. An empty module only
+means something next to the paragraph defending it, a rule goes stale in the future, and a missing
+button is an absence. The assistant is good at reading what is there.
+
 ## What I made it verify instead of recall
 
 Model knowledge has a cutoff, so anything version-shaped had to be checked. Four times, and three
@@ -175,3 +199,6 @@ Three practices, each with a specific trigger rather than a good intention:
    metered multiplier would have died on contact with 17 KB and 50 KB.
 3. **A verification command has to be able to fail.** Check the exit status, and prefer a check
    that a compiler enforces over a grep that approximates it.
+4. **A requirement about what the user sees is checked on the screen.** "Is the callback wired" and
+   "is there anything to tap" are different questions, and only the first is answerable from the
+   code.
