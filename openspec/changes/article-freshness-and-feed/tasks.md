@@ -77,8 +77,10 @@
       what the tests find them by
 - [ ] 2.6 Add pull to refresh, bypassing the policy. Verify by hand that pulling refreshes
       straight after a refresh; a view test shows the indicator follows the refresh load state
-- [ ] 2.7 Offer `retry()` for a failed append without losing what is loaded. Verify: a view test
-      shows the loaded articles stay and the retry is offered
+- [x] 2.7 Offer `retry()` for a failed append without losing what is loaded. Verify: a view test
+      shows the loaded articles stay and the retry is offered, and a second checks it is drawn
+      under the last article rather than anywhere on screen. It says the same "Try again" as the
+      full screen error, so one action does not have two names
 - [x] 2.8 Set `PagingConfig` with a page size of twenty and a `prefetchDistance` of five. Verify:
       by hand that reaching the end does not stall. **Done in pass 1**; both values are in
       `DefaultArticleRepository`. The test this task asked for was dropped on purpose: asserting

@@ -108,6 +108,35 @@ class FeedScreenTest {
         assertTrue("article at ${last.top}, indicator at ${appending.top}", last.top < appending.top)
     }
 
+    /**
+     * The failure is at the bottom of the list, not the whole screen. Blanking what the reader is
+     * holding because the next page did not arrive loses more than it explains.
+     */
+    @Test
+    fun `an append that fails keeps the articles and offers a retry`() {
+        show(
+            articles = listOf(article("a1", "Article one")),
+            append = LoadState.Error(RuntimeException("no network"))
+        )
+
+        compose.onNodeWithText("Article one").assertIsDisplayed()
+        compose.onNodeWithText("no network").assertIsDisplayed()
+        compose.onNodeWithText("Try again").assertIsDisplayed()
+    }
+
+    @Test
+    fun `an append that fails is shown under the articles`() {
+        show(
+            articles = listOf(article("a1", "Article one")),
+            append = LoadState.Error(RuntimeException("no network"))
+        )
+
+        val last = compose.onNodeWithText("Article one").getBoundsInRoot()
+        val failure = compose.onNodeWithText("Try again").getBoundsInRoot()
+
+        assertTrue("article at ${last.top}, retry at ${failure.top}", last.top < failure.top)
+    }
+
     @Test
     fun `with nothing loading neither indicator is drawn`() {
         show(articles = listOf(article("a1", "Article one")))
