@@ -132,15 +132,19 @@
 
 ## 4. Pictures — about forty five minutes
 
-- [ ] 4.1 Add Coil to the version catalog and an `ArticleImage` composable to
+- [x] 4.1 Add Coil to the version catalog and an `ArticleImage` composable to
       `:core:designsystem` that falls back to the text-only layout while loading and on failure.
       Verify: a view test with no picture and one with an unreachable URL both still show the
-      article's title
-- [ ] 4.2 Put the thumbnail on the article card and a wide picture at the top of the detail
+      article's title. `SubcomposeAsyncImage` with empty loading and error slots is what makes
+      the fallback structural: with nothing to show it takes no room, so nothing waits
+- [x] 4.2 Put the thumbnail on the article card and a wide picture at the top of the detail
       screen. Verify: previews in both themes, and by hand that a card without a picture keeps
-      its layout
-- [ ] 4.3 Check a slow picture does not block the card. Verify by hand with a throttled
-      connection: the title and source appear immediately and the picture arrives later
+      its layout. Coil fetches through the shared `OkHttpClient`, wired in `:app` because
+      `:core:designsystem` may not see `:core:network`
+- [x] 4.3 Check a slow picture does not block the card. Verify by hand with a throttled
+      connection: the title and source appear immediately and the picture arrives later. Recorded
+      on an emulator at EDGE speed: titles were on screen at nine seconds, thumbnails at twenty,
+      and the rows did not move when they arrived
 
 ## 5. The metered behaviour, and the numbers — about one and a quarter hours
 

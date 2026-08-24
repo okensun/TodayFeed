@@ -11,6 +11,10 @@ android {
 
 dependencies {
     implementation(project(":core:designsystem"))
+    // Coil fetches through the client this project already builds, so pictures share the
+    // connection pool and the timeouts with every other request.
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation(project(":components:feed:ui"))
     implementation(project(":components:articles:ui"))
     implementation(project(":components:weather:ui"))
