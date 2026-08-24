@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.articles.ui
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.okensun.todayfeed.components.articles.api.Article
@@ -28,11 +29,16 @@ class SavedViewModel
         @OptIn(ExperimentalCoroutinesApi::class)
         val state: StateFlow<ContentState<List<Article>>> =
             retries
-                .flatMapLatest { articles.observeSavedArticles() }
-                .map { saved ->
-                    if (saved.isEmpty()) ContentState.Empty else ContentState.Content(saved)
-                }.catch { emit(ContentState.Error("Saved articles could not be read.")) }
-                .stateIn(
+                .flatMapLatest {
+                    // The failure is caught in here, so it ends this read and not the flow of
+                    // retries. Caught outside, the first failure would carry `retries` away with
+                    // it, and the button would raise a number nobody is left collecting.
+                    articles
+                        .observeSavedArticles()
+                        .map { saved ->
+                            if (saved.isEmpty()) ContentState.Empty else ContentState.Content(saved)
+                        }.catch { emit(ContentState.Error("Saved articles could not be read.")) }
+                }.stateIn(
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
                     initialValue = ContentState.Loading
@@ -45,7 +51,13 @@ class SavedViewModel
 
         fun onToggleSave(article: Article) =
             viewModelScope.launch {
-                if (article.saved) articles.unsave(article.id) else articles.save(article.id)
+                try {
+                    if (article.saved) articles.unsave(article.id) else articles.save(article.id)
+                } catch (ignored: SQLiteException) {
+                    // Storage is full or broken. There is nothing to put right, because what the
+                    // star shows is read back from storage and so it never moved. Uncaught here
+                    // it would take the app down instead.
+                }
             }
 
         private companion object {

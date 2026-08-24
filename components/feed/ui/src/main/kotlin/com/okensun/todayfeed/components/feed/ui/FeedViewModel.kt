@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.feed.ui
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -52,7 +53,13 @@ class FeedViewModel
 
         fun onToggleSave(article: Article) =
             viewModelScope.launch {
-                if (article.saved) repository.unsave(article.id) else repository.save(article.id)
+                try {
+                    if (article.saved) repository.unsave(article.id) else repository.save(article.id)
+                } catch (ignored: SQLiteException) {
+                    // Storage is full or broken. There is nothing to put right, because what the
+                    // star shows is read back from storage and so it never moved. Uncaught here
+                    // it would take the app down instead.
+                }
             }
 
         private companion object {

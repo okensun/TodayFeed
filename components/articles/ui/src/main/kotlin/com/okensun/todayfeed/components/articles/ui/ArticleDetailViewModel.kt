@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.articles.ui
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,7 +33,12 @@ class ArticleDetailViewModel
         fun onToggleSave() =
             viewModelScope.launch {
                 val article = (_state.value as? ContentState.Content)?.value ?: return@launch
-                if (article.saved) articles.unsave(article.id) else articles.save(article.id)
+                try {
+                    if (article.saved) articles.unsave(article.id) else articles.save(article.id)
+                } catch (ignored: SQLiteException) {
+                    // Storage is full or broken. Reading again below shows what is really stored,
+                    // so the star settles on the truth. Uncaught it would take the app down.
+                }
                 load()
             }
 
