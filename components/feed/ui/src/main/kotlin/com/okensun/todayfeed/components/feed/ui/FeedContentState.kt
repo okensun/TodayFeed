@@ -17,19 +17,26 @@ import com.okensun.todayfeed.core.designsystem.ContentState
  *    weather card, an empty list, and no way to try again.
  * 3. Only then do sections count as content, which keeps a weather card from being replaced by
  *    "nothing to read" when there is simply nothing to read yet.
+ * 4. Offline is settled last of all, and only decides how content is labelled. It is not a
+ *    failure, so it never takes an error's place and never hides what is held.
  */
 internal fun feedContentState(
     refresh: LoadState,
     itemCount: Int,
     hasSections: Boolean,
+    offline: Boolean,
 ): ContentState<Unit> =
     when {
-        itemCount > 0 -> ContentState.Content(Unit)
+        itemCount > 0 -> held(offline)
         refresh is LoadState.Error ->
             ContentState.Error(
                 refresh.error.message ?: "The feed could not be loaded."
             )
         refresh is LoadState.Loading -> ContentState.Loading
-        hasSections -> ContentState.Content(Unit)
+        hasSections -> held(offline)
+        offline -> ContentState.Offline(null)
         else -> ContentState.Empty
     }
+
+/** Offline is not a failure: the same content, marked as what it is. */
+private fun held(offline: Boolean): ContentState<Unit> = if (offline) ContentState.Offline(Unit) else ContentState.Content(Unit)

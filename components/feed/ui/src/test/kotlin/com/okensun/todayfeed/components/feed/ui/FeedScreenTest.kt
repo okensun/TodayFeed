@@ -143,11 +143,52 @@ class FeedScreenTest {
         compose.onNodeWithContentDescription(APPENDING).assertDoesNotExist()
     }
 
+    /**
+     * Offline with articles is not a failure. They stay, with a line saying they may be old, so
+     * the reader knows what they are looking at rather than being sent away from it.
+     */
+    @Test
+    fun `offline with articles keeps them and says they may be out of date`() {
+        show(articles = listOf(article("a1", "Article one")), offline = true)
+
+        compose.onNodeWithText("Article one").assertIsDisplayed()
+        compose.onNodeWithText(OUT_OF_DATE).assertIsDisplayed()
+    }
+
+    @Test
+    fun `online shows no out of date line`() {
+        show(articles = listOf(article("a1", "Article one")))
+
+        compose.onNodeWithText(OUT_OF_DATE).assertDoesNotExist()
+    }
+
+    @Test
+    fun `the out of date line is above the articles`() {
+        show(articles = listOf(article("a1", "Article one")), offline = true)
+
+        val line = compose.onNodeWithText(OUT_OF_DATE).getBoundsInRoot()
+        val first = compose.onNodeWithText("Article one").getBoundsInRoot()
+
+        assertTrue("line at ${line.top}, article at ${first.top}", line.top < first.top)
+    }
+
+    @Test
+    fun `offline with nothing stored says so and offers a retry`() {
+        show(articles = emptyList(), offline = true)
+
+        compose.onNodeWithText("You are offline").assertIsDisplayed()
+        compose.onNodeWithText("Try again").assertIsDisplayed()
+    }
+
+    // Six named defaults is what lets each test say only what it is about. Bundling them into a
+    // holder would move that noise into every call site instead of removing it.
+    @Suppress("LongParameterList")
     private fun show(
         articles: List<Article>,
         sections: List<FeedSection> = emptyList(),
         refresh: LoadState = LoadState.NotLoading(endOfPaginationReached = true),
         append: LoadState = LoadState.NotLoading(endOfPaginationReached = true),
+        offline: Boolean = false,
         onArticleClick: (String) -> Unit = {},
     ) = compose.setContent {
         TodayFeedTheme {
@@ -165,6 +206,7 @@ class FeedScreenTest {
                         )
                     ),
                 sections = sections,
+                offline = offline,
                 onArticleClick = onArticleClick
             )
         }
@@ -172,6 +214,7 @@ class FeedScreenTest {
 
     private companion object {
         const val APPENDING = "Loading more"
+        const val OUT_OF_DATE = "You are offline. These articles may be out of date."
 
         val hero =
             FeedSection.WeatherHero(

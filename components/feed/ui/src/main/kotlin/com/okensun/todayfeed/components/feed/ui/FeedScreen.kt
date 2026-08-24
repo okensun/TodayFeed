@@ -34,6 +34,7 @@ import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.EmptyState
 import com.okensun.todayfeed.core.designsystem.ErrorState
 import com.okensun.todayfeed.core.designsystem.LoadingState
+import com.okensun.todayfeed.core.designsystem.OfflineState
 import kotlinx.coroutines.flow.Flow
 
 /** Stateful form: finds the view model and nothing else. */
@@ -44,9 +45,11 @@ fun FeedScreen(
     viewModel: FeedViewModel = hiltViewModel(),
 ) {
     val sections by viewModel.sections.collectAsStateWithLifecycle()
+    val offline by viewModel.offline.collectAsStateWithLifecycle()
     FeedScreen(
         articles = viewModel.articles,
         sections = sections,
+        offline = offline,
         onArticleClick = onArticleClick,
         modifier = modifier
     )
@@ -61,13 +64,15 @@ fun FeedScreen(
 internal fun FeedScreen(
     articles: Flow<PagingData<Article>>,
     sections: List<FeedSection>,
+    offline: Boolean,
     onArticleClick: (String) -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
 ) {
     val paged = articles.collectAsLazyPagingItems()
 
-    when (val state = feedContentState(paged.loadState.refresh, paged.itemCount, sections.isNotEmpty())) {
+    val state = feedContentState(paged.loadState.refresh, paged.itemCount, sections.isNotEmpty(), offline)
+    when (state) {
         is ContentState.Loading -> LoadingState(modifier)
         is ContentState.Empty -> EmptyState(title = "Nothing to read yet", modifier = modifier)
         is ContentState.Error ->
@@ -76,7 +81,9 @@ internal fun FeedScreen(
                 onRetry = paged::retry,
                 modifier = modifier
             )
-        // Offline arrives in pass 3, once the connection is read for real.
+        // Nothing stored and no connection is the one dead end, and even it offers a retry.
+        is ContentState.Offline if state.cached == null ->
+            OfflineState(onRetry = paged::refresh, modifier = modifier)
         is ContentState.Offline, is ContentState.Content ->
             RefreshableFeed(
                 refreshing = paged.loadState.refresh is LoadState.Loading,
@@ -84,6 +91,10 @@ internal fun FeedScreen(
                 modifier = modifier
             ) {
                 LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                    // Above the sections, so it is read before what it is describing.
+                    if (offline) {
+                        item(key = OUT_OF_DATE) { OutOfDate() }
+                    }
                     sections.forEach { section ->
                         item(key = section.key()) { Section(section) }
                     }
@@ -155,6 +166,15 @@ private fun Appending() =
     )
 
 @Composable
+private fun OutOfDate() =
+    Text(
+        text = OUT_OF_DATE,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+    )
+
+@Composable
 private fun AppendFailed(
     message: String?,
     onRetry: () -> Unit,
@@ -172,6 +192,7 @@ private fun AppendFailed(
 private const val REFRESHING = "Refreshing"
 private const val APPENDING = "Loading more"
 private const val APPEND_FAILED = "append failed"
+private const val OUT_OF_DATE = "You are offline. These articles may be out of date."
 private const val COULD_NOT_LOAD_MORE = "More articles could not be loaded."
 
 // The same word as the full screen error, so one action does not have two names.
