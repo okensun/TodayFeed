@@ -36,7 +36,12 @@ fun ArticleDetailScreen(
     viewModel: ArticleDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    ArticleDetailScreen(state = state, onBack = onBack, modifier = modifier)
+    ArticleDetailScreen(
+        state = state,
+        onBack = onBack,
+        modifier = modifier,
+        onToggleSave = viewModel::onToggleSave
+    )
 }
 
 /**
@@ -52,6 +57,7 @@ internal fun ArticleDetailScreen(
     state: ContentState<Article>,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    onToggleSave: () -> Unit = {},
     scrollState: ScrollState = rememberScrollState(),
 ) {
     Scaffold(
@@ -65,6 +71,16 @@ internal fun ArticleDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(imageVector = BackArrow, contentDescription = BACK)
+                    }
+                },
+                actions = {
+                    // Only where there is an article to keep. There is nothing to save on a
+                    // screen that could not find one.
+                    val article =
+                        (state as? ContentState.Content)?.value
+                            ?: (state as? ContentState.Offline)?.cached
+                    if (article != null) {
+                        SaveControl(saved = article.saved, onToggle = onToggleSave)
                     }
                 }
             )

@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.feed.ui
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
@@ -15,19 +16,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class FeedViewModel
     @Inject
     constructor(
-        articles: ArticleRepository,
+        private val repository: ArticleRepository,
         observeSections: ObserveFeedSections,
         observeOffline: ObserveOffline,
         observeNetworkReturned: ObserveNetworkReturned,
     ) : ViewModel() {
         /** `cachedIn` so the loaded pages survive the activity being recreated. */
-        val articles: Flow<PagingData<Article>> = articles.observeArticles().cachedIn(viewModelScope)
+        val articles: Flow<PagingData<Article>> = repository.observeArticles().cachedIn(viewModelScope)
 
         val sections: StateFlow<List<FeedSection>> =
             observeSections()
@@ -48,6 +50,17 @@ class FeedViewModel
 
         /** The screen asks again when this fires, because nothing else will. */
         val networkReturned: Flow<Unit> = observeNetworkReturned()
+
+        fun onToggleSave(article: Article) =
+            viewModelScope.launch {
+                try {
+                    if (article.saved) repository.unsave(article.id) else repository.save(article.id)
+                } catch (ignored: SQLiteException) {
+                    // Storage is full or broken. There is nothing to put right, because what the
+                    // star shows is read back from storage and so it never moved. Uncaught here
+                    // it would take the app down instead.
+                }
+            }
 
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L

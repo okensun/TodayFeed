@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.articles.ui
 
+import android.database.sqlite.SQLiteException
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,6 +27,24 @@ class ArticleDetailViewModel
         val state: StateFlow<ContentState<Article>> = _state.asStateFlow()
 
         init {
+            load()
+        }
+
+        fun onToggleSave() =
+            viewModelScope.launch {
+                val article = (_state.value as? ContentState.Content)?.value ?: return@launch
+                try {
+                    if (article.saved) articles.unsave(article.id) else articles.save(article.id)
+                } catch (ignored: SQLiteException) {
+                    // Storage is full or broken. Reading again below shows what is really stored,
+                    // so the star settles on the truth. Uncaught it would take the app down.
+                }
+                load()
+            }
+
+        /** Read from storage, not from the paged feed. A saved article can fall out of what the
+         * source returns and must still open. */
+        private fun load() =
             viewModelScope.launch {
                 val article = articles.findArticle(articleId)
                 _state.value =
@@ -34,7 +53,6 @@ class ArticleDetailViewModel
                         else -> ContentState.Content(article)
                     }
             }
-        }
 
         private companion object {
             const val ARTICLE_ID_KEY = "articleId"

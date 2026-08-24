@@ -1,13 +1,16 @@
 package com.okensun.todayfeed.components.articles.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -78,13 +81,47 @@ class SavedScreenTest {
         assertEquals(article.id, clicked)
     }
 
+    /** The tab reads in the order the repository gives it, which is most recently saved first. */
+    @Test
+    fun `the list keeps the order it was given`() {
+        setState(
+            ContentState.Content(
+                listOf(article.copy(id = "newer", title = "Newer"), article.copy(id = "older", title = "Older"))
+            )
+        )
+
+        val newer = compose.onNodeWithText("Newer").getBoundsInRoot()
+        val older = compose.onNodeWithText("Older").getBoundsInRoot()
+
+        assertTrue("newer at ${newer.top}, older at ${older.top}", newer.top < older.top)
+    }
+
+    @Test
+    fun `unsaving from the tab passes the article back`() {
+        var toggled: Article? = null
+        setState(
+            ContentState.Content(listOf(article.copy(saved = true))),
+            onToggleSave = { toggled = it }
+        )
+
+        compose.onNodeWithContentDescription("Saved").performClick()
+
+        assertEquals(article.id, toggled?.id)
+    }
+
     private fun setState(
         state: ContentState<List<Article>>,
         onRetry: () -> Unit = {},
         onArticleClick: (String) -> Unit = {},
+        onToggleSave: (Article) -> Unit = {},
     ) = compose.setContent {
         TodayFeedTheme {
-            SavedScreen(state = state, onRetry = onRetry, onArticleClick = onArticleClick)
+            SavedScreen(
+                state = state,
+                onRetry = onRetry,
+                onArticleClick = onArticleClick,
+                onToggleSave = onToggleSave
+            )
         }
     }
 
