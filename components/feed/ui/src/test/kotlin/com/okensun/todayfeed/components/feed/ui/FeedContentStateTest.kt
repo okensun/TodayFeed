@@ -2,6 +2,8 @@ package com.okensun.todayfeed.components.feed.ui
 
 import androidx.paging.LoadState
 import com.okensun.todayfeed.core.designsystem.ContentState
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -65,11 +67,48 @@ class FeedContentStateTest {
         )
     }
 
+    /** Offline is not a failure. Articles in hand stay on screen, marked as what they are. */
+    @Test
+    fun `offline with articles is offline carrying them, not an error`() {
+        val result = state(done, itemCount = 5, offline = true)
+
+        assertTrue(result is ContentState.Offline)
+        assertNotNull((result as ContentState.Offline).cached)
+    }
+
+    @Test
+    fun `offline with only a section still carries it`() {
+        val result = state(done, itemCount = 0, hasSections = true, offline = true)
+
+        assertNotNull((result as ContentState.Offline).cached)
+    }
+
+    /** The dead end: offline and nothing stored. Even this offers a retry rather than nothing. */
+    @Test
+    fun `offline with nothing at all carries nothing`() {
+        val result = state(done, itemCount = 0, offline = true)
+
+        assertTrue(result is ContentState.Offline)
+        assertNull((result as ContentState.Offline).cached)
+    }
+
+    /**
+     * Offline is settled after a failure that has nothing to show, so the retry stays reachable.
+     * Ordering, again, rather than a rule anyone has to remember.
+     */
+    @Test
+    fun `offline with nothing loaded and a failure is still the error`() {
+        val result = state(LoadState.Error(RuntimeException("x")), itemCount = 0, offline = true)
+
+        assertTrue(result is ContentState.Error)
+    }
+
     private fun state(
         refresh: LoadState,
         itemCount: Int,
         hasSections: Boolean = false,
-    ) = feedContentState(refresh, itemCount, hasSections)
+        offline: Boolean = false,
+    ) = feedContentState(refresh, itemCount, hasSections, offline)
 
     private companion object {
         val done = LoadState.NotLoading(endOfPaginationReached = true)

@@ -96,10 +96,14 @@
       fake connectivity offline makes **zero** requests and the stored articles still come through.
       Checked for both a refresh and an append. The check sits above the `when` over `LoadType`,
       so that stays exhaustive and a new load type still has to be written out
-- [ ] 3.2 Add the offline branch to the state derivation, so content plus offline gives
-      `Offline(cached)`. Verify: a unit test covers both offline branches
-- [ ] 3.3 Show the out-of-date marker when offline with content. Verify: a view test shows the
-      marker with content present and offline, and none when online
+- [x] 3.2 Add the offline branch to the state derivation, so content plus offline gives
+      `Offline(cached)`. Verify: a unit test covers both offline branches. Offline is settled
+      last, so it only labels content and never takes an error's place. `feed:ui` may not name
+      `Connection`, so `ObserveOffline` in `feed:domain` hands the answer over as a plain flag
+- [x] 3.3 Show the out-of-date marker when offline with content. Verify: a view test shows the
+      marker with content present and offline, and none when online, and a third that it sits
+      above the articles it describes. Offline with nothing stored gets the offline screen and its
+      retry instead
 - [ ] 3.4 Drop the marker when the network returns, from `Connectivity.observe()`, **and refresh**.
       A review of pass 1 found this is not only cosmetic: `initialize()` runs once per pager, so a
       reader who starts offline with an empty cache never retries without it. Verify: a test

@@ -8,6 +8,7 @@ import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.components.articles.api.ArticleRepository
 import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.feed.domain.ObserveFeedSections
+import com.okensun.todayfeed.components.feed.domain.ObserveOffline
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -21,6 +22,7 @@ class FeedViewModel
     constructor(
         articles: ArticleRepository,
         observeSections: ObserveFeedSections,
+        observeOffline: ObserveOffline,
     ) : ViewModel() {
         /** `cachedIn` so the loaded pages survive the activity being recreated. */
         val articles: Flow<PagingData<Article>> = articles.observeArticles().cachedIn(viewModelScope)
@@ -31,6 +33,15 @@ class FeedViewModel
                     scope = viewModelScope,
                     started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
                     initialValue = emptyList()
+                )
+
+        /** Not a failure, so it is its own flag rather than a kind of error. */
+        val offline: StateFlow<Boolean> =
+            observeOffline()
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+                    initialValue = false
                 )
 
         private companion object {
