@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.weather.api
 
+import com.okensun.todayfeed.components.weather.api.models.Weather
 import kotlinx.coroutines.flow.Flow
 
 /**

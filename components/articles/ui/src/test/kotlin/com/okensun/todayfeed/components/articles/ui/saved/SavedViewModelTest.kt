@@ -1,8 +1,10 @@
-package com.okensun.todayfeed.components.articles.ui
+package com.okensun.todayfeed.components.articles.ui.saved
 
 import app.cash.turbine.ReceiveTurbine
 import app.cash.turbine.test
-import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.models.Article
+import com.okensun.todayfeed.components.articles.ui.FakeArticleRepository
+import com.okensun.todayfeed.components.articles.ui.previewArticle
 import com.okensun.todayfeed.core.designsystem.ContentState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

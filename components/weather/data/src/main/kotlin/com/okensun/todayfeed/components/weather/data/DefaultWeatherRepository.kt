@@ -1,7 +1,7 @@
 package com.okensun.todayfeed.components.weather.data
 
-import com.okensun.todayfeed.components.weather.api.Weather
 import com.okensun.todayfeed.components.weather.api.WeatherRepository
+import com.okensun.todayfeed.components.weather.api.models.Weather
 import com.okensun.todayfeed.core.freshness.Connectivity
 import com.okensun.todayfeed.core.freshness.decide
 import com.okensun.todayfeed.core.freshness.wantsNetwork

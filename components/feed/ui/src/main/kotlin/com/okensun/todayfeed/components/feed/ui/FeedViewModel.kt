@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.components.articles.api.ArticleRepository
+import com.okensun.todayfeed.components.articles.api.models.Article
 import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.feed.domain.ObserveFeedSections
 import com.okensun.todayfeed.components.feed.domain.ObserveNetworkReturned

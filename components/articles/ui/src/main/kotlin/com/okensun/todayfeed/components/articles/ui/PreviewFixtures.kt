@@ -1,6 +1,6 @@
 package com.okensun.todayfeed.components.articles.ui
 
-import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.models.Article
 import java.time.Instant
 
 /** Shared by the previews in this package so the same article is not written three times. */

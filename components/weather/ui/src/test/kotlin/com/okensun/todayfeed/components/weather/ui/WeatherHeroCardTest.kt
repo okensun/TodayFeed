@@ -3,7 +3,7 @@ package com.okensun.todayfeed.components.weather.ui
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import com.okensun.todayfeed.components.weather.api.Weather
+import com.okensun.todayfeed.components.weather.api.models.Weather
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import org.junit.Rule
 import org.junit.Test

@@ -1,6 +1,6 @@
 package com.okensun.todayfeed.components.weather.data
 
-import com.okensun.todayfeed.components.weather.api.Weather
+import com.okensun.todayfeed.components.weather.api.models.Weather
 
 /**
  * The source answers with a WMO code. Grouped rather than listed one by one: a reader wants to
