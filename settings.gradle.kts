@@ -30,7 +30,6 @@ include(":core:testing")
 // Each component owns its layers. Only :app may depend on a data module, and a component
 // sees another component only through its api module. See AGENTS.md for the full rules.
 include(":components:articles:api")
-include(":components:articles:domain")
 include(":components:articles:data")
 include(":components:articles:ui")
 

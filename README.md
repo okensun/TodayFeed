@@ -51,13 +51,13 @@ design, and the build enforces both:
 :core:database                    shared Room settings
 :core:freshness                   the per-source freshness policy
 :core:testing                     FakeClock and shared fakes
-:components:articles:{api,domain,data,ui}
+:components:articles:{api,data,ui}
 :components:weather:{api,data,ui}
 :components:feed:{domain,ui}
 ```
 
-Compose with Material 3, MVVM with `StateFlow`, Hilt, Room, Retrofit, and pagination
-written by hand. `AGENTS.md` explains the layout in full. `DECISIONS.md` says why each of
+Compose with Material 3, MVVM with `StateFlow`, Hilt, Room, Retrofit, and Paging 3 reading
+from Room. `AGENTS.md` explains the layout in full. `DECISIONS.md` says why each of
 those was chosen and what was turned down.
 
 ## Freshness

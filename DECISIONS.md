@@ -119,23 +119,37 @@ rejection — it keeps the layers but loses the boundary, because every feature 
 The cost is paid by convention plugins in a `build-logic` included build, so each module's build
 file stays about two lines and a new component inherits the rules for free.
 
-### A `domain` module only when logic has no model to own it — decided
+### The four layers are the shape, and an empty layer is not created — decided, then narrowed
 
-**Picked.** Only `articles` and `feed` get a `domain` module. The test: a `domain` module exists
-when logic coordinates more than one repository or source, so no single model can own it.
-`articles` has paging cursors, save and unsave against the cache, and freshness-driven refresh
-decisions. `feed` combines four sources and decides what to do when one fails.
+**Picked.** The same four layers describe every component: `api`, `domain`, `data` and `ui`. A
+layer is created only when there is something to put in it. The test for `domain` is whether the
+logic coordinates more than one repository or source, so that no single model can own it. `feed`
+passes it: it reads weather and articles and decides what to do when one of them has nothing.
+And nothing may depend on a module it takes nothing from.
 
-**Considered instead.** Give all five components the same four layers.
+**Considered instead.** Create all four modules for every component, whether or not each one has
+anything in it.
 
-**Trade-off.** Uniformity is easier to learn, and an unused layer only costs a build file. But
-`weather`, `serviceCard` and `movie` would each get a module holding one pass-through class, and
-a pass-through class attracts logic that belongs elsewhere. Their logic is real — discount
-arithmetic, sorting by air date, mapping a weather code — but it fits on their models in `api`,
-which is plain Kotlin and may carry its own arithmetic.
+**Trade-off.** Uniformity is easier to learn, and an empty layer looks like it only costs a build
+file. It does not, as the narrowing below shows. And `weather`, `serviceCard` and `movie` would
+each get a module holding one pass-through class, which attracts logic that belongs elsewhere.
+Their logic is real — discount arithmetic, sorting by air date, mapping a weather code — but it
+fits on their models in `api`, which is plain Kotlin and may carry its own arithmetic.
+
+**Narrowed on 2026-08-24.** `articles` had a `domain` module too. Three reasons were written
+down for it: paging cursors, save and unsave against the cache, and freshness-driven refresh
+decisions. Choosing Paging 3 moved the first and the third into `ArticlesRemoteMediator`, which
+lives in `data`, because `RemoteMediator.initialize()` is where an app reads its own cache. Save
+and unsave call one repository, and one call coordinates nothing. The module was still empty
+when this was checked, so it was deleted, along with the dependency `articles:ui` still declared
+on it. Two more unused dependencies went with it, from `feed:domain` on `articles:api` and on
+`:core:freshness`. That is where the second half of the rule comes from: an empty module cost
+more than its build file, because a dependency kept it alive and this entry kept defending it.
 
 Worth recording: my first draft of this justified it as "these components have no business
-logic". That was wrong, and the corrected rule above is the one I can actually apply.
+logic". That was wrong, and the corrected rule above is the one I can actually apply. The rule
+held. Its answer for `articles` did not, because a later decision moved the work somewhere else
+and nobody went back to check.
 
 ### Repository interfaces live in `api`, not in `domain` — decided
 

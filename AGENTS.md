@@ -36,7 +36,8 @@ first build.
 ## Architecture
 
 Component-based Clean Architecture. A **component** is one area of subject matter, not one
-screen. Each component owns its own layers, and the build enforces the layering.
+screen. Each component owns its own layers, and the build enforces the layering. Not every
+component has all four, because a layer with nothing to hold is not created.
 
 | Layer | Holds | May depend on |
 |---|---|---|
@@ -54,7 +55,7 @@ screen. Each component owns its own layers, and the build enforces the layering.
 :core:database                    shared Room settings and type converters. No tables.
 :core:freshness                   the per-source freshness policy. Plain Kotlin.
 :core:testing                     FakeClock, shared fakes, coroutine test rules
-:components:articles:{api,domain,data,ui}   Spaceflight News
+:components:articles:{api,data,ui}          Spaceflight News
 :components:weather:{api,data,ui}           Open-Meteo
 :components:feed:{domain,ui}                puts the feed together, owns the Reading screen
 ```
@@ -123,11 +124,21 @@ The navigation graph is in `:app`, and routes are `@Serializable` types rather t
 strings. Components hand out callbacks such as `onArticleClick(id)` and never a
 destination, so no component knows where another component's screens are.
 
-### A `domain` module only when logic has no model to own it
+### The four layers are the shape, and a layer with nothing to hold is not created
 
-Only `articles` and `feed` have one. The test is whether the logic coordinates more than
-one repository or source. Smaller logic belongs on the model in `api` or in the `data`
-mapper. Do not add a `domain` module that only passes calls along.
+The table above describes every component. That is the shape to expect. A layer is only
+created when there is something to put in it, so a component with no use case has no `domain`
+module. The test for `domain` is whether the logic coordinates more than one repository or
+source. Smaller logic belongs on the model in `api` or in the `data` mapper. Never add a module
+that only passes calls along.
+
+**Never depend on a module you take nothing from.** An unused dependency claims two modules are
+related when they are not, and nothing fails while it is wrong, so it can sit there for months.
+An empty module is the worst case, because the dependency then also keeps the module alive.
+
+```bash
+for d in components/*/*/; do [ -d "${d}src" ] || echo "empty module: $d"; done   # prints nothing
+```
 
 ## Convention plugins
 
@@ -153,7 +164,7 @@ each holds its layer's dependency rules so a new component inherits them.
 4. Register all three in `settings.gradle.kts`.
 5. Bind the data implementations from `:app`, which is the only module allowed to see them.
 
-Add a `domain` module only if the test above says you need one.
+Create a `domain` module only when there is something to put in it. See the rule above.
 
 ## Code style
 
