@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.core.designsystem.NO_PICTURE
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -27,15 +28,23 @@ class ArticleRowCardTest {
     }
 
     /**
-     * An article that carries a picture still reads as one that does not until the picture
-     * arrives. This runs with no network fetcher on the classpath, so the request never leaves:
-     * that is the shape of a picture that never comes, not of one that fails a request.
+     * A picture that cannot be fetched says so and stops waiting. This runs with no network
+     * fetcher on the classpath, which is the same answer a timeout or a refusal gives.
      */
     @Test
-    fun `an article carrying a picture shows its title before the picture arrives`() {
+    fun `a picture that cannot be fetched shows the no picture mark and keeps the title`() {
         show(previewArticle("a2").copy(imageUrl = "https://example.invalid/missing.jpg"))
 
         compose.onNodeWithText(TITLE).assertIsDisplayed()
+        compose.onNodeWithContentDescription(NO_PICTURE).assertIsDisplayed()
+    }
+
+    /** An article that never had one is not a failure, so it is not marked as one. */
+    @Test
+    fun `an article with no picture at all shows no mark`() {
+        show(previewArticle("a6").copy(imageUrl = null))
+
+        compose.onNodeWithContentDescription(NO_PICTURE).assertDoesNotExist()
     }
 
     @Test

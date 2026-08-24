@@ -138,10 +138,11 @@
       article's title. An article that has a picture holds its place from the first frame and
       breathes while it waits, so nothing moves when the picture lands; an article with no
       picture draws nothing, which is known at once. A picture that never arrives leaves the
-      quiet square rather than collapsing, because a row that changes shape late is worse. Two
-      earlier versions were wrong the other two ways: one reserved space it never gave up, and
-      one gave it up so late that every row jumped. The view test runs with no network fetcher on
-      the classpath, so it covers a picture that never comes rather than one whose request fails
+      no-picture mark rather than collapsing, because a row that changes shape late is worse, and
+      a square still breathing after it has given up says the wrong thing. Two earlier versions
+      were wrong the other two ways: one reserved space it never gave up, and one gave it up so
+      late that every row jumped. The tests cover all three answers: no mark for an article that
+      never had a picture, the mark for one whose fetch cannot happen, and the title in both
 - [x] 4.2 Put the thumbnail on the article card and a wide picture at the top of the detail
       screen. Verify: previews in both themes, and by hand that a card without a picture keeps
       its layout. Coil fetches through the shared `OkHttpClient`, wired in `:app` because
