@@ -112,6 +112,10 @@ is Android, so that grep now reports a violation that is not one. The real guara
 Also: a grep over a Gradle task's output reports zero when the task itself failed. Check the exit
 status, or the answer is "the command broke" wearing the answer "none".
 
+And a build that finishes `in 1s` with everything up to date verified nothing. It means Gradle saw
+no changes, not that the code is good. If a file changed after the last real build, run one — or
+let CI be the first thing that compiles it, and expect to be told.
+
 ### Where screens live
 
 Reading is `:components:feed:ui`. Article detail and Saved are `:components:articles:ui`.

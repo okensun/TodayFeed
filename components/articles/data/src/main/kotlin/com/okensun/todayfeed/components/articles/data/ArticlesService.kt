@@ -9,7 +9,7 @@ import retrofit2.http.Query
 internal interface ArticlesService {
     /** Newest first, which is the source's own order. */
     @GET("v4/articles/")
-    suspend fun /articles(
+    suspend fun articles(
         @Query("limit") limit: Int,
         @Query("offset") offset: Int,
     ): Response<ArticlesPage>
