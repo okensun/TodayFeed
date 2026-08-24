@@ -8,6 +8,7 @@ import com.okensun.todayfeed.core.freshness.Connectivity
 import com.okensun.todayfeed.core.freshness.decide
 import com.okensun.todayfeed.core.freshness.wantsNetwork
 import com.okensun.todayfeed.core.network.maxAgeOf
+import kotlinx.coroutines.CancellationException
 import retrofit2.HttpException
 import java.time.Clock
 import java.time.Duration
@@ -101,6 +102,13 @@ internal class ArticlesRemoteMediator(
                 body == null -> MediatorResult.Error(EmptyBodyException(response.code()))
                 else -> store(body, response.headers().values(CACHE_CONTROL))
             }
+        } catch (cancelled: CancellationException) {
+            // Cancellation is not a failure. Paging runs loads through a single runner where a
+            // refresh outranks an append, so an append in flight when a refresh arrives is
+            // cancelled. Reported as an error it would leave the reader a retry for a load that
+            // nothing was wrong with, and a later refresh failure would not clear it.
+            @Suppress("RethrowCaughtException")
+            throw cancelled
         } catch (e: Throwable) {
             MediatorResult.Error(e)
         }
@@ -115,12 +123,19 @@ internal class ArticlesRemoteMediator(
         metadata: FeedMetadataEntity,
         body: ArticlesPage,
     ): MediatorResult {
+        // A page with nothing in it stores nothing, so Room does not invalidate and Paging is
+        // never asked again. Without this the reader is parked at the bottom while every later
+        // append asks for the same offset.
+        if (body.results.isEmpty()) {
+            dao.setPagingProgress(nextOffset = metadata.nextOffset, hasMore = false)
+            return MediatorResult.Success(endOfPaginationReached = true)
+        }
         dao.upsertArticles(body.results.map { it.toEntity() })
-        dao.upsertMetadata(
-            metadata.copy(
-                nextOffset = metadata.nextOffset + body.results.size,
-                hasMore = body.next != null
-            )
+        // Only the two paging columns. Writing the whole row back would carry the freshness stamp
+        // this append read before its own request, and revert a refresh that landed meanwhile.
+        dao.setPagingProgress(
+            nextOffset = metadata.nextOffset + body.results.size,
+            hasMore = body.next != null
         )
         return MediatorResult.Success(endOfPaginationReached = body.next == null)
     }

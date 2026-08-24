@@ -7,7 +7,7 @@ import retrofit2.Response
  * test says "and then it made no request at all" rather than only checking what came back.
  */
 internal class FakeArticlesService : ArticlesService {
-    private val queued = ArrayDeque<Response<ArticlesPage>>()
+    private val queued = ArrayDeque<Result<Response<ArticlesPage>>>()
 
     val requests = mutableListOf<Request>()
 
@@ -17,7 +17,12 @@ internal class FakeArticlesService : ArticlesService {
     )
 
     fun enqueue(page: ArticlesPage) {
-        queued.addLast(Response.success(page))
+        queued.addLast(Result.success(Response.success(page)))
+    }
+
+    /** So a test can model a request that is cancelled or fails rather than answering. */
+    fun enqueueThrowing(failure: Throwable) {
+        queued.addLast(Result.failure(failure))
     }
 
     override suspend fun articles(
@@ -25,7 +30,9 @@ internal class FakeArticlesService : ArticlesService {
         offset: Int,
     ): Response<ArticlesPage> {
         requests += Request(limit = limit, offset = offset)
-        return queued.removeFirstOrNull()
-            ?: error("The mediator asked for offset $offset and no page was queued for it.")
+        val queuedResult =
+            queued.removeFirstOrNull()
+                ?: error("The mediator asked for offset $offset and no page was queued for it.")
+        return queuedResult.getOrThrow()
     }
 }

@@ -9,6 +9,7 @@ import androidx.paging.RemoteMediator
 import androidx.room.Room
 import com.okensun.todayfeed.core.testing.FakeClock
 import com.okensun.todayfeed.core.testing.FakeConnectivity
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -111,6 +112,40 @@ class ArticlesRemoteMediatorTest {
 
             assertEquals(emptyList<Int>(), service.requests.map { it.offset })
             assertTrue((result as RemoteMediator.MediatorResult.Success).endOfPaginationReached)
+        }
+
+    /**
+     * Paging cancels an append when a refresh takes priority, and cancellation is not a failure.
+     * Turning it into an error leaves the reader a retry for a load that nothing was wrong with,
+     * and the append is the load this happens to, because refresh outranks it.
+     */
+    @Test
+    fun `a cancelled append is not turned into an error`() =
+        runTest {
+            service.enqueue(page(1..2, hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+
+            service.enqueueThrowing(CancellationException("a refresh took priority"))
+            val outcome = runCatching { mediator.load(LoadType.APPEND, noState()) }
+
+            assertTrue(outcome.exceptionOrNull() is CancellationException)
+        }
+
+    /**
+     * A page with nothing in it stores nothing, so Room does not invalidate and Paging is never
+     * asked again. Without this the reader is parked at the bottom asking for the same offset.
+     */
+    @Test
+    fun `an append that comes back empty is the end rather than a stall`() =
+        runTest {
+            service.enqueue(page(1..2, hasNext = true))
+            mediator.load(LoadType.REFRESH, noState())
+
+            service.enqueue(page(IntRange.EMPTY, hasNext = true))
+            val result = mediator.load(LoadType.APPEND, noState())
+
+            assertTrue((result as RemoteMediator.MediatorResult.Success).endOfPaginationReached)
+            assertEquals(false, dao.findMetadata()?.hasMore)
         }
 
     /**
