@@ -73,10 +73,14 @@
 - [x] 2.5 Show the refreshing and appending indicators from `LoadState`. Verify: view tests supply
       load states through `PagingData.from` and check each indicator. A refresh with content on
       screen marks it rather than replacing it, so only an empty screen gets the loading state.
-      Both indicators carry a content description, which is what a screen reader announces and
-      what the tests find them by
-- [ ] 2.6 Add pull to refresh, bypassing the policy. Verify by hand that pulling refreshes
-      straight after a refresh; a view test shows the indicator follows the refresh load state
+      2.6 replaced the refreshing bar with the pull indicator, which is in the tree even at rest,
+      so the refresh case is tested by the articles staying rather than by finding the indicator.
+      The appending one carries a content description, which the test finds it by
+- [x] 2.6 Add pull to refresh, bypassing the policy. Verify by hand that pulling refreshes
+      straight after a refresh. Done on the emulator: one pull right after a refresh sends exactly
+      one `offset=0` request, which the allowance would otherwise have suppressed. `refresh()`
+      skips `initialize()`, and that is where the policy lives. The indicator is the one
+      `PullToRefreshBox` draws, which replaced the separate bar 2.5 added
 - [x] 2.7 Offer `retry()` for a failed append without losing what is loaded. Verify: a view test
       shows the loaded articles stay and the retry is offered, and a second checks it is drawn
       under the last article rather than anywhere on screen. It says the same "Try again" as the
