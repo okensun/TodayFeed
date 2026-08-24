@@ -71,9 +71,8 @@ class ArticlesDaoTest {
         }
 
     /**
-     * Paging reads its windows with `LIMIT` and `OFFSET`, so an order with ties is not an order.
-     * Two rows that swap places between two queries appear twice or not at all at a page
-     * boundary. An article whose date will not parse is stored at the epoch, so ties are ordinary.
+     * Windows are read with `LIMIT` and `OFFSET`, so an order with ties is not an order. A date
+     * that will not parse is stored at the epoch, which makes ties ordinary.
      */
     @Test
     fun `articles published at the same instant come back in the same order every time`() =
