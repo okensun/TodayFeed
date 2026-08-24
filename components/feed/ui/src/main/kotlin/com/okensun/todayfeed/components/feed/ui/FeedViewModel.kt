@@ -15,19 +15,20 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class FeedViewModel
     @Inject
     constructor(
-        articles: ArticleRepository,
+        private val repository: ArticleRepository,
         observeSections: ObserveFeedSections,
         observeOffline: ObserveOffline,
         observeNetworkReturned: ObserveNetworkReturned,
     ) : ViewModel() {
         /** `cachedIn` so the loaded pages survive the activity being recreated. */
-        val articles: Flow<PagingData<Article>> = articles.observeArticles().cachedIn(viewModelScope)
+        val articles: Flow<PagingData<Article>> = repository.observeArticles().cachedIn(viewModelScope)
 
         val sections: StateFlow<List<FeedSection>> =
             observeSections()
@@ -48,6 +49,11 @@ class FeedViewModel
 
         /** The screen asks again when this fires, because nothing else will. */
         val networkReturned: Flow<Unit> = observeNetworkReturned()
+
+        fun onToggleSave(article: Article) =
+            viewModelScope.launch {
+                if (article.saved) repository.unsave(article.id) else repository.save(article.id)
+            }
 
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L

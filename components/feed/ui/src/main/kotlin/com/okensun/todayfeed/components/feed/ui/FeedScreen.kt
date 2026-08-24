@@ -57,6 +57,7 @@ fun FeedScreen(
         offline = offline,
         refreshWhen = viewModel.networkReturned,
         onArticleClick = onArticleClick,
+        onToggleSave = viewModel::onToggleSave,
         modifier = modifier
     )
 }
@@ -73,6 +74,7 @@ internal fun FeedScreen(
     offline: Boolean,
     onArticleClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onToggleSave: (Article) -> Unit = {},
     refreshWhen: Flow<Unit> = emptyFlow(),
     listState: LazyListState = rememberLazyListState(),
 ) {
@@ -128,7 +130,8 @@ internal fun FeedScreen(
                             paged[index]?.let { article ->
                                 ArticleRowCard(
                                     article = article,
-                                    onClick = { onArticleClick(article.id) }
+                                    onClick = { onArticleClick(article.id) },
+                                    onToggleSave = { onToggleSave(article) }
                                 )
                             }
                         }

@@ -26,6 +26,19 @@ class ArticleDetailViewModel
         val state: StateFlow<ContentState<Article>> = _state.asStateFlow()
 
         init {
+            load()
+        }
+
+        fun onToggleSave() =
+            viewModelScope.launch {
+                val article = (_state.value as? ContentState.Content)?.value ?: return@launch
+                if (article.saved) articles.unsave(article.id) else articles.save(article.id)
+                load()
+            }
+
+        /** Read from storage, not from the paged feed. A saved article can fall out of what the
+         * source returns and must still open. */
+        private fun load() =
             viewModelScope.launch {
                 val article = articles.findArticle(articleId)
                 _state.value =
@@ -34,7 +47,6 @@ class ArticleDetailViewModel
                         else -> ContentState.Content(article)
                     }
             }
-        }
 
         private companion object {
             const val ARTICLE_ID_KEY = "articleId"

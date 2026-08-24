@@ -87,6 +87,12 @@ always states one, so the fallback has never yet been needed.
 
 The weather card is still a fixed value held in memory, so none of this applies to it yet.
 
+### What the reader keeps is not what the policy decides
+
+Saving is the one decision the reader makes rather than the app. A saved article stays until they
+unsave it: no refresh, no expiry and no allowance touches it, and it opens with no network. The
+policy above decides when to ask the source for more; it has no say over what was kept.
+
 ### When it calls the network
 
 It does:
