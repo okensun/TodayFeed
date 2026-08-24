@@ -79,7 +79,9 @@
       `Offline(cached)`. Verify: a unit test covers both offline branches
 - [ ] 3.3 Show the out-of-date marker when offline with content. Verify: a view test shows the
       marker with content present and offline, and none when online
-- [ ] 3.4 Drop the marker when the network returns, from `Connectivity.observe()`. Verify: a test
+- [ ] 3.4 Drop the marker when the network returns, from `Connectivity.observe()`, **and refresh**.
+      A review of pass 1 found this is not only cosmetic: `initialize()` runs once per pager, so a
+      reader who starts offline with an empty cache never retries without it. Verify: a test
       moves the fake back to unmetered and shows the marker clears
 - [x] 3.5 Add `FeedSection` and `ObserveFeedSections` to `:components:feed:domain`, replacing
       `ObserveFeed`. **Pulled into pass 1**: the moment the feed became a paged stream, the old

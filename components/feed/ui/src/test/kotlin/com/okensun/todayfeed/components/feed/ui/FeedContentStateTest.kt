@@ -51,11 +51,17 @@ class FeedContentStateTest {
         assertTrue(state(done, itemCount = 0, hasSections = true) is ContentState.Content)
     }
 
+    /**
+     * This asserted the opposite, which locked a bug in place. The weather source always has a
+     * value, so treating a section as content ahead of a failure made the error state and its
+     * retry unreachable in the real app: an article source that was down showed a weather card, an
+     * empty list, and no way to try again.
+     */
     @Test
-    fun `a section also survives a failure`() {
+    fun `a failure with no articles is an error even when a section has content`() {
         assertTrue(
             state(LoadState.Error(RuntimeException("x")), 0, hasSections = true)
-                is ContentState.Content
+                is ContentState.Error
         )
     }
 

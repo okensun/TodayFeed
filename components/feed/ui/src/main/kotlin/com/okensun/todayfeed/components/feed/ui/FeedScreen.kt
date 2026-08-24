@@ -66,7 +66,13 @@ internal fun FeedScreen(
                 sections.forEach { section ->
                     item(key = section.key()) { Section(section) }
                 }
-                items(paged.itemCount) { index ->
+                // Keyed on the article's own id. Without a key LazyColumn keys by index, so a
+                // refresh that upserts newer articles would move every row and throw the reader's
+                // position off by however many arrived — the opposite of keeping their place.
+                items(
+                    count = paged.itemCount,
+                    key = { index -> paged.peek(index)?.id ?: index }
+                ) { index ->
                     paged[index]?.let { article ->
                         ArticleRowCard(
                             article = article,
