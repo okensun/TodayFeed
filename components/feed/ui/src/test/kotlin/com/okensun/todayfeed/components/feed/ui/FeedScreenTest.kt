@@ -79,23 +79,22 @@ class FeedScreenTest {
     }
 
     /**
-     * A refresh with content already on screen is not the loading state: the reader keeps reading
-     * while it happens, so it is a marker rather than a screen.
+     * A refresh with content already on screen is not the loading state. The pull indicator says
+     * it is happening; the articles stay, which is the part that can be got wrong here.
      */
     @Test
-    fun `a refresh with articles on screen marks them rather than replacing them`() {
+    fun `a refresh with articles on screen keeps them rather than replacing them`() {
         show(articles = listOf(article("a1", "Article one")), refresh = LoadState.Loading)
 
-        compose.onNodeWithContentDescription(REFRESHING).assertIsDisplayed()
         compose.onNodeWithText("Article one").assertIsDisplayed()
+        compose.onNodeWithText("Loading").assertDoesNotExist()
     }
 
     @Test
-    fun `a refresh with nothing on screen is the loading state, not the marker`() {
+    fun `a refresh with nothing on screen is the loading state`() {
         show(articles = emptyList(), refresh = LoadState.Loading)
 
         compose.onNodeWithText("Loading").assertIsDisplayed()
-        compose.onNodeWithContentDescription(REFRESHING).assertDoesNotExist()
     }
 
     @Test
@@ -138,10 +137,9 @@ class FeedScreenTest {
     }
 
     @Test
-    fun `with nothing loading neither indicator is drawn`() {
+    fun `with nothing loading the appending indicator is not drawn`() {
         show(articles = listOf(article("a1", "Article one")))
 
-        compose.onNodeWithContentDescription(REFRESHING).assertDoesNotExist()
         compose.onNodeWithContentDescription(APPENDING).assertDoesNotExist()
     }
 
@@ -173,7 +171,6 @@ class FeedScreenTest {
     }
 
     private companion object {
-        const val REFRESHING = "Refreshing"
         const val APPENDING = "Loading more"
 
         val hero =

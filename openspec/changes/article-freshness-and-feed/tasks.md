@@ -59,9 +59,12 @@
       still present with the two new ones on top. **The code landed in pass 1**, because real
       articles on screen already needed the choice between upsert and delete. Only the test was
       outstanding, and it had to wait for 2.1 to be able to load three pages
-- [ ] 2.3 Make `REFRESH` loop until a page contains an article already stored, capped at five
+- [x] 2.3 Make `REFRESH` loop until a page contains an article already stored, capped at five
       pages. Verify: a test with a source three days ahead makes at most five requests and leaves
-      no gap; a test where page zero contains something familiar makes exactly one
+      no gap; a test where page zero contains something familiar makes exactly one. The walk also
+      stops after one page when nothing was stored before, because there is then no gap to close.
+      Where the next append starts moves down by however many articles arrived above what the
+      reader holds, which is what the note left on 2.1 asked for
 - [x] 2.4 Derive `ContentState` from `loadState.refresh` and `itemCount` in a pure function, with
       `itemCount > 0` first. Verify: unit tests cover every branch, including that an error with
       content already loaded stays `Content`. **Done in pass 1** as `feedContentState`, for the
@@ -70,10 +73,14 @@
 - [x] 2.5 Show the refreshing and appending indicators from `LoadState`. Verify: view tests supply
       load states through `PagingData.from` and check each indicator. A refresh with content on
       screen marks it rather than replacing it, so only an empty screen gets the loading state.
-      Both indicators carry a content description, which is what a screen reader announces and
-      what the tests find them by
-- [ ] 2.6 Add pull to refresh, bypassing the policy. Verify by hand that pulling refreshes
-      straight after a refresh; a view test shows the indicator follows the refresh load state
+      2.6 replaced the refreshing bar with the pull indicator, which is in the tree even at rest,
+      so the refresh case is tested by the articles staying rather than by finding the indicator.
+      The appending one carries a content description, which the test finds it by
+- [x] 2.6 Add pull to refresh, bypassing the policy. Verify by hand that pulling refreshes
+      straight after a refresh. Done on the emulator: one pull right after a refresh sends exactly
+      one `offset=0` request, which the allowance would otherwise have suppressed. `refresh()`
+      skips `initialize()`, and that is where the policy lives. The indicator is the one
+      `PullToRefreshBox` draws, which replaced the separate bar 2.5 added
 - [x] 2.7 Offer `retry()` for a failed append without losing what is loaded. Verify: a view test
       shows the loaded articles stay and the retry is offered, and a second checks it is drawn
       under the last article rather than anywhere on screen. It says the same "Try again" as the

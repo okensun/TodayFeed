@@ -25,11 +25,8 @@ internal class ArticlesRemoteMediator(
     private val clock: Clock,
     private val pageSize: Int = PAGE_SIZE,
 ) : RemoteMediator<Int, ArticleEntity>() {
-    /**
-     * `initialize()` is the seam the library provides for an app to consult its own cache before
-     * the pager refreshes. The freshness decision is therefore ours, and is the same call a unit
-     * test makes.
-     */
+    /** `initialize()` is where the library lets an app read its own cache first, so the
+     * freshness decision stays ours and stays the call a unit test makes. */
     override suspend fun initialize(): InitializeAction {
         val metadata = dao.findMetadata()
         val decision =
@@ -40,12 +37,8 @@ internal class ArticlesRemoteMediator(
                 connection = connectivity.current(),
                 now = clock.instant()
             )
-        // NothingToServe maps to a skip, which is right in itself — with no network there is
-        // nothing to ask. But `initialize()` runs once per pager, so on its own that leaves a
-        // reader who started offline with nothing looking at an empty feed until the process
-        // restarts. Task 3.4 is what closes it: the screen watches connectivity and refreshes when
-        // the network returns. Latent until pass 5 replaces the stand-in that always answers
-        // unmetered.
+        // A skip is right, but `initialize()` runs once per pager, so a reader who started
+        // offline sees an empty feed until the process restarts. Task 3.4 closes it.
         return if (decision.wantsNetwork) {
             InitializeAction.LAUNCH_INITIAL_REFRESH
         } else {
@@ -58,62 +51,131 @@ internal class ArticlesRemoteMediator(
         state: PagingState<Int, ArticleEntity>,
     ): MediatorResult =
         when (loadType) {
-            // New articles arrive at the front, so a refresh brings them. There is nothing to
-            // prepend.
+            // New articles arrive at the front, so a refresh brings them.
             LoadType.PREPEND -> MediatorResult.Success(endOfPaginationReached = true)
             LoadType.APPEND -> append()
             LoadType.REFRESH -> refresh()
         }
 
-    /**
-     * Where the next page starts comes from what was stored, not from [PagingState]. The source
-     * counts in offsets and the state describes rows on screen, and the two drift apart as soon
-     * as a refresh brings articles in above them.
-     */
+    /** Where the next page starts comes from what was stored, not from [PagingState]: the source
+     * counts offsets, the state counts rows on screen, and a refresh pulls them apart. */
     private suspend fun append(): MediatorResult {
         val metadata = dao.findMetadata()
-        // Nothing has been refreshed yet, or the source has already said there is no more. Both
-        // mean there is nothing to ask for, so neither makes a request.
-        return if (metadata == null || !metadata.hasMore) {
-            MediatorResult.Success(endOfPaginationReached = true)
-        } else {
-            fetch(offset = metadata.nextOffset) { body, _ -> storeAppended(metadata, body) }
+        // Nothing refreshed yet, or the source has said there is no more. Neither asks.
+        if (metadata == null || !metadata.hasMore) {
+            return MediatorResult.Success(endOfPaginationReached = true)
+        }
+        return when (val fetched = fetch(metadata.nextOffset)) {
+            is Fetched.Failed -> fetched.result
+            is Fetched.Page -> storeAppended(metadata, fetched.body)
         }
     }
 
     /**
-     * Paging does not wrap `load` in a try/catch, so anything thrown here escapes the coroutine
-     * and takes the paging collection down instead of becoming an error state. The contract asks
-     * for a result rather than a throw, so this catches broadly on purpose: the usual rule about
-     * catching specific exceptions does not apply where the framework wants every failure back as
-     * a value. A captive portal answering 200 with HTML, or the source dropping a field, arrive
-     * here as a serialization failure rather than as an IOException.
+     * Walks forward until a page holds an article already stored, which closes the gap left by
+     * time away. Capped, or a reader who has fallen right behind would read the source end to end.
+     */
+    private suspend fun refresh(): MediatorResult {
+        var walk = Walk(previous = dao.findMetadata())
+        while (!walk.done && walk.pages < MAX_REFRESH_PAGES) {
+            when (val fetched = fetch(walk.fetched)) {
+                is Fetched.Failed -> return fetched.result
+                is Fetched.Page -> {
+                    // Counted before storing, or every page would look familiar.
+                    val known = dao.countStored(fetched.body.results.map { it.id.toString() })
+                    // Upsert, not delete, so a reader who has scrolled keeps their place.
+                    dao.upsertArticles(fetched.body.results.map { it.toEntity() })
+                    walk = walk.and(fetched, known)
+                }
+            }
+        }
+        return finish(walk)
+    }
+
+    private suspend fun finish(walk: Walk): MediatorResult {
+        // Only stamp when something was stored. An empty 200 would otherwise buy silence for
+        // the whole allowance while the feed shows nothing.
+        if (walk.fetched > 0) {
+            dao.upsertMetadata(
+                FeedMetadataEntity(
+                    lastRefreshedAt = clock.instant(),
+                    // Every value: Headers.get returns only the last of a repeated header.
+                    serverMaxAge = maxAgeOf(walk.stated.joinToString(separator = ", ")),
+                    nextOffset = walk.nextOffset,
+                    hasMore = !walk.endOfSource
+                )
+            )
+        }
+        return MediatorResult.Success(endOfPaginationReached = walk.endOfSource)
+    }
+
+    /** How far the refresh has walked. [newlyArrived] is how far down everything the reader
+     * already holds has moved. */
+    private data class Walk(
+        val previous: FeedMetadataEntity?,
+        val pages: Int = 0,
+        val fetched: Int = 0,
+        val newlyArrived: Int = 0,
+        val reachedKnown: Boolean = false,
+        val endOfSource: Boolean = false,
+        val stated: List<String> = emptyList(),
+    ) {
+        // With nothing held before, one page is the whole answer: there is no gap to close.
+        val done: Boolean get() = pages > 0 && (previous == null || reachedKnown || endOfSource)
+
+        // Past the cap the walk never met what the reader holds, so appends carry on from
+        // where it stopped instead.
+        val nextOffset: Int
+            get() = if (reachedKnown) (previous?.nextOffset ?: 0) + newlyArrived else fetched
+
+        fun and(
+            page: Fetched.Page,
+            known: Int,
+        ): Walk =
+            copy(
+                pages = pages + 1,
+                fetched = fetched + page.body.results.size,
+                newlyArrived = newlyArrived + page.body.results.size - known,
+                reachedKnown = known > 0,
+                endOfSource = page.body.next == null || page.body.results.isEmpty(),
+                stated = if (pages == 0) page.cacheControl else stated
+            )
+    }
+
+    /**
+     * Paging does not wrap `load`, so a throw takes the whole collection down instead of becoming
+     * an error state. Catching broadly is the contract here, not an oversight.
      */
     @Suppress("TooGenericExceptionCaught")
-    private suspend fun fetch(
-        offset: Int,
-        store: suspend (ArticlesPage, List<String>) -> MediatorResult,
-    ): MediatorResult =
+    private suspend fun fetch(offset: Int): Fetched =
         try {
             val response = service.articles(limit = pageSize, offset = offset)
             val body = response.body()
             when {
-                !response.isSuccessful -> MediatorResult.Error(HttpException(response))
-                body == null -> MediatorResult.Error(EmptyBodyException(response.code()))
-                else -> store(body, response.headers().values(CACHE_CONTROL))
+                !response.isSuccessful -> Fetched.Failed(MediatorResult.Error(HttpException(response)))
+                body == null -> Fetched.Failed(MediatorResult.Error(EmptyBodyException(response.code())))
+                else -> Fetched.Page(body, response.headers().values(CACHE_CONTROL))
             }
         } catch (cancelled: CancellationException) {
-            // Cancellation is not a failure. Paging runs loads through a single runner where a
-            // refresh outranks an append, so an append in flight when a refresh arrives is
-            // cancelled. Reported as an error it would leave the reader a retry for a load that
-            // nothing was wrong with, and a later refresh failure would not clear it.
+            // Cancellation is not a failure. A refresh outranks an append and cancels it, and
+            // an error there would offer a retry for a load nothing was wrong with.
             @Suppress("RethrowCaughtException")
             throw cancelled
         } catch (e: Throwable) {
-            MediatorResult.Error(e)
+            Fetched.Failed(MediatorResult.Error(e))
         }
 
-    private suspend fun refresh(): MediatorResult = fetch(offset = 0, store = ::storeRefreshed)
+    /** One page, or the failure to say instead of it. */
+    private sealed interface Fetched {
+        data class Page(
+            val body: ArticlesPage,
+            val cacheControl: List<String>,
+        ) : Fetched
+
+        data class Failed(
+            val result: MediatorResult,
+        ) : Fetched
+    }
 
     /**
      * An append brings older articles, so it moves the offset on and leaves the freshness stamp
@@ -123,16 +185,15 @@ internal class ArticlesRemoteMediator(
         metadata: FeedMetadataEntity,
         body: ArticlesPage,
     ): MediatorResult {
-        // A page with nothing in it stores nothing, so Room does not invalidate and Paging is
-        // never asked again. Without this the reader is parked at the bottom while every later
-        // append asks for the same offset.
+        // An empty page stores nothing, so Room never invalidates and Paging never asks again.
+        // Without this the reader is parked at the bottom for ever.
         if (body.results.isEmpty()) {
             dao.setPagingProgress(nextOffset = metadata.nextOffset, hasMore = false)
             return MediatorResult.Success(endOfPaginationReached = true)
         }
         dao.upsertArticles(body.results.map { it.toEntity() })
-        // Only the two paging columns. Writing the whole row back would carry the freshness stamp
-        // this append read before its own request, and revert a refresh that landed meanwhile.
+        // Only the paging columns: the whole row would carry a freshness stamp read before
+        // this request and revert a refresh that landed meanwhile.
         dao.setPagingProgress(
             nextOffset = metadata.nextOffset + body.results.size,
             hasMore = body.next != null
@@ -140,39 +201,11 @@ internal class ArticlesRemoteMediator(
         return MediatorResult.Success(endOfPaginationReached = body.next == null)
     }
 
-    private suspend fun storeRefreshed(
-        body: ArticlesPage,
-        cacheControl: List<String>,
-    ): MediatorResult {
-        // Upsert rather than delete, so a reader who has scrolled keeps what they have and Paging
-        // reloads around where they are.
-        dao.upsertArticles(body.results.map { it.toEntity() })
-
-        // Stamp the freshness time only when something was actually stored. A 200 carrying an
-        // empty list would otherwise buy silence for the whole allowance while the feed shows
-        // nothing, and this source holds tens of thousands of articles, so an empty page means
-        // something is wrong rather than that there is nothing to read.
-        if (body.results.isNotEmpty()) {
-            dao.upsertMetadata(
-                FeedMetadataEntity(
-                    lastRefreshedAt = clock.instant(),
-                    // Every value, not the last one. A repeated header would otherwise lose the
-                    // stated age, because Headers.get returns only the final occurrence.
-                    serverMaxAge = maxAgeOf(cacheControl.joinToString(separator = ", ")),
-                    // The offset starts again from this page. A reader who had paged deeper will
-                    // therefore be served offsets they already hold on the next append, which the
-                    // upsert makes harmless but not free. Counting how many of a page are already
-                    // stored is what fixes it, and is the same count task 2.3 needs.
-                    nextOffset = body.results.size,
-                    hasMore = body.next != null
-                )
-            )
-        }
-        return MediatorResult.Success(endOfPaginationReached = body.next == null)
-    }
-
     internal companion object {
         const val PAGE_SIZE = 20
+
+        /** How many pages one refresh may walk back before it accepts the gap. */
+        const val MAX_REFRESH_PAGES = 5
 
         /** Used only when the source states no maximum age of its own. This one always does. */
         val FALLBACK_TIME_TO_LIVE: Duration = Duration.ofMinutes(15)
