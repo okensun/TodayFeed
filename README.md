@@ -36,9 +36,10 @@ News](https://api.spaceflightnewsapi.net/v4/articles/) for articles and
 
 ## How it is built
 
-Component-based Clean Architecture across 15 modules. A component is one area of subject
-matter, and it owns its own `api`, `domain`, `data` and `ui` layers. Two rules carry the
-design, and the build enforces both:
+Component-based Clean Architecture. A component is one area of subject matter, and the four
+layers `api`, `domain`, `data` and `ui` are the shape it takes. A layer is created only when
+there is something to put in it, which is why not every component below has all four. Two rules
+carry the design, and the build enforces both:
 
 1. Only `:app` may depend on a `data` module, so a ViewModel cannot reach Retrofit or a
    DAO even by accident.
