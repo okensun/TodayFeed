@@ -100,21 +100,22 @@ app for no gain.
 
 ## Architecture
 
-### Component-based Clean Architecture, 21 modules — decided
+### Component-based Clean Architecture, a module per layer — decided
 
-**Picked.** Each area of subject matter is a *component* that owns its own `api`, `domain`,
-`data` and `ui` layers. Two rules carry it: only `:app` may depend on a `data` module, and a
+**Picked.** Each area of subject matter is a *component*, and `api`, `domain`, `data` and `ui`
+are the layers it can own. Two rules carry it: only `:app` may depend on a `data` module, and a
 component may see another component only through its `api`.
 
 **Considered instead.** One `:app` module with `data`, `domain` and `ui` packages. Also one
 global three-layer split (`:domain`, `:data`, `:ui`) shared by all features.
 
-**Trade-off.** 21 modules is more structure than a four-screen app needs, and the single-module
-version would have been faster. I chose the modules because they turn two common review comments
-into build errors: "this ViewModel talks to Room directly" and "this feed code reaches into the
-weather cache" are both unwritable here. The global three-layer split is the more interesting
-rejection — it keeps the layers but loses the boundary, because every feature shares one
-`:domain`. Layers alone do not give the guarantee. Component ownership does.
+**Trade-off.** A module for every layer of every component is more structure than a four-screen
+app needs, and the single-module version would have been faster. I chose the modules because
+they turn two common review comments into build errors: "this ViewModel talks to Room directly"
+and "this feed code reaches into the weather cache" are both unwritable here. The global
+three-layer split is the more interesting rejection — it keeps the layers but loses the boundary,
+because every feature shares one `:domain`. Layers alone do not give the guarantee. Component
+ownership does.
 
 The cost is paid by convention plugins in a `build-logic` included build, so each module's build
 file stays about two lines and a new component inherits the rules for free.
