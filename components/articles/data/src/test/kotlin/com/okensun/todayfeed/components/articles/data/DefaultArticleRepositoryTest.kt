@@ -46,14 +46,14 @@ class DefaultArticleRepositoryTest {
     }
 
     @Test
-    fun `saving puts the article in the saved list and unsaving takes it out`() =
+    fun `keeping puts the article in the saved list and keeping again takes it out`() =
         runTest {
             store("a1")
 
-            repository.save("a1")
+            repository.toggleSaved("a1")
             assertEquals(listOf("a1"), repository.observeSavedArticles().first().map { it.id })
 
-            repository.unsave("a1")
+            repository.toggleSaved("a1")
             assertTrue(repository.observeSavedArticles().first().isEmpty())
         }
 
@@ -64,9 +64,9 @@ class DefaultArticleRepositoryTest {
             store("first")
             store("second")
 
-            repository.save("first")
+            repository.toggleSaved("first")
             clock.advanceBy(Duration.ofMinutes(1))
-            repository.save("second")
+            repository.toggleSaved("second")
 
             assertEquals(
                 listOf("second", "first"),
@@ -78,7 +78,7 @@ class DefaultArticleRepositoryTest {
     fun `a saved article is still readable when it is no longer in the feed`() =
         runTest {
             store("gone")
-            repository.save("gone")
+            repository.toggleSaved("gone")
 
             assertEquals("gone", repository.findArticle("gone")?.id)
         }

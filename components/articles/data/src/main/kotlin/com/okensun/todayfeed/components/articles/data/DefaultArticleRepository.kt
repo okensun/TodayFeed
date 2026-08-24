@@ -51,9 +51,7 @@ internal class DefaultArticleRepository
         override fun observeSavedArticles(): Flow<List<Article>> =
             database.dao().observeSaved().map { saved -> saved.map { it.toArticle() } }
 
-        override suspend fun save(id: String) = database.dao().setSaved(id, clock.instant())
-
-        override suspend fun unsave(id: String) = database.dao().setSaved(id, null)
+        override suspend fun toggleSaved(id: String) = database.dao().toggleSaved(id, clock.instant())
 
         override suspend fun findArticle(id: String): Article? = database.dao().findArticle(id)?.toArticle()
 

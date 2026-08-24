@@ -52,7 +52,7 @@ class SavedViewModel
         fun onToggleSave(article: Article) =
             viewModelScope.launch {
                 try {
-                    if (article.saved) articles.unsave(article.id) else articles.save(article.id)
+                    articles.toggleSaved(article.id)
                 } catch (ignored: SQLiteException) {
                     // Storage is full or broken. There is nothing to put right, because what the
                     // star shows is read back from storage and so it never moved. Uncaught here

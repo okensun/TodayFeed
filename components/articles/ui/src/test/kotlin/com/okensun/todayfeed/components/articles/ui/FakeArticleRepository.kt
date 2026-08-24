@@ -12,31 +12,30 @@ import kotlinx.coroutines.flow.flow
 /**
  * Storage a test can break on purpose. Both flags are read when the call is made, so one read can
  * be failed and the next let through, which is what a retry has to be driven with.
+ *
+ * [kept] flips the way storage does, so a test can tap the same article twice and see where it
+ * ends up rather than only what was called.
  */
 internal class FakeArticleRepository : ArticleRepository {
-    private val saved = MutableStateFlow<List<Article>>(emptyList())
+    private val articles = MutableStateFlow<List<Article>>(emptyList())
 
     var readFails = false
     var writeFails = false
-    val written = mutableListOf<String>()
+    val kept = mutableSetOf<String>()
 
-    fun hold(vararg articles: Article) {
-        saved.value = articles.toList()
+    fun hold(vararg held: Article) {
+        articles.value = held.toList()
     }
 
     override fun observeArticles(): Flow<PagingData<Article>> = emptyFlow()
 
     override fun observeSavedArticles(): Flow<List<Article>> =
-        if (readFails) flow { throw SQLiteException("storage cannot be read") } else saved
+        if (readFails) flow { throw SQLiteException("storage cannot be read") } else articles
 
-    override suspend fun findArticle(id: String): Article? = saved.value.firstOrNull { it.id == id }
+    override suspend fun findArticle(id: String): Article? = articles.value.firstOrNull { it.id == id }
 
-    override suspend fun save(id: String) = write(id)
-
-    override suspend fun unsave(id: String) = write(id)
-
-    private fun write(id: String) {
+    override suspend fun toggleSaved(id: String) {
         if (writeFails) throw SQLiteException("storage is full")
-        written += id
+        if (!kept.add(id)) kept.remove(id)
     }
 }

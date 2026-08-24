@@ -54,7 +54,7 @@ class FeedViewModel
         fun onToggleSave(article: Article) =
             viewModelScope.launch {
                 try {
-                    if (article.saved) repository.unsave(article.id) else repository.save(article.id)
+                    repository.toggleSaved(article.id)
                 } catch (ignored: SQLiteException) {
                     // Storage is full or broken. There is nothing to put right, because what the
                     // star shows is read back from storage and so it never moved. Uncaught here

@@ -10,15 +10,19 @@ If time runs out, the cut order is section 4, then task 3.4. Sections 1 to 3 are
 - [x] 1.1 Add `savedAt: Instant?` to `ArticleEntity` and bump the database to version 2 with an
       `ALTER TABLE` migration. Verify: a test opens a version 1 database holding an article,
       migrates it, and reads the same article back with a null `savedAt`
-- [x] 1.2 Add `setSaved(id, savedAt)` and `observeSaved()` to the DAO, ordered by `savedAt`
+- [x] 1.2 Add `toggleSaved(id, now)` and `observeSaved()` to the DAO, ordered by `savedAt`
       descending. Verify: a test saves two articles in a known order and reads them back most
       recently saved first. A plain `@Upsert` was replaced: it rewrote every column, so one
-      refresh would have quietly unsaved everything. There is a test for that
+      refresh would have quietly unsaved everything. There is a test for that. Keeping turns on
+      and off in one statement, because a caller that read the article and then chose let two
+      quick taps both save
 - [x] 1.3 Note on the DAO that anything which ever deletes from `articles` must exclude rows with
       a `savedAt`. Verify: the note is on the query it constrains, not at the top of the file
-- [x] 1.4 Add `save(id)`, `unsave(id)` and the real `observeSavedArticles()` to the repository
-      contract and its implementation. Verify: a test saves through the repository and sees the
-      article arrive in the observed list, and unsaving removes it
+- [x] 1.4 Add `toggleSaved(id)` and the real `observeSavedArticles()` to the repository contract
+      and its implementation. Verify: a test keeps an article through the repository and sees it
+      arrive in the observed list, and keeping it again takes it out. There is deliberately no
+      `save`/`unsave` pair: with one call the contract cannot be told which way to go from a
+      screen that has not caught up
 
 ## 2. The control on the card and the article screen — about forty minutes
 
