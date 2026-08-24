@@ -16,6 +16,13 @@ class FakeWeatherRepository(
 
     override fun observeCurrent(): Flow<Weather?> = current
 
+    var refreshes = 0
+        private set
+
+    override suspend fun refresh() {
+        refreshes++
+    }
+
     fun emit(weather: Weather?) {
         current.value = weather
     }

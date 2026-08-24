@@ -1,13 +1,13 @@
 package com.okensun.todayfeed.components.weather.data
 
 import com.okensun.todayfeed.components.weather.api.WeatherRepository
+import com.okensun.todayfeed.core.network.TodayFeedJson
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -36,8 +36,7 @@ internal object WeatherServiceModule {
             .Builder()
             .baseUrl("https://api.open-meteo.com/")
             .client(client)
-            .addConverterFactory(
-                Json { ignoreUnknownKeys = true }.asConverterFactory("application/json".toMediaType())
-            ).build()
+            .addConverterFactory(TodayFeedJson.asConverterFactory("application/json".toMediaType()))
+            .build()
             .create(WeatherService::class.java)
 }

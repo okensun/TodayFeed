@@ -17,22 +17,35 @@ class DefaultWeatherRepositoryTest {
 
     private val repository = DefaultWeatherRepository(service, connectivity, clock)
 
+    /**
+     * Collecting is not asking. Something has to say when — the screen opening, a pull, or the
+     * network returning — or a reader who was offline at the start would never see the card.
+     */
     @Test
-    fun `the first collector gets a reading from the source`() =
+    fun `collecting on its own asks for nothing`() =
         runTest {
-            val weather = repository.observeCurrent().first { it != null }
+            assertNull(repository.observeCurrent().first())
 
+            assertEquals(0, service.calls)
+        }
+
+    @Test
+    fun `a refresh brings a reading`() =
+        runTest {
+            repository.refresh()
+
+            val weather = repository.observeCurrent().first()
             assertEquals(25.5, weather?.temperatureCelsius ?: 0.0, 0.001)
             assertEquals(1, service.calls)
         }
 
     @Test
-    fun `a second collector inside the allowance asks for nothing`() =
+    fun `a refresh inside the allowance asks for nothing`() =
         runTest {
-            repository.observeCurrent().first { it != null }
+            repository.refresh()
 
             clock.advanceBy(Duration.ofMinutes(5))
-            repository.observeCurrent().first { it != null }
+            repository.refresh()
 
             assertEquals(1, service.calls)
         }
@@ -40,21 +53,49 @@ class DefaultWeatherRepositoryTest {
     @Test
     fun `past the allowance it asks again`() =
         runTest {
-            repository.observeCurrent().first { it != null }
+            repository.refresh()
 
             clock.advanceBy(Duration.ofMinutes(16))
-            repository.observeCurrent().first()
+            repository.refresh()
 
             assertEquals(2, service.calls)
         }
 
     /** No network and nothing held is a missing card, not a failure next to the articles. */
     @Test
-    fun `with no connection and nothing held it asks for nothing and shows nothing`() =
+    fun `with no connection it asks for nothing and shows nothing`() =
         runTest {
             connectivity.set(Connection.Offline)
 
+            repository.refresh()
+
             assertNull(repository.observeCurrent().first())
             assertEquals(0, service.calls)
+        }
+
+    @Test
+    fun `a failure leaves the reading that was already held`() =
+        runTest {
+            repository.refresh()
+
+            service.failure = FakeWeatherService.Failure.NoNetwork
+            clock.advanceBy(Duration.ofMinutes(16))
+            repository.refresh()
+
+            assertEquals(25.5, repository.observeCurrent().first()?.temperatureCelsius ?: 0.0, 0.001)
+        }
+
+    /** A failure stamps nothing, so the next ask tries rather than waiting out the allowance. */
+    @Test
+    fun `a failure does not buy silence`() =
+        runTest {
+            service.failure = FakeWeatherService.Failure.ServerError
+            repository.refresh()
+
+            service.failure = null
+            repository.refresh()
+
+            assertEquals(2, service.calls)
+            assertEquals(25.5, repository.observeCurrent().first()?.temperatureCelsius ?: 0.0, 0.001)
         }
 }

@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.feed.ui
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -19,6 +20,7 @@ import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.weather.api.Weather
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -202,6 +204,59 @@ class FeedScreenTest {
         offline = true
 
         compose.onNodeWithText(OUT_OF_DATE).assertIsDisplayed()
+    }
+
+    /**
+     * The weather arriving after the reader is already looking. Without a nudge the list holds
+     * its anchor and the card is inserted above the screen, where nobody finds it.
+     */
+    @Test
+    fun `a section that arrives late is brought into view at the top`() {
+        var sections by mutableStateOf(emptyList<FeedSection>())
+        compose.setContent {
+            TodayFeedTheme {
+                FeedScreen(
+                    articles = flowOf(PagingData.from((1..20).map { article("a$it", "Article $it") })),
+                    sections = sections,
+                    offline = false,
+                    onArticleClick = {}
+                )
+            }
+        }
+
+        sections = listOf(hero)
+
+        compose.onNodeWithText("Taipei").assertIsDisplayed()
+    }
+
+    /** The other half: a reader who has scrolled away is not dragged back to the top. */
+    @Test
+    fun `a section that arrives late does not move a reader who has scrolled`() {
+        var sections by mutableStateOf(emptyList<FeedSection>())
+        val listState = LazyListState()
+        compose.setContent {
+            TodayFeedTheme {
+                FeedScreen(
+                    articles = flowOf(PagingData.from((1..20).map { article("a$it", "Article $it") })),
+                    sections = sections,
+                    offline = false,
+                    onArticleClick = {},
+                    listState = listState
+                )
+            }
+        }
+        compose.runOnIdle { }
+        compose.waitForIdle()
+        runBlocking { listState.scrollToItem(10) }
+        compose.waitForIdle()
+
+        sections = listOf(hero)
+        compose.waitForIdle()
+
+        assertTrue(
+            "first visible was ${listState.firstVisibleItemIndex}",
+            listState.firstVisibleItemIndex > 1
+        )
     }
 
     @Test

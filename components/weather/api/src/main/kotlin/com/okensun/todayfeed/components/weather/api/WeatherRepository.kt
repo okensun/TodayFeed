@@ -9,4 +9,10 @@ import kotlinx.coroutines.flow.Flow
 interface WeatherRepository {
     /** The weather for the feed's hero card, or null while nothing has been fetched yet. */
     fun observeCurrent(): Flow<Weather?>
+
+    /**
+     * Asks again if the allowance says it is worth it. Collecting does not fetch, so something
+     * has to say when: the screen opening, a pull, or the network coming back.
+     */
+    suspend fun refresh()
 }

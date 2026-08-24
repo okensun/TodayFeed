@@ -57,6 +57,7 @@ fun FeedScreen(
         offline = offline,
         refreshWhen = viewModel.networkReturned,
         onArticleClick = onArticleClick,
+        onRefreshSections = viewModel::onRefreshSections,
         modifier = modifier
     )
 }
@@ -73,20 +74,17 @@ internal fun FeedScreen(
     offline: Boolean,
     onArticleClick: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onRefreshSections: () -> Unit = {},
     refreshWhen: Flow<Unit> = emptyFlow(),
     listState: LazyListState = rememberLazyListState(),
 ) {
     val paged = articles.collectAsLazyPagingItems()
 
-    // Watched with the lifecycle rather than with the composition. A composition outlives the
-    // app going to the background, so on its own it would keep the platform callback registered
-    // and fetch when the connection came back with nobody looking.
-    val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(refreshWhen, paged, lifecycle) {
-        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-            refreshWhen.collect { paged.refresh() }
-        }
+    RefreshOn(refreshWhen) {
+        paged.refresh()
+        onRefreshSections()
     }
+    ShowNewSections(sections.size, listState)
 
     val state = feedContentState(paged.loadState.refresh, paged.itemCount, sections.isNotEmpty(), offline)
     when (state) {
@@ -104,7 +102,10 @@ internal fun FeedScreen(
         is ContentState.Offline, is ContentState.Content ->
             RefreshableFeed(
                 refreshing = paged.loadState.refresh is LoadState.Loading,
-                onRefresh = paged::refresh,
+                onRefresh = {
+                    paged.refresh()
+                    onRefreshSections()
+                },
                 modifier = modifier
             ) {
                 Column(modifier = Modifier.fillMaxSize()) {
@@ -151,6 +152,39 @@ internal fun FeedScreen(
 /** `refresh()` skips `initialize()`, which is where the freshness policy lives, so a pull asks
  * the source whatever the allowance says. That is what a pull is for. */
 @OptIn(ExperimentalMaterial3Api::class)
+/**
+ * A section arriving is inserted above whatever the list is anchored on, so a reader sitting at
+ * the top would never see it: the list holds its place, which is what task 2.2 asked it to do.
+ * A reader who has scrolled away is left alone, because being moved is worse than being late.
+ */
+@Composable
+private fun ShowNewSections(
+    count: Int,
+    listState: LazyListState,
+) = LaunchedEffect(count, listState) {
+    if (count > 0 && listState.firstVisibleItemIndex <= count) {
+        listState.scrollToItem(0)
+    }
+}
+
+/**
+ * Watched with the lifecycle rather than with the composition. A composition outlives the app
+ * going to the background, so on its own it would keep the platform callback registered and
+ * fetch when the connection came back with nobody looking.
+ */
+@Composable
+private fun RefreshOn(
+    signal: Flow<Unit>,
+    refresh: () -> Unit,
+) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(signal, refresh, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            signal.collect { refresh() }
+        }
+    }
+}
+
 @Composable
 private fun RefreshableFeed(
     refreshing: Boolean,
