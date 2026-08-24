@@ -119,11 +119,16 @@
 - [x] 3.6 Draw the sections above the paged articles. **Pulled into pass 1** for the same reason. Verify: a view test shows a section and
       articles together, and that no articles with a section present shows the section rather
       than the empty state
-- [ ] 3.7 Write the freshness section of the README, describing what exists at this point.
+- [x] 3.7 Write the freshness section of the README, describing what exists at this point.
       **Never cut.** Verify: a reader who has not seen the code can say when the app will and will
-      not call the network
-- [ ] 3.8 Add to the README limitations: the refresh cap of five pages and what a reader away
-      longer than that will see. Verify: the wording says what they would notice
+      not call the network. Written as two lists, one for each answer, with the emulator result
+      behind the one claim that has a number. The source's stated ten minutes was measured rather
+      than quoted from memory
+- [x] 3.8 Add to the README limitations: the refresh cap of five pages and what a reader away
+      longer than that will see. Verify: the wording says what they would notice. Three more went
+      in with it: the next-page spinner that prefetch usually hides, a metered connection that is
+      read but was never tested on one, and a correction, because the feed's retry now works and
+      the limitation still said it did not
 
 ## 4. Pictures — about forty five minutes
 

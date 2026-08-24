@@ -63,9 +63,49 @@ those was chosen and what was turned down.
 
 ## Freshness
 
-To be written in the final block. It covers what "fresh" means here, the time-to-live for
-each source and where those numbers come from, why refresh only happens at moments the
-user can see, and how a metered connection changes the answer.
+The screen always shows what is stored on the device. The network only tops that store up. A
+refresh that fails therefore cannot empty the screen, and being offline needs no separate path
+through the code.
+
+Before asking a source for anything, the app looks at what it already holds. That decision is a
+plain function in `:core:freshness`, and it has five answers:
+
+| Stored | Connection | What happens |
+|---|---|---|
+| nothing | none | say so, and offer a retry |
+| nothing | any | fetch |
+| something | none | show it, marked as possibly out of date |
+| something, inside the allowance | any | show it and ask for nothing |
+| something, past the allowance | any | show it, then fetch |
+
+### The allowance, and where the number comes from
+
+Spaceflight News states its own: `cache-control: max-age=600`, which is ten minutes. Measured on
+2026-08-24. That figure wins, because a number the source states is a fact while ours is a
+judgement. Our own figure, fifteen minutes, is used only when a source states none. This source
+always states one, so the fallback has never yet been needed.
+
+The weather card is still a fixed value held in memory, so none of this applies to it yet.
+
+### When it calls the network
+
+It does:
+
+- on the first open, when nothing is stored
+- on a later open, when what is stored is older than the allowance
+- when the reader pulls the list down, whatever the allowance says. Asking anyway is what a pull
+  is for
+- when the reader scrolls past the end of what is stored, for the next page only
+- when the network comes back after being away
+
+It does not:
+
+- on a later open inside the allowance. Verified on an emulator: a relaunch within ten minutes
+  makes **zero** requests and the articles stay on screen
+- when there is no connection. Nothing is attempted, so nothing arrives as an error either
+- when the reader scrolls back up through pages already held
+- to renew the allowance while scrolling. Reading older articles says nothing about whether the
+  top of the feed has changed, so fetching the next page leaves the allowance where it was
 
 ## Plan and sequencing
 
@@ -76,10 +116,21 @@ broken into slices, the order they were built and why, and what was cut.
 
 Written as they are found.
 
-- **Retry does nothing yet on the feed and the saved list.** Both show a Try again button
-  wired to a view model method with an empty body, because nothing talks to the network until
-  the next slice. The path is wired end to end, so only the body is missing. The detail screen
-  is different: it has nothing to reload, so its button says Go back and leaves the screen.
+- **A refresh walks back five pages at most.** When articles have arrived since the reader was
+  last here, a refresh keeps asking for the next page until one holds an article already stored,
+  so no gap is left in the middle. It gives up after five pages, which is a hundred articles. A
+  reader who has been away longer than that sees the newest hundred, then a gap, then what they
+  had before. Scrolling down fills the gap in from where the walk stopped.
+- **The spinner for the next page is rarely seen.** Paging asks for it five articles before the
+  end, so it usually arrives before the reader gets there. It shows on a slow network, and after
+  a failed page is retried.
+- **Retry does nothing yet on the saved list.** Its Try again button is wired to a view model
+  method with an empty body, because saving arrives in the next slice. The feed's retry and pull
+  to refresh are real. The detail screen has nothing to reload, so its button says Go back and
+  leaves the screen.
+- **A metered connection is read but never tested on one.** `NET_CAPABILITY_NOT_METERED` decides
+  it, and wifi and aeroplane mode were both checked on a Pixel 6. The phone has no SIM, so
+  mobile data reporting itself as metered is unverified.
 
 ### Checked by hand rather than by a test
 
