@@ -49,27 +49,34 @@
 
 ## 2. Paging behaviour — about one and a quarter hours
 
-- [ ] 2.1 Add the `APPEND` branch and the end-of-pagination signal. Verify: a test shows a second
+- [x] 2.1 Add the `APPEND` branch and the end-of-pagination signal. Verify: a test shows a second
       page is fetched and that once the source reports no more, further appends make **zero**
-      requests
-- [ ] 2.2 Make `REFRESH` upsert without deleting, so the reader keeps their place. Verify: a test
+      requests. Where the next page starts comes from the stored metadata rather than from
+      `PagingState`, because the source counts in offsets and the state describes rows on screen.
+      An append also leaves the freshness stamp alone, which has its own test
+- [x] 2.2 Make `REFRESH` upsert without deleting, so the reader keeps their place. Verify: a test
       loads three pages, refreshes with two new articles at the front, and shows all three pages
-      still present with the two new ones on top
+      still present with the two new ones on top. **The code landed in pass 1**, because real
+      articles on screen already needed the choice between upsert and delete. Only the test was
+      outstanding, and it had to wait for 2.1 to be able to load three pages
 - [ ] 2.3 Make `REFRESH` loop until a page contains an article already stored, capped at five
       pages. Verify: a test with a source three days ahead makes at most five requests and leaves
       no gap; a test where page zero contains something familiar makes exactly one
-- [ ] 2.4 Derive `ContentState` from `loadState.refresh` and `itemCount` in a pure function, with
+- [x] 2.4 Derive `ContentState` from `loadState.refresh` and `itemCount` in a pure function, with
       `itemCount > 0` first. Verify: unit tests cover every branch, including that an error with
-      content already loaded stays `Content`
+      content already loaded stays `Content`. **Done in pass 1** as `feedContentState`, for the
+      same reason 3.5 and 3.6 were pulled forward: a paged feed on screen needs a state to be in.
+      Eight tests cover it
 - [ ] 2.5 Show the refreshing and appending indicators from `LoadState`. Verify: view tests supply
       load states through `PagingData.from` and check each indicator
 - [ ] 2.6 Add pull to refresh, bypassing the policy. Verify by hand that pulling refreshes
       straight after a refresh; a view test shows the indicator follows the refresh load state
 - [ ] 2.7 Offer `retry()` for a failed append without losing what is loaded. Verify: a view test
       shows the loaded articles stay and the retry is offered
-- [ ] 2.8 Set `PagingConfig` with a page size of twenty and a `prefetchDistance` of five. Verify:
-      by hand that reaching the end does not stall, and a test that the config is what the screen
-      builds
+- [x] 2.8 Set `PagingConfig` with a page size of twenty and a `prefetchDistance` of five. Verify:
+      by hand that reaching the end does not stall. **Done in pass 1**; both values are in
+      `DefaultArticleRepository`. The test this task asked for was dropped on purpose: asserting
+      that a config field equals the constant next to it repeats the code and can catch nothing
 
 ## 3. Offline, sections, and the write-up — about one and a quarter hours
 

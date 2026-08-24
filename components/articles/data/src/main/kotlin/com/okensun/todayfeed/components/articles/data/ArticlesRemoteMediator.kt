@@ -60,11 +60,25 @@ internal class ArticlesRemoteMediator(
             // New articles arrive at the front, so a refresh brings them. There is nothing to
             // prepend.
             LoadType.PREPEND -> MediatorResult.Success(endOfPaginationReached = true)
-            // Pass 2 implements this. Until then the feed is one page, which is still real articles
-            // rather than placeholders.
-            LoadType.APPEND -> MediatorResult.Success(endOfPaginationReached = true)
+            LoadType.APPEND -> append()
             LoadType.REFRESH -> refresh()
         }
+
+    /**
+     * Where the next page starts comes from what was stored, not from [PagingState]. The source
+     * counts in offsets and the state describes rows on screen, and the two drift apart as soon
+     * as a refresh brings articles in above them.
+     */
+    private suspend fun append(): MediatorResult {
+        val metadata = dao.findMetadata()
+        // Nothing has been refreshed yet, or the source has already said there is no more. Both
+        // mean there is nothing to ask for, so neither makes a request.
+        return if (metadata == null || !metadata.hasMore) {
+            MediatorResult.Success(endOfPaginationReached = true)
+        } else {
+            fetch(offset = metadata.nextOffset) { body, _ -> storeAppended(metadata, body) }
+        }
+    }
 
     /**
      * Paging does not wrap `load` in a try/catch, so anything thrown here escapes the coroutine
@@ -75,9 +89,12 @@ internal class ArticlesRemoteMediator(
      * here as a serialization failure rather than as an IOException.
      */
     @Suppress("TooGenericExceptionCaught")
-    private suspend fun refresh(): MediatorResult =
+    private suspend fun fetch(
+        offset: Int,
+        store: suspend (ArticlesPage, List<String>) -> MediatorResult,
+    ): MediatorResult =
         try {
-            val response = service.articles(limit = pageSize, offset = 0)
+            val response = service.articles(limit = pageSize, offset = offset)
             val body = response.body()
             when {
                 !response.isSuccessful -> MediatorResult.Error(HttpException(response))
@@ -88,7 +105,27 @@ internal class ArticlesRemoteMediator(
             MediatorResult.Error(e)
         }
 
-    private suspend fun store(
+    private suspend fun refresh(): MediatorResult = fetch(offset = 0, store = ::storeRefreshed)
+
+    /**
+     * An append brings older articles, so it moves the offset on and leaves the freshness stamp
+     * where it was. Stamping it here would let a long read keep buying silence.
+     */
+    private suspend fun storeAppended(
+        metadata: FeedMetadataEntity,
+        body: ArticlesPage,
+    ): MediatorResult {
+        dao.upsertArticles(body.results.map { it.toEntity() })
+        dao.upsertMetadata(
+            metadata.copy(
+                nextOffset = metadata.nextOffset + body.results.size,
+                hasMore = body.next != null
+            )
+        )
+        return MediatorResult.Success(endOfPaginationReached = body.next == null)
+    }
+
+    private suspend fun storeRefreshed(
         body: ArticlesPage,
         cacheControl: List<String>,
     ): MediatorResult {
@@ -107,6 +144,10 @@ internal class ArticlesRemoteMediator(
                     // Every value, not the last one. A repeated header would otherwise lose the
                     // stated age, because Headers.get returns only the final occurrence.
                     serverMaxAge = maxAgeOf(cacheControl.joinToString(separator = ", ")),
+                    // The offset starts again from this page. A reader who had paged deeper will
+                    // therefore be served offsets they already hold on the next append, which the
+                    // upsert makes harmless but not free. Counting how many of a page are already
+                    // stored is what fixes it, and is the same count task 2.3 needs.
                     nextOffset = body.results.size,
                     hasMore = body.next != null
                 )
