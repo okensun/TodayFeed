@@ -4,6 +4,7 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
+import com.okensun.todayfeed.core.freshness.Connection
 import com.okensun.todayfeed.core.freshness.Connectivity
 import com.okensun.todayfeed.core.freshness.decide
 import com.okensun.todayfeed.core.freshness.wantsNetwork
@@ -49,13 +50,19 @@ internal class ArticlesRemoteMediator(
     override suspend fun load(
         loadType: LoadType,
         state: PagingState<Int, ArticleEntity>,
-    ): MediatorResult =
-        when (loadType) {
+    ): MediatorResult {
+        // Nothing to ask with no connection. What is stored is what the screen shows, so this is
+        // a success with nothing added rather than a failure to report.
+        if (connectivity.current() == Connection.Offline) {
+            return MediatorResult.Success(endOfPaginationReached = false)
+        }
+        return when (loadType) {
             // New articles arrive at the front, so a refresh brings them.
             LoadType.PREPEND -> MediatorResult.Success(endOfPaginationReached = true)
             LoadType.APPEND -> append()
             LoadType.REFRESH -> refresh()
         }
+    }
 
     /** Where the next page starts comes from what was stored, not from [PagingState]: the source
      * counts offsets, the state counts rows on screen, and a refresh pulls them apart. */
