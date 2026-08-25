@@ -278,22 +278,20 @@ Written down as they turned up, not gathered at the end.
 
 ### Checked by hand rather than by a test
 
-There is no emulator in CI, so these were driven over `adb` on an emulator and the result
-recorded. See `DECISIONS.md` for why.
+There is no emulator in CI, so these were driven over `adb` and the result recorded.
+`DECISIONS.md` says why they are checked this way instead of being written as tests.
 
-| Behaviour | What was measured |
-|---|---|
-| Each tab keeps its own scroll position | Scrolled the feed, opened Saved, returned. The two screenshots are identical apart from the clock. |
-| Tapping the tab already open adds nothing to the back stack | After tapping Reading while on Reading, the system back button left the app for the launcher. |
-| The theme follows the system setting without a restart | Switching to dark redrew the app in dark, and the process id was unchanged before and after. |
-| Detail opens for the article that was tapped, and returns | The detail screen showed the tapped card's title and no bottom bar. The system back gesture returned to the feed with its scroll position intact. |
-| A fresh clone builds with one command | Cloned into an empty directory with no `local.properties`, ran `./gradlew assembleDebug`, got an APK. |
+- Each tab keeps its own scroll position
+- Tapping the tab already open adds nothing to the back stack
+- The theme follows the system setting without a restart
+- Detail opens for the article that was tapped, and returns
+- A fresh clone builds with one command
 
-- **One scenario is still unverified: whether the screen keeps its state across a theme
-  change.** On this emulator `adb shell cmd uimode night` swaps the task and the process, which
-  loses the state for reasons that have nothing to do with the app. An equivalent configuration
-  change does pass: after a font scale change the process, the task and the scroll position are
-  all unchanged. It still needs a pass through Settings by hand.
+One is still unverified: whether the screen keeps its state across a theme change. Changing the
+night mode on this emulator swaps the task and the process, which loses the state for reasons
+that have nothing to do with the app. A font scale change is the same kind of configuration
+change and it passes, so the mechanism works; the theme path still needs a pass through Settings
+by hand.
 
 ## What I'd do next
 
