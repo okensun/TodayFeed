@@ -264,21 +264,17 @@ filled". `AI_USAGE.md` is the short version of what that turned up.
 
 Written down as they turned up, not gathered at the end.
 
-- **A refresh walks back five pages at most.** When articles have arrived since the reader was
-  last here, a refresh keeps asking for the next page until one holds an article already stored,
-  so no gap is left in the middle. It gives up after five pages, which is a hundred articles. A
-  reader who has been away longer than that sees the newest hundred, then a gap, then what they
-  had before. Scrolling down fills the gap in from where the walk stopped.
-- **The spinner for the next page is rarely seen.** Paging asks for it five articles before the
-  end, so it usually arrives before the reader gets there. It shows on a slow network, and after
-  a failed page is retried.
-- **The weather is always Taipei.** The coordinates are fixed, so the app asks for no location
-  permission. Reading a coarse location would mean a permission dialog on first launch, a path
-  for when it is refused, and either reverse geocoding or a card that cannot name the place. None
-  of that is what the brief asks for, and "clean checkout, one command" is worth more here.
-- **A metered connection is read but never tested on one.** `NET_CAPABILITY_NOT_METERED` decides
-  it, and wifi and aeroplane mode were both checked on a Pixel 6. The phone has no SIM, so
-  mobile data reporting itself as metered is unverified.
+- **A refresh walks back five pages at most**, which is a hundred articles. It asks for page
+  after page until one holds an article already stored, so no gap is left in the middle. A reader
+  who has been away longer sees a gap, and scrolling down fills it.
+- **The spinner for the next page is rarely seen.** Paging asks for the page five articles
+  before the end, so it usually arrives first. It shows on a slow network and after a retry.
+- **The weather is always Taipei.** The coordinates are fixed on purpose, so the app asks for
+  no location permission. Reading one would cost a dialog on first launch and a path for when it
+  is refused, and the brief does not ask for it.
+- **A metered connection is read but never tested on one.** `NET_CAPABILITY_NOT_METERED`
+  decides it, and wifi and aeroplane mode were checked on a Pixel 6 with no SIM. Mobile data
+  reporting itself as metered is therefore unverified.
 
 ### Checked by hand rather than by a test
 
@@ -293,12 +289,11 @@ recorded. See `DECISIONS.md` for why.
 | Detail opens for the article that was tapped, and returns | The detail screen showed the tapped card's title and no bottom bar. The system back gesture returned to the feed with its scroll position intact. |
 | A fresh clone builds with one command | Cloned into an empty directory with no `local.properties`, ran `./gradlew assembleDebug`, got an APK. |
 
-- **One scenario is still not verified: whether the screen keeps its state across a theme
+- **One scenario is still unverified: whether the screen keeps its state across a theme
   change.** On this emulator `adb shell cmd uimode night` swaps the task and the process, which
-  loses the state for reasons that have nothing to do with the app, and writing the setting
-  directly has no effect. The same check passes for an equivalent configuration change: after a
-  font scale change the process, the task and the scroll position are all unchanged. It still
-  needs a manual pass through Settings.
+  loses the state for reasons that have nothing to do with the app. An equivalent configuration
+  change does pass: after a font scale change the process, the task and the scroll position are
+  all unchanged. It still needs a pass through Settings by hand.
 
 ## What I'd do next
 
