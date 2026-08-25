@@ -188,9 +188,18 @@ work. So the order is risk first, not features first.
 | 1 | `bootstrap-project-skeleton` | Nothing can be run or reviewed until a fresh copy builds. Drawing the module lines now is cheaper than drawing them after code has grown across a line nobody drew. |
 | 2 | `article-freshness-and-feed` | The heart of it. `:core:freshness` first with its tests, then one source wired through Room as the single source of truth. |
 | 3 | `save-articles` | The last must-have. It needs the article already stored, so it comes after slice 2. |
+| 4 | The weather, read from Open-Meteo | Planned as part of slice 3 and finished just after it. The card was drawn in slice 1 with a number that was made up. It is also the fast end of the freshness policy, so it is what makes a per-source allowance worth having at all. |
+| 5 | `film-carousel` | The one optional feature, and the only slice that was allowed to not happen. |
 
-Sixteen hours were planned across four evenings, one slice each and the documents in the last
-block. Two things did not go to plan, and both are worth stating:
+Rows 4 and 5 were both conditional, and row 5 had a rule written against it before any of this
+started: the submission documents are finished before optional work begins, and the documents
+are never cut. The history shows the rule held: the documents merged as `#26`, and every commit
+of the film carousel comes after that merge in `git log`. That can be checked instead of taken
+on trust.
+
+Sixteen hours were planned across four evenings: one slice on each of the first three, then the
+documents on the fourth with anything optional after them. Two things did not go to plan, and
+both are worth stating:
 
 - **Slice 2 was estimated at four hours and took closer to eight.** The estimate was made against
   a horizontal plan; rewriting it as five vertical passes, each ending with the app working, is
