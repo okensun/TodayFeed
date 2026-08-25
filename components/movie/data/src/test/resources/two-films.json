@@ -1,0 +1,18 @@
+[
+  {
+    "id": "2baf70d1-42bb-4437-b551-e5fed5a87abe",
+    "title": "Castle in the Sky",
+    "release_date": "1986",
+    "director": "Hayao Miyazaki",
+    "movie_banner": "https://image.tmdb.org/t/p/w533_and_h300_bestv2/3cyjYtLWCBE1uvWINHFsFnE8LUK.jpg",
+    "rt_score": "95"
+  },
+  {
+    "id": "12cfb892-aac0-4c5b-94af-521852e46d6a",
+    "title": "Grave of the Fireflies",
+    "release_date": "1988",
+    "director": "Isao Takahata",
+    "movie_banner": "https://image.tmdb.org/t/p/original/vkZSd0Lp8iCVBGpFH9L7LzLusjS.jpg",
+    "rt_score": "97"
+  }
+]

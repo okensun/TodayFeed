@@ -20,6 +20,8 @@ import androidx.paging.PagingData
 import com.okensun.todayfeed.components.articles.api.models.Article
 import com.okensun.todayfeed.components.feed.domain.FeedSection
 import com.okensun.todayfeed.components.weather.api.models.Weather
+import com.okensun.todayfeed.components.weather.ui.NO_WEATHER
+import com.okensun.todayfeed.components.weather.ui.WEATHER_COMING
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -47,6 +49,25 @@ class FeedScreenTest {
         val first = compose.onNodeWithText("Article one").getBoundsInRoot()
 
         assertTrue("section at ${section.top}, article at ${first.top}", section.top < first.top)
+    }
+
+    /** Every band of the feed is named, so a reader can tell one kind of content from another. */
+    @Test
+    fun `the articles are under a heading of their own`() {
+        show(articles = listOf(article("a1", "Article one")), sections = listOf(hero))
+
+        val heading = compose.onNodeWithText(ARTICLES).getBoundsInRoot()
+        val first = compose.onNodeWithText("Article one").getBoundsInRoot()
+
+        assertTrue("heading at ${heading.top}, article at ${first.top}", heading.top < first.top)
+    }
+
+    /** A heading over nothing is worse than no heading. */
+    @Test
+    fun `with no articles there is no articles heading`() {
+        show(articles = emptyList(), sections = listOf(hero))
+
+        compose.onNodeWithText(ARTICLES).assertDoesNotExist()
     }
 
     @Test
@@ -212,29 +233,63 @@ class FeedScreenTest {
     }
 
     /**
-     * The weather arriving after the reader is already looking. Without a nudge the list holds
-     * its anchor and the card is inserted above the screen, where nobody finds it.
+     * The block's place is taken before its source answers, so an answer changes the inside of a
+     * card and never the number of cards. That is what keeps a reader where they were, rather
+     * than a rule about when it is fair to move them.
      */
     @Test
-    fun `a section that arrives late is brought into view at the top`() {
-        var sections by mutableStateOf(emptyList<FeedSection>())
+    fun `a section with nothing yet still holds its place`() {
+        show(articles = listOf(article("a1", "Article one")), sections = listOf(FeedSection.WeatherHero(null)))
+
+        compose.onNodeWithContentDescription(WEATHER_COMING).assertIsDisplayed()
+    }
+
+    /** With no connection nothing is on its way, so the block says that instead of breathing. */
+    @Test
+    fun `a section with nothing and no connection says so rather than waiting`() {
+        show(
+            articles = listOf(article("a1", "Article one")),
+            sections = listOf(FeedSection.WeatherHero(null)),
+            offline = true
+        )
+
+        compose.onNodeWithContentDescription(NO_WEATHER).assertIsDisplayed()
+    }
+
+    /**
+     * A second source answering used to throw a reader back to the top. The nudge that brought a
+     * new block into view tested the reader's position against the number of sections, so every
+     * section added widened the window it fired in. Nothing is inserted now, so nothing nudges.
+     */
+    @Test
+    fun `a reader who has scrolled a little is not moved when a second section answers`() {
+        var sections by mutableStateOf(listOf<FeedSection>(hero))
+        val listState = LazyListState()
         compose.setContent {
             TodayFeedTheme {
                 FeedScreen(
                     articles = flowOf(PagingData.from((1..20).map { article("a$it", "Article $it") })),
                     sections = sections,
                     offline = false,
-                    onArticleClick = {}
+                    onArticleClick = {},
+                    listState = listState
                 )
             }
         }
+        compose.waitForIdle()
+        runBlocking { listState.scrollToItem(2) }
+        compose.waitForIdle()
 
-        sections = listOf(hero)
+        sections = listOf(hero, FeedSection.Films(emptyList()))
+        compose.waitForIdle()
 
-        compose.onNodeWithText("Taipei").assertIsDisplayed()
+        assertTrue(
+            "first visible was ${listState.firstVisibleItemIndex}",
+            listState.firstVisibleItemIndex > 0
+        )
     }
 
-    /** The other half: a reader who has scrolled away is not dragged back to the top. */
+    /** And the reader is never moved, whichever source answers or when. */
     @Test
     fun `a section that arrives late does not move a reader who has scrolled`() {
         var sections by mutableStateOf(emptyList<FeedSection>())
@@ -358,6 +413,7 @@ class FeedScreenTest {
 
     private companion object {
         const val APPENDING = "Loading more"
+        const val ARTICLES = "Articles"
         const val OUT_OF_DATE = "You are offline. These articles may be out of date."
 
         val hero =

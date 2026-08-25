@@ -11,5 +11,6 @@ dependencies {
     // The one sanctioned cross-component ui dependency: drawing their cards is this
     // module's entire job. See DECISIONS.md.
     implementation(project(":components:articles:ui"))
+    implementation(project(":components:movie:ui"))
     implementation(project(":components:weather:ui"))
 }
