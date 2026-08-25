@@ -27,6 +27,9 @@ exactly as it was, so stopping after either of them costs the reader nothing.
 - [ ] 2.2 Check the two scroll directions by hand: a sideways drag moves the row and not the
       feed, a vertical drag moves the feed and not the row
 
+- [ ] 2.3 Show the review score on the card and order the row by it, best first. Verify: tests
+      show the best score first, no score last, and a tie broken by title
+
 ## 3. Into the feed — about fifty minutes
 
 - [ ] 3.1 Add `FeedSection.Films` and take the film repository in `ObserveFeedSections`, ordered
@@ -36,6 +39,9 @@ exactly as it was, so stopping after either of them costs the reader nothing.
       Verify: a view test shows the row between the weather card and the first article
 - [ ] 3.3 Bind the repository from `:app`. Verify by hand on a device that the row appears with
       the films in it
+- [ ] 3.4 Name each band of the feed, with the name saying how the band is ordered. Verify: a
+      view test shows the articles heading above the first article, and none when there are no
+      articles
 
 ## 4. Saying so — about twenty minutes
 

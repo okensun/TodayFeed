@@ -67,6 +67,25 @@ This is the second source to make that choice, so the shape is now a pattern rat
 one-off: **articles are stored because they are the thing the reader came for; sections are held
 in memory because a missing section costs a reader nothing.**
 
+### The row is ordered by score, and says so
+
+The catalogue arrives in no useful order. Ordering it by `rt_score` makes the row worth scrolling
+and makes the score worth drawing: a number on a card that explains nothing is decoration, and a
+row ordered by a number the reader cannot see looks arbitrary. Each needs the other.
+
+No score sorts last rather than as a nought, because "we were not told" is not "the worst film
+ever made". Title breaks a tie, so the same answer always draws the row in the same order.
+
+The ordering lives in the repository, so the contract states it once and one test proves it,
+rather than every screen that ever draws a film having to remember.
+
+### Naming the bands is what makes it a mixed feed
+
+With one section the feed read as a weather card with articles under it. With two it needs to say
+which is which, so each band carries a line naming it, and the line says how the band is ordered.
+That is also the cheapest place to tell the reader something true they cannot otherwise know:
+`Films, best first` and `Articles, newest first`.
+
 ### The carousel is a `LazyRow` inside the feed's `LazyColumn`
 
 A row that scrolls sideways inside a list that scrolls down is the standard shape and Compose

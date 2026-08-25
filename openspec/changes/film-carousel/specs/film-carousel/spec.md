@@ -9,15 +9,24 @@ the others, which is what makes the freshness policy legible.
 ### Requirement: The feed shows a row of films
 
 The app SHALL show films in the feed as a row that scrolls sideways, between the weather card and
-the articles. Each film SHALL show its title, the year it came out, and its picture where the
-source provides one. A film whose picture is missing or cannot be loaded SHALL still show its
-text.
+the articles. Each film SHALL show its title, the year it came out, its review score where the
+source gives one, and its picture where the source provides one. A film whose picture is missing
+or cannot be loaded SHALL still show its text.
+
+The row SHALL be ordered by review score, best first. A film with no score SHALL come last rather
+than be treated as scoring nothing, and films sharing a score SHALL keep a stable order.
 
 #### Scenario: Films are shown
 
 - **WHEN** the feed is opened and films have been fetched
 - **THEN** a row of films is shown between the weather card and the articles
-- **AND** each film shows its title and its year
+- **AND** each film shows its title, its year and its score
+
+#### Scenario: The best film is first
+
+- **WHEN** the row is drawn
+- **THEN** the film with the highest score is at the start of the row
+- **AND** a film the source gives no score for is at the end
 
 #### Scenario: The row scrolls on its own
 
@@ -29,6 +38,22 @@ text.
 
 - **WHEN** a film has no picture, or its picture cannot be loaded
 - **THEN** its title and year are still shown
+
+### Requirement: Each band of the feed is named
+
+The feed SHALL name each band of content it shows, and each name SHALL say how that band is
+ordered. A band with nothing in it SHALL NOT be named.
+
+#### Scenario: The bands are named
+
+- **WHEN** the feed shows films and articles
+- **THEN** the row of films is under a name saying it is ordered best first
+- **AND** the articles are under a name saying they are ordered newest first
+
+#### Scenario: An empty band is not named
+
+- **WHEN** there are no articles to show
+- **THEN** no name for the articles is shown
 
 ### Requirement: The films never take the feed away
 
