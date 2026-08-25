@@ -15,7 +15,7 @@ exactly as it was, so stopping after either of them costs the reader nothing.
       interface names `Film` and nothing else, and the module is plain Kotlin
 - [ ] 1.3 Add the Retrofit service, its response type and the mapping in `movie/data`. Verify: a
       test decodes a real saved response and checks the title, the year and the banner
-- [ ] 1.4 Add `DefaultFilmRepository` with the freshness decision and a twenty-four hour
+- [ ] 1.4 Add `DefaultFilmRepository` with the freshness decision and a twelve hour
       allowance. Verify: tests show a second ask inside the allowance makes no request, one past
       it does, and no connection makes none
 

@@ -22,17 +22,25 @@ Measured on 2026-08-25: twenty-two films, 32 KB, `cache-control: no-cache`, and 
 
 ### The films get an ordinary allowance, not "forever"
 
-**Picked.** Twenty-four hours, the same shape of number as every other source.
+**Picked.** Twelve hours, the same shape of number as every other source.
 
 **Considered instead.** Treating the catalogue as permanent: fetch once, never again. Twenty-two
 films that were released between 1986 and 2014 will not change while anyone is reading this.
 
-**Trade-off.** "Never changes" is a fact about today's data, not about the contract. A source that
-adds a film, corrects a director's name or changes a picture URL would leave the app showing
-something wrong for as long as it is installed, and nothing in the code would explain why. A day
-is short enough that a correction lands, and long enough that the app asks about a catalogue at
-most once a session. The policy also stays uniform: there is no branch anywhere that means "this
-one is special".
+**Trade-off.** "Never changes" is a fact about today's data, not about the contract, and it is not
+even true of all of today's data: every film carries `rt_score`, a review score, and a review
+score moves. A film added, a director's name corrected or a score revised would leave the app
+showing something wrong for as long as it is installed, and nothing in the code would explain
+why. Half a day is short enough that a correction reaches a reader who opens the app in the
+morning and again after work, and long enough that the app asks about a catalogue at most once a
+session. The policy also stays uniform: there is no branch anywhere that means "this one is
+special".
+
+The shape of the number is corroborated. Two comparable keyless catalogues state one for
+themselves, and both state a day: `itunes.apple.com/search` and `api.tvmaze.com/shows` each send
+`max-age=86400`, measured on 2026-08-25. Ours is half of that, because we hold the films in
+memory and revalidate nothing, so being early costs one small request and being late shows a
+wrong score.
 
 ### A stated `no-cache` counts as stating nothing
 
@@ -40,8 +48,8 @@ The source sends `cache-control: no-cache`, which read literally means "ask ever
 parser reads `max-age` and finds none, so our own figure applies — and that is the behaviour we
 want, so the design states it rather than leaving it as an accident of parsing.
 
-The reason it is right here: `no-cache` on a static catalogue is a statement about a CDN, not
-about the content. The rule that a source's stated age beats ours is about a source that has
+The reason it is right here: `no-cache` on a catalogue this slow is a statement about a CDN,
+not about the content. The rule that a source's stated age beats ours is about a source that has
 thought about how fast its content moves. This one has not; it has thought about its cache.
 
 Worth noting and not doing: the source answers `304` with an empty body, so revalidating would
@@ -50,7 +58,7 @@ is a real improvement and it is out of scope here.
 
 ### Held in memory, like the weather
 
-32 KB that changes a few times a decade does not earn a database, an entity, a DAO and a
+32 KB that gains a film every few years does not earn a database, an entity, a DAO and a
 migration. The cost is that a cold start with no network shows no films, which the spec allows
 because the row is a section: `ObserveFeedSections` already leaves out a section with nothing to
 say.
