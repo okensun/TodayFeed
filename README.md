@@ -38,15 +38,17 @@ API](https://ghibliapi.vercel.app/films) for films.
 Each band of the feed carries its name, so one kind of content cannot be taken for another. The
 films are ordered by review score, best first; the articles by when they were published.
 
-| The feed | Saved, with the wifi off | Offline, in dark |
-|---|---|---|
-| ![The feed](docs/images/feed.png) | ![Saved while offline](docs/images/saved-offline.png) | ![The feed offline in dark](docs/images/feed-offline-dark.png) |
+| The feed | An article |
+|---|---|
+| ![The feed](docs/images/feed.png) | ![An article](docs/images/detail.png) |
+| **Saved, with the wifi off** | **Offline, in dark** |
+| ![Saved while offline](docs/images/saved-offline.png) | ![The feed offline in dark](docs/images/feed-offline-dark.png) |
 
-Taken on a Pixel 6. The first shot is the mixed feed the brief asks for: one list holding a
-weather card, a row of films and article cards, and no reader could take one of them for
-another. The second was taken with the wifi off, so those saved articles and their pictures are
-coming back from storage. The third is the same feed offline in dark, with the line that says
-so.
+Taken on a Pixel 6. The first is the mixed feed the brief asks for: one list holding a weather
+card, a row of films and article cards, and no reader could take one of them for another. The
+second is an article, with the way back and the star that saves it. The third was taken with the
+wifi off, so those saved articles and their pictures are coming back from storage. The last is
+the same feed offline in dark, with the line that says so.
 
 ## How it is built
 
