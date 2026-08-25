@@ -81,10 +81,12 @@ rather than every screen that ever draws a film having to remember.
 
 ### Naming the bands is what makes it a mixed feed
 
-With one section the feed read as a weather card with articles under it. With two it needs to say
-which is which, so each band carries a line naming it, and the line says how the band is ordered.
-That is also the cheapest place to tell the reader something true they cannot otherwise know:
-`Films, best first` and `Articles, newest first`.
+With one section the feed read as a weather card with articles under it. With two it has to say
+which is which, so each band carries a line naming it: `Films`, `Articles`.
+
+The name is the name and nothing else. Adding how the band is ordered was tried and dropped: it
+turns a label into a sentence, and it reads as an apology for an order the content should already
+make obvious. The scores on the film cards do that work.
 
 ### The carousel is a `LazyRow` inside the feed's `LazyColumn`
 

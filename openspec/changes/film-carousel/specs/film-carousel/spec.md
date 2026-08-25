@@ -41,14 +41,14 @@ than be treated as scoring nothing, and films sharing a score SHALL keep a stabl
 
 ### Requirement: Each band of the feed is named
 
-The feed SHALL name each band of content it shows, and each name SHALL say how that band is
-ordered. A band with nothing in it SHALL NOT be named.
+The feed SHALL name each band of content it shows, so that one kind of content cannot be taken
+for another. A band with nothing in it SHALL NOT be named.
 
 #### Scenario: The bands are named
 
 - **WHEN** the feed shows films and articles
-- **THEN** the row of films is under a name saying it is ordered best first
-- **AND** the articles are under a name saying they are ordered newest first
+- **THEN** the row of films is under a name of its own
+- **AND** the articles are under a name of their own
 
 #### Scenario: An empty band is not named
 
