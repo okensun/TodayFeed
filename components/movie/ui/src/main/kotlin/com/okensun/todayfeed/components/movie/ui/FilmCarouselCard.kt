@@ -2,6 +2,7 @@ package com.okensun.todayfeed.components.movie.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,9 +16,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.okensun.todayfeed.components.movie.api.models.Film
 import com.okensun.todayfeed.core.designsystem.ArticleImage
@@ -60,18 +63,47 @@ fun FilmCarouselPlaceholder(
     modifier: Modifier = Modifier,
 ) = Column(modifier = modifier.fillMaxWidth()) {
     SectionTitle(TITLE)
-    val block =
-        Modifier
-            .padding(horizontal = 16.dp)
-            .fillMaxWidth()
-            .height(208.dp)
-            .clip(MaterialTheme.shapes.medium)
-    if (missing) {
-        EmptyBlock(description = NO_FILMS, modifier = block)
-    } else {
-        WaitingBlock(block.semantics { contentDescription = FILMS_COMING })
+    Row(
+        modifier =
+            Modifier
+                .padding(horizontal = 16.dp)
+                .semantics { contentDescription = if (missing) NO_FILMS else FILMS_COMING }
+    ) {
+        repeat(WAITING_CARDS) { CardShell(missing) }
     }
 }
+
+/**
+ * A card's own parts with nothing in them, so its height cannot drift from a real one. A number
+ * would have to be kept in step with the type, and would stop matching the moment a reader turned
+ * their font size up.
+ */
+@Composable
+private fun CardShell(missing: Boolean) =
+    Card(modifier = Modifier.padding(end = 12.dp).width(220.dp)) {
+        val type = MaterialTheme.typography
+        val title: Dp
+        val line: Dp
+        with(LocalDensity.current) {
+            title = type.titleSmall.lineHeight.toDp()
+            line = type.labelMedium.lineHeight.toDp()
+        }
+        Blank(missing, Modifier.fillMaxWidth().height(124.dp).clip(MaterialTheme.shapes.medium))
+        Column(modifier = Modifier.padding(12.dp)) {
+            Blank(missing, Modifier.fillMaxWidth().height(title))
+            Blank(missing, Modifier.fillMaxWidth(0.6f).height(line).padding(top = 4.dp))
+        }
+    }
+
+/** Only the row carries the words, so a screen reader hears the row once and not once a card. */
+@Composable
+private fun Blank(
+    missing: Boolean,
+    modifier: Modifier,
+) = if (missing) EmptyBlock(modifier = modifier) else WaitingBlock(modifier)
+
+/** Enough to read as a row rather than as one wide block. */
+private const val WAITING_CARDS = 3
 
 // The same pair as the weather: still coming is not the same as not coming.
 const val FILMS_COMING = "Films are loading"
@@ -90,7 +122,9 @@ private fun FilmCard(film: Film) =
             Text(
                 text = film.title,
                 style = MaterialTheme.typography.titleSmall,
-                maxLines = 2,
+                // One line, so every card in the row is the same height. A title cut short
+                // reads better than a row of cards that do not line up.
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(

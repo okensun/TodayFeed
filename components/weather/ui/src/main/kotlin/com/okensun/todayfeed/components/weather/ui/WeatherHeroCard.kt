@@ -11,8 +11,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.okensun.todayfeed.components.weather.api.models.Weather
 import com.okensun.todayfeed.core.designsystem.EmptyBlock
@@ -51,15 +53,23 @@ fun WeatherHeroCard(
  * the card and not where anything sits. Breathing while an answer is still expected, still once
  * there is no connection to bring one.
  *
- * The inner height stands in for the three rows of type the real card holds. A few points out
- * costs a small settle, which is the thing a whole card appearing from nowhere does not do.
+ * The inner height is the three rows of type the real card holds, measured rather than guessed, so
+ * it still matches when a reader turns their font size up.
  */
 @Composable
 fun WeatherHeroPlaceholder(
     missing: Boolean,
     modifier: Modifier = Modifier,
 ) = HeroCard(modifier) {
-    val block = Modifier.fillMaxWidth().height(92.dp)
+    val type = MaterialTheme.typography
+    val rows: Dp
+    with(LocalDensity.current) {
+        rows =
+            type.labelLarge.lineHeight.toDp() +
+            type.displayMedium.lineHeight.toDp() +
+            type.bodyMedium.lineHeight.toDp()
+    }
+    val block = Modifier.fillMaxWidth().height(rows)
     if (missing) {
         EmptyBlock(description = NO_WEATHER, modifier = block)
     } else {

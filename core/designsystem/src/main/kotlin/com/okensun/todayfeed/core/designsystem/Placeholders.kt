@@ -40,17 +40,24 @@ fun WaitingBlock(modifier: Modifier = Modifier) {
  * Still, and says what is not there, because the waiting is over.
  *
  * The words are the caller's. "No picture" is wrong for a block that was never going to hold one,
- * and a screen reader saying it would be worse than saying nothing.
+ * and a screen reader saying it would be worse than saying nothing. A block inside something that
+ * already says its own name passes nothing, so it is not announced twice.
  */
 @Composable
 fun EmptyBlock(
-    description: String,
+    description: String? = null,
     modifier: Modifier = Modifier,
 ) = Box(
     modifier =
         modifier
             .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.10f))
-            .semantics { contentDescription = description },
+            .then(
+                if (description == null) {
+                    Modifier
+                } else {
+                    Modifier.semantics { contentDescription = description }
+                }
+            ),
     contentAlignment = Alignment.Center
 ) {
     Icon(
