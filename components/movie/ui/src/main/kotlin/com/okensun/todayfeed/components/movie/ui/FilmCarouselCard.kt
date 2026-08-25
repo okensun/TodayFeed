@@ -19,6 +19,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.okensun.todayfeed.components.movie.api.models.Film
 import com.okensun.todayfeed.core.designsystem.ArticleImage
+import com.okensun.todayfeed.core.designsystem.EmptyBlock
+import com.okensun.todayfeed.core.designsystem.NO_PICTURE
 import com.okensun.todayfeed.core.designsystem.SectionTitle
 import com.okensun.todayfeed.core.designsystem.ThemePreviews
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
@@ -53,15 +55,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.items(films: List<Fil
 @Composable
 private fun FilmCard(film: Film) =
     Card(modifier = Modifier.padding(end = 12.dp).width(220.dp)) {
-        ArticleImage(
-            url = film.bannerUrl,
-            contentDescription = null,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(124.dp)
-                    .clip(MaterialTheme.shapes.medium)
-        )
+        Banner(film.bannerUrl)
         Column(modifier = Modifier.padding(12.dp)) {
             Text(
                 text = film.title,
@@ -77,6 +71,25 @@ private fun FilmCard(film: Film) =
             )
         }
     }
+
+/**
+ * The space is held either way. [ArticleImage] draws nothing without an address, which costs no
+ * movement in a list where every row sizes itself, and in a row where the cards sit side by side
+ * would leave this one shorter than the rest.
+ */
+@Composable
+private fun Banner(url: String?) {
+    val shape =
+        Modifier
+            .fillMaxWidth()
+            .height(124.dp)
+            .clip(MaterialTheme.shapes.medium)
+    if (url.isNullOrBlank()) {
+        EmptyBlock(description = NO_PICTURE, modifier = shape)
+    } else {
+        ArticleImage(url = url, contentDescription = null, modifier = shape)
+    }
+}
 
 /** The row is ordered by the score, so the score has to be on the card to explain the order. */
 private fun Film.line() = score?.let { "$year  ·  $it%" } ?: year

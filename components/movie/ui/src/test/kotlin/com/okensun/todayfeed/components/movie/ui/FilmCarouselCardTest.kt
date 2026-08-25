@@ -1,10 +1,14 @@
 package com.okensun.todayfeed.components.movie.ui
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import com.okensun.todayfeed.components.movie.api.models.Film
+import com.okensun.todayfeed.core.designsystem.NO_PICTURE
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,6 +42,27 @@ class FilmCarouselCardTest {
         show(listOf(film("1", "Castle in the Sky", "1986", banner = null)))
 
         compose.onNodeWithText("Castle in the Sky").assertIsDisplayed()
+    }
+
+    /**
+     * Side by side, a card that drew no banner would be shorter than the rest of the row. The
+     * space is held, so the cards line up whether the picture exists or not.
+     */
+    @Test
+    fun `a film with no picture is the same height as one with a picture`() {
+        show(listOf(film("1", "Castle in the Sky", "1986", banner = null), film("2", "Kiki", "1989")))
+
+        val without = compose.onNodeWithText("Castle in the Sky").getBoundsInRoot()
+        val with = compose.onNodeWithText("Kiki").getBoundsInRoot()
+
+        assertEquals(with.top, without.top)
+    }
+
+    @Test
+    fun `a film with no picture says so where the picture would be`() {
+        show(listOf(film("1", "Castle in the Sky", "1986", banner = null)))
+
+        compose.onNodeWithContentDescription(NO_PICTURE).assertIsDisplayed()
     }
 
     /** Nothing to show is not a row with nothing in it. */

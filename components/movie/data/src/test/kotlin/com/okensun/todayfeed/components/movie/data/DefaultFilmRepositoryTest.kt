@@ -115,6 +115,23 @@ class DefaultFilmRepositoryTest {
             assertTrue(repository.observeFilms().first().isEmpty())
         }
 
+    /**
+     * A source that answers 200 with nothing has answered. Treating that as a failure left the
+     * allowance unstarted, so every later ask went to the network again for as long as it stayed
+     * empty.
+     */
+    @Test
+    fun `an answer with nothing in it still starts the allowance`() =
+        runTest {
+            service.answer = emptyList()
+
+            repository.refresh()
+            repository.refresh()
+
+            assertEquals(1, service.calls)
+            assertTrue(repository.observeFilms().first().isEmpty())
+        }
+
     @Test
     fun `a failure leaves what is held and does not buy silence`() =
         runTest {

@@ -60,8 +60,11 @@ internal class DefaultFilmRepository
             try {
                 val response = service.films()
                 val body = response.body()
-                if (!response.isSuccessful || body.isNullOrEmpty()) return
-                films.value = body.map { it.toFilm() }.bestFirst()
+                if (!response.isSuccessful || body == null) return
+                // An answer carrying nothing still answered, so the allowance starts. Without the
+                // stamp below, every later ask would fetch again for as long as the source stayed
+                // empty. The row keeps what it had rather than being emptied to match.
+                if (body.isNotEmpty()) films.value = body.map { it.toFilm() }.bestFirst()
                 // The source says `no-cache`, which states no age at all, so ours is what holds.
                 serverMaxAge = maxAgeOf(response.headers().values(CACHE_CONTROL).joinToString(", "))
                 fetchedAt = clock.instant()
