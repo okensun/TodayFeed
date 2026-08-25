@@ -1,15 +1,14 @@
 # AI usage
 
-Claude Code (Opus 5) wrote most of the code and most of the words. The README describes the
-process. This file is about how I treated that output, which came down to one habit:
+Claude Code (Opus 5) was the implementation assistant for both the code and the documents. The
+README describes the process and what my part in it was. This file is about how I treated the
+output, which came down to one habit:
 **AI-generated reasoning is most useful as a hypothesis, never as a fact.**
 
 Every correction below had the same shape. A claim ran ahead of its evidence, and I had to notice
 it and go and check.
 
 ## Three things I asked for
-
-I asked these in Chinese and have translated them.
 
 - "Stop arguing and prove it. Write throwaway tests that make Paging 3 do the three things the
   plan says it cannot, then delete them."
@@ -20,8 +19,7 @@ I asked these in Chinese and have translated them.
 
 The first reversed an architecture decision. The second deleted a module. The third reversed a
 decision already argued for in writing, and `DECISIONS.md` carries the reversal next to what it
-replaced. None of the three asks for an opinion. Each one states a judgement and gives the
-assistant something to go and do.
+replaced.
 
 ## What I accepted as it was
 
