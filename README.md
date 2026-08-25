@@ -155,7 +155,10 @@ block. Two things did not go to plan, and both are worth stating:
   one more source; the weather card is that source, so cutting this leaves every must-have whole.
 - **Search and filter.** A nice-to-have needing debounce handling and its own empty-result state.
   Not worth an hour and a half against the freshness policy.
-- **Animations and transitions.** Polish. First out.
+- **Elaborate motion.** Shared element transitions from a card into the detail screen, and
+  animated list items, were cut as polish. One transition was not: the bottom bar and the screen
+  fade over the same duration, because on a device the bar vanished before the detail screen
+  began to arrive, and that reads as a bug rather than as speed.
 - **A metered connection changing behaviour.** The connection is read for real and the enum has a
   `Metered` case, but nothing yet treats it differently from unmetered. The policy is written to
   take it, so this is a value not yet used rather than a design that cannot.
@@ -192,10 +195,6 @@ Written as they are found.
 - **The spinner for the next page is rarely seen.** Paging asks for it five articles before the
   end, so it usually arrives before the reader gets there. It shows on a slow network, and after
   a failed page is retried.
-- **Retry does nothing yet on the saved list.** Its Try again button is wired to a view model
-  method with an empty body, because saving arrives in the next slice. The feed's retry and pull
-  to refresh are real. The detail screen has nothing to reload, so its button says Go back and
-  leaves the screen.
 - **The weather is always Taipei.** The coordinates are fixed, so the app asks for no location
   permission. Reading a coarse location would mean a permission dialog on first launch, a path
   for when it is refused, and either reverse geocoding or a card that cannot name the place. None
@@ -223,3 +222,21 @@ recorded. See `DECISIONS.md` for why.
   directly has no effect. The same check passes for an equivalent configuration change: after a
   font scale change the process, the task and the scroll position are all unchanged. It still
   needs a manual pass through Settings.
+
+## What I'd do next
+
+The nice-to-haves that were cut, in the order I would pick them up: metered behaviour first,
+because the policy is already written to take a `Connection` and nothing reads it; then search
+and filter, the only nice-to-have with no groundwork under it; then the `serviceCard` component;
+then a coarse location for the weather.
+
+Two other things the code is now asking for:
+
+- **A baseline profile, with the measuring done first.** A macrobenchmark module to record cold
+  start and the frame timings of a scroll, then a generated profile, then the same two numbers
+  again. A profile with no before and after is a file, not an improvement.
+- **Tests that compare what is drawn.** Every UI fault this week was found by using the app, not
+  by a test: a picture that held its place and never gave it up, a hollow star that drew solid, an
+  offline line pushed above the top of the list. Roborazzi runs on Robolectric, which this
+  project's view tests already use, so comparing images would fit the JVM build that CI runs
+  today rather than needing an emulator.
