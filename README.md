@@ -38,6 +38,16 @@ API](https://ghibliapi.vercel.app/films) for films.
 Each band of the feed carries its name, so one kind of content cannot be taken for another. The
 films are ordered by review score, best first; the articles by when they were published.
 
+| The feed | Saved, with the wifi off | Offline, in dark |
+|---|---|---|
+| ![The feed](docs/images/feed.png) | ![Saved while offline](docs/images/saved-offline.png) | ![The feed offline in dark](docs/images/feed-offline-dark.png) |
+
+Taken on a Pixel 6. The first shot is the whole point of the brief's heterogeneous feed
+requirement: one list holding a weather card, a row of films and article cards, none of which
+could be mistaken for another. The second was taken with the wifi off — the saved articles and
+their pictures come back from storage. The third is the same feed offline in dark, with the line
+that says so.
+
 ## How it is built
 
 Component-based Clean Architecture. A component is one area of subject matter, and the four
@@ -49,18 +59,60 @@ carry the design, and the build enforces both:
    DAO even by accident.
 2. A component sees another component only through its `api` module.
 
+```mermaid
+graph TD
+    app[":app"]
+
+    subgraph feed[":components:feed"]
+        feed_ui["ui"]
+        feed_domain["domain"]
+    end
+    subgraph articles[":components:articles"]
+        a_ui["ui"]
+        a_api["api"]
+        a_data["data"]
+    end
+    subgraph weather[":components:weather"]
+        w_ui["ui"]
+        w_api["api"]
+        w_data["data"]
+    end
+    subgraph movie[":components:movie"]
+        m_ui["ui"]
+        m_api["api"]
+        m_data["data"]
+    end
+
+    app --> feed_ui
+    app --> a_ui
+    app -.->|"rule 1: only :app sees data"| a_data
+    app -.-> w_data
+    app -.-> m_data
+
+    feed_ui --> feed_domain
+    feed_ui --> a_api
+    feed_ui --> w_api
+    feed_domain --> w_api
+    feed_domain --> m_api
+
+    feed_ui ==>|"rule 2's one exception"| a_ui
+    feed_ui ==> w_ui
+    feed_ui ==> m_ui
+
+    a_ui --> a_api
+    a_data --> a_api
+    w_ui --> w_api
+    w_data --> w_api
+    m_ui --> m_api
+    m_data --> m_api
 ```
-:app                              navigation, bottom bar, Hilt aggregation
-:core:designsystem                theme (light and dark), the four content states
-:core:network                     OkHttp, Retrofit, serialization
-:core:database                    shared Room settings
-:core:freshness                   the per-source freshness policy
-:core:testing                     FakeClock and shared fakes
-:components:articles:{api,data,ui}
-:components:weather:{api,data,ui}
-:components:movie:{api,data,ui}
-:components:feed:{domain,ui}
-```
+
+The dotted lines are rule 1 and the thick lines are the exception to rule 2: `:components:feed:ui`
+draws the other components' cards, so it is the one module allowed to see another component's
+`ui`. Everything else reaches a component through its `api`. The `core` modules are left out of
+the picture because everything uses them: `designsystem` for the theme and the four content
+states, `network` for OkHttp and serialization, `database` for shared Room settings, `freshness`
+for the policy, and `testing` for `FakeClock` and the shared fakes.
 
 Compose with Material 3, MVVM with `StateFlow`, Hilt, Room, Retrofit, and Paging 3 reading
 from Room. `AGENTS.md` explains the layout in full. `DECISIONS.md` says why each of
@@ -177,6 +229,24 @@ part worth describing, because it is what makes the output reviewable:
 - **Review by a subagent** that is given the diff and the requirements but **not** the session
   history, so it cannot inherit the author's blind spots. Its findings are posted as inline
   comments on the exact line. Every pull request after the first went through this.
+
+```mermaid
+graph LR
+    idea["an idea"] --> brainstorm["brainstorm<br/>me: the constraints"]
+    brainstorm --> spec["OpenSpec change<br/>proposal, spec, design, tasks"]
+    spec --> gate{"me: does the<br/>plan hold?"}
+    gate -->|no| brainstorm
+    gate -->|yes| build["build it, task by task"]
+    build --> review["subagent review<br/>diff and requirements only,<br/>no session history"]
+    review --> findings{"me: is the<br/>finding real?"}
+    findings -->|yes| build
+    findings -->|no| pr["pull request<br/>merged, never squashed"]
+```
+
+The two diamonds are the whole point of the picture: they are where I am, and nothing reaches
+`main` without passing both. The plan is written before the code and committed next to it, so a
+reader can see what was intended and what actually landed. The reviewer is given the diff and the
+requirements but not the conversation, which is what stops it agreeing with the author.
 
 My role was to set the constraints, price the claims and decide. Almost every significant
 correction in this project came from a question rather than from spotting a bug: "why do some
