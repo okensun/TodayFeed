@@ -1,7 +1,15 @@
 # Roadmap and sequencing
 
-Working notes. They become the README's **Plan & Sequencing** section. Each numbered slice is
-one OpenSpec change in `openspec/changes/`, and lands as several small commits.
+**This is the plan, and it stopped being updated on 24 August.** It was revised while the work
+went on, most sharply when a spike showed that all three reasons for hand-writing the pagination
+were wrong. `git log docs/ROADMAP.md` has those revisions.
+
+Some of it is out of date now: two slices were renamed, the module count grew from fifteen to
+seventeen, a third source was added and the optional feature was built. `README.md` says what
+actually happened. Both are kept, because a forecast is only worth reading next to the result.
+
+Working notes. Each numbered slice is one OpenSpec change in `openspec/changes/`, and lands as
+several small commits.
 
 ## How the problem was broken down
 
