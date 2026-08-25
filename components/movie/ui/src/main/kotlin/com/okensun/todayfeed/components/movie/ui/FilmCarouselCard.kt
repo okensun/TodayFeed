@@ -15,6 +15,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.okensun.todayfeed.components.movie.api.models.Film
@@ -24,6 +26,7 @@ import com.okensun.todayfeed.core.designsystem.NO_PICTURE
 import com.okensun.todayfeed.core.designsystem.SectionTitle
 import com.okensun.todayfeed.core.designsystem.ThemePreviews
 import com.okensun.todayfeed.core.designsystem.TodayFeedTheme
+import com.okensun.todayfeed.core.designsystem.WaitingBlock
 
 /**
  * A row that scrolls sideways inside a feed that scrolls down. It keeps its own state, so
@@ -46,6 +49,33 @@ fun FilmCarouselCard(
         }
     }
 }
+
+/**
+ * The row's place, taken before the films are known. One block rather than a row of card-shaped
+ * ones: how many there will be is not known yet, and a guessed number would itself move.
+ */
+@Composable
+fun FilmCarouselPlaceholder(
+    missing: Boolean,
+    modifier: Modifier = Modifier,
+) = Column(modifier = modifier.fillMaxWidth()) {
+    SectionTitle(TITLE)
+    val block =
+        Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth()
+            .height(208.dp)
+            .clip(MaterialTheme.shapes.medium)
+    if (missing) {
+        EmptyBlock(description = NO_FILMS, modifier = block)
+    } else {
+        WaitingBlock(block.semantics { contentDescription = FILMS_COMING })
+    }
+}
+
+// The same pair as the weather: still coming is not the same as not coming.
+const val FILMS_COMING = "Films are loading"
+const val NO_FILMS = "No films"
 
 private fun androidx.compose.foundation.lazy.LazyListScope.items(films: List<Film>) =
     items(count = films.size, key = { films[it].id }) { index ->
