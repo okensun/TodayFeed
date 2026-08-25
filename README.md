@@ -227,8 +227,23 @@ both are worth stating:
 
 ## How I worked with AI
 
-Claude Code (Opus 5) wrote most of the code and most of the words. The process around it is the
-part worth describing, because it is what makes the output reviewable:
+Claude Code (Opus 5) was the implementation. My role was:
+
+- setting the constraints: the two dependency rules, no API keys, comments of three lines or
+  fewer, and what counted as done for each task
+- asking for a spike when a claim was about what a library cannot do. Thirty minutes of
+  throwaway tests reversed the decision to hand-write pagination, which three paragraphs of
+  reasoning had got wrong
+- asking for the case against as well as the case for, which is why all twenty-eight entries in
+  `DECISIONS.md` name what was turned down
+- pricing a number before it was written down. A longer allowance on a metered connection died
+  when 17 KB of articles met a 50 KB thumbnail
+- accepting, rejecting or rewriting what came back, including reversing decisions already
+  argued for in writing. `AI_USAGE.md` is the short version of that
+- checking on a device, which is where every fault a reader would have seen was found
+
+So it wrote most of the code and most of the words. The process around that is the part worth
+describing, because it is what makes the output reviewable:
 
 - **OpenSpec** for every change. A proposal, a delta spec of observable behaviour, a design
   document and a task list, all committed under `openspec/changes/`. The plan is reviewable next
@@ -255,10 +270,9 @@ The two diamonds are where I am, and nothing reaches `main` without passing both
 written before the code and committed next to it, so a reader can see what was intended and what
 actually landed.
 
-My role was to set the constraints, price the claims and decide. Almost every significant
-correction in this project came from a question rather than from spotting a bug: "why do some
-components have no `domain` module", "is CI running the view tests", "why is the star not
-filled". `AI_USAGE.md` is the short version of what that turned up.
+Almost every significant correction here came from a question rather than from spotting a bug:
+"why do some components have no `domain` module", "is CI running the view tests", "why is the
+star not filled".
 
 ## Known limitations
 
