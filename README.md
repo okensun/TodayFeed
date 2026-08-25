@@ -305,13 +305,13 @@ There is no emulator in CI, so these were driven over `adb` and the result recor
 - The theme follows the system setting without a restart
 - Detail opens for the article that was tapped, and returns
 - A saved article and its picture are still there with the wifi off
+- The screen keeps its state across a theme change
 - A fresh clone builds with one command
 
-One is still unverified: whether the screen keeps its state across a theme change. Changing the
-night mode on this emulator swaps the task and the process, which loses the state for reasons
-that have nothing to do with the app. A font scale change is the same kind of configuration
-change and it passes, so the mechanism works; the theme path still needs a pass through Settings
-by hand.
+The theme one had to be done on a phone. Changing the night mode on the emulator swaps the task
+and the process, which loses the state for reasons that have nothing to do with the app. On a
+Pixel 6 the process id, the task id and the two articles at the top of the screen were all the
+same before and after, and the app redrew in light.
 
 ## What I'd do next
 
