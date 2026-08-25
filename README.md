@@ -87,17 +87,17 @@ plain function in `:core:freshness`, and it has five answers:
 
 Spaceflight News states its own: `cache-control: max-age=600`, which is ten minutes. Measured on
 2026-08-24. That figure wins, because a number the source states is a fact while ours is a
-judgement. Our own figure is used only when a source states none. Spaceflight News always states one, so
-ours never applies there. Open-Meteo states none, so ours is what holds for the weather.
-
-The film catalogue is the third answer. It says `cache-control: no-cache`, which states no age
-at all, so ours applies: half a day. The twenty-two films look permanent, but each one carries a
-review score, and a score moves. They get an ordinary allowance like every other source.
+judgement. Our own figure is used only when a source states none, and Spaceflight News always
+states one, so ours never applies there.
 
 Open-Meteo states nothing, so our own figure is the one that counts there: fifteen minutes,
 which is how often the source says it re-reads. It reports that as `interval` in its own answer.
 The weather is held in memory rather than in a database, so a cold start with no network shows
 the feed without the card rather than yesterday's weather as if it were now.
+
+The film catalogue states no age either: it says `cache-control: no-cache`, so ours holds there
+too, at half a day. The twenty-two films look permanent, but each one carries a review score, and
+a score moves. They get an ordinary allowance like every other source.
 
 ### What the reader keeps is not what the policy decides
 

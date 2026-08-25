@@ -10,9 +10,17 @@ import org.junit.Test
 class FilmMappingTest {
     private val json: Json = TodayFeedJson
 
+    // Read off the classpath, not off a path relative to the working directory. Under Gradle the
+    // two agree; run straight from an IDE they do not, and a companion that threw took every test
+    // in the class down with an initialiser error rather than saying what was missing.
+    private val twoFilms =
+        checkNotNull(javaClass.classLoader?.getResourceAsStream("two-films.json")) {
+            "two-films.json is missing from test resources"
+        }.bufferedReader().readText()
+
     @Test
     fun `a real answer decodes into what the row needs`() {
-        val films = json.decodeFromString<List<FilmDto>>(TWO_FILMS).map { it.toFilm() }
+        val films = json.decodeFromString<List<FilmDto>>(twoFilms).map { it.toFilm() }
 
         assertEquals(2, films.size)
         assertEquals("Castle in the Sky", films[0].title)
@@ -42,14 +50,5 @@ class FilmMappingTest {
         val film = json.decodeFromString<FilmDto>("""{"id":"1","title":"T","release_date":"1990","director":"D"}""")
 
         assertNull(film.toFilm().bannerUrl)
-    }
-
-    private companion object {
-        val TWO_FILMS =
-            java.io
-                .File("src/test/resources/two-films.json")
-                .takeIf { it.exists() }
-                ?.readText()
-                ?: error("The saved answer is missing")
     }
 }
