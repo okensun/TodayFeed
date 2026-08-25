@@ -1,8 +1,8 @@
 # TodayFeed
 
-A content feed app in the style of LINE TODAY. One scrollable list mixes article cards
-with a weather hero card. Open an article, save it, and read what you saved with no
-network.
+A content feed app in the style of LINE TODAY. One scrollable list holds a weather card, a
+row of films and a page-by-page list of articles. Open an article, save it, and read what you
+saved with no network.
 
 ## Run it
 
@@ -17,8 +17,8 @@ Gradle needs to know where the SDK is, through `ANDROID_HOME` or a `sdk.dir` lin
 every Android project needs it, so it is not something this one adds.
 
 Beyond that there is nothing to configure. No API keys, no secrets, no local files to create,
-because every data source is keyless. CI runs the same command on every push with no secrets
-configured, so that stays true rather than being a claim.
+because every data source is keyless. CI runs the same command with no secrets
+configured, so every push checks that this is still true.
 
 To put it on a device: `./gradlew installDebug`.
 
@@ -42,11 +42,11 @@ films are ordered by review score, best first; the articles by when they were pu
 |---|---|---|
 | ![The feed](docs/images/feed.png) | ![Saved while offline](docs/images/saved-offline.png) | ![The feed offline in dark](docs/images/feed-offline-dark.png) |
 
-Taken on a Pixel 6. The first shot is the whole point of the brief's heterogeneous feed
-requirement: one list holding a weather card, a row of films and article cards, none of which
-could be mistaken for another. The second was taken with the wifi off — the saved articles and
-their pictures come back from storage. The third is the same feed offline in dark, with the line
-that says so.
+Taken on a Pixel 6. The first shot is the mixed feed the brief asks for: one list holding a
+weather card, a row of films and article cards, and no reader could take one of them for
+another. The second was taken with the wifi off, so those saved articles and their pictures are
+coming back from storage. The third is the same feed offline in dark, with the line that says
+so.
 
 ## How it is built
 
@@ -144,8 +144,8 @@ states one, so ours never applies there.
 
 Open-Meteo states nothing, so our own figure is the one that counts there: fifteen minutes,
 which is how often the source says it re-reads. It reports that as `interval` in its own answer.
-The weather is held in memory rather than in a database, so a cold start with no network shows
-the feed without the card rather than yesterday's weather as if it were now.
+The weather is held in memory and not in a database. A cold start with no network therefore
+shows the feed without the card, instead of showing yesterday's weather as if it were now.
 
 The film catalogue states no age either: it says `cache-control: no-cache`, so ours holds there
 too, at half a day. The twenty-two films look permanent, but each one carries a review score, and
@@ -198,8 +198,8 @@ block. Two things did not go to plan, and both are worth stating:
   list, so running out of time removes the last pass rather than leaving something half-built.
 - **Two things thought finished were not.** The weather card drew a fixed value from the skeleton
   until it was wired to Open-Meteo, and the article pictures were fetched and stored but never
-  drawn. Both were found by using the app rather than by a test, which is the point made at
-  length in `AI_USAGE.md`.
+  drawn. Both were found by using the app, not by a test. `AI_USAGE.md` goes into that at
+  length.
 
 ### What was cut, and why
 
@@ -210,10 +210,10 @@ block. Two things did not go to plan, and both are worth stating:
 - **Elaborate motion.** Shared element transitions from a card into the detail screen, and
   animated list items, were cut as polish. One transition was not: the bottom bar and the screen
   fade over the same duration, because on a device the bar vanished before the detail screen
-  began to arrive, and that reads as a bug rather than as speed.
+  began to arrive, which looks like a bug.
 - **A metered connection changing behaviour.** The connection is read for real and the enum has a
   `Metered` case, but nothing yet treats it differently from unmetered. The policy is written to
-  take it, so this is a value not yet used rather than a design that cannot.
+  take it, so using it needs no redesign.
 - **Location for the weather.** Fixed coordinates instead. A permission dialog on first launch
   costs more than it buys against "clean checkout, one command".
 
@@ -243,10 +243,9 @@ graph LR
     findings -->|no| pr["pull request<br/>merged, never squashed"]
 ```
 
-The two diamonds are the whole point of the picture: they are where I am, and nothing reaches
-`main` without passing both. The plan is written before the code and committed next to it, so a
-reader can see what was intended and what actually landed. The reviewer is given the diff and the
-requirements but not the conversation, which is what stops it agreeing with the author.
+The two diamonds are where I am, and nothing reaches `main` without passing both. The plan is
+written before the code and committed next to it, so a reader can see what was intended and what
+actually landed.
 
 My role was to set the constraints, price the claims and decide. Almost every significant
 correction in this project came from a question rather than from spotting a bug: "why do some
@@ -255,7 +254,7 @@ filled". `AI_USAGE.md` is the short version of what that turned up.
 
 ## Known limitations
 
-Written as they are found.
+Written down as they turned up, not gathered at the end.
 
 - **A refresh walks back five pages at most.** When articles have arrived since the reader was
   last here, a refresh keeps asking for the next page until one holds an article already stored,
@@ -304,9 +303,9 @@ Two other things the code is now asking for:
 
 - **A baseline profile, with the measuring done first.** A macrobenchmark module to record cold
   start and the frame timings of a scroll, then a generated profile, then the same two numbers
-  again. A profile with no before and after is a file, not an improvement.
+  again. Without a before and an after there is no way to say the profile helped.
 - **Tests that compare what is drawn.** Every UI fault this week was found by using the app, not
   by a test: a picture that held its place and never gave it up, a hollow star that drew solid, an
   offline line pushed above the top of the list. Roborazzi runs on Robolectric, which this
-  project's view tests already use, so comparing images would fit the JVM build that CI runs
-  today rather than needing an emulator.
+  project's view tests already use, so comparing images would fit the JVM build CI already runs
+  and would need no emulator.
