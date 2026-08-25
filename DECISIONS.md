@@ -196,6 +196,22 @@ in exactly one module whose name says so.
 
 ---
 
+### The data layer splits into `database` and `source`, not `database` and `network` — decided
+
+**Picked.** `data.source` holds the outside source's own calls and the shapes it answers with.
+Every component splits the same way, even where one side is a single file.
+
+**Considered instead.** `data.network`, which is what the articles component had and what most
+Android projects use.
+
+**Trade-off.** `:core:network` already exists and means something else: the shared OkHttp client,
+the JSON, the connectivity reader. One word for the shared plumbing and for one component's
+endpoints made a reader work out which was meant from the path. `source` also says the honest
+thing about the files, which is not that they use a network but that they describe somebody
+else's service. Keeping a one-file `source` folder in the weather and film components breaks the
+rule that a folder needs a grouping to earn a level; that rule loses here, because a reader who
+has learned one component should not have to learn the next.
+
 ## Data sources
 
 ### No API keys anywhere — decided

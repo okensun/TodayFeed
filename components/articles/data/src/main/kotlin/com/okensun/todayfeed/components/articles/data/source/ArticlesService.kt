@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.data.network
+package com.okensun.todayfeed.components.articles.data.source
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

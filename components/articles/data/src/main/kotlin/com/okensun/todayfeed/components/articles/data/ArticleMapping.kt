@@ -2,7 +2,7 @@ package com.okensun.todayfeed.components.articles.data
 
 import com.okensun.todayfeed.components.articles.api.models.Article
 import com.okensun.todayfeed.components.articles.data.database.ArticleEntity
-import com.okensun.todayfeed.components.articles.data.network.ArticleDto
+import com.okensun.todayfeed.components.articles.data.source.ArticleDto
 import java.time.Instant
 
 internal fun ArticleDto.toEntity(): ArticleEntity =

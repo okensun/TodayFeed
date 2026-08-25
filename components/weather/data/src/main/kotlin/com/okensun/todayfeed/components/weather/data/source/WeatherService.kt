@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.weather.data
+package com.okensun.todayfeed.components.weather.data.source
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

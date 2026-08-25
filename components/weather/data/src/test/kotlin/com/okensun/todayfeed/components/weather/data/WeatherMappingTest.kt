@@ -1,5 +1,8 @@
 package com.okensun.todayfeed.components.weather.data
 
+import com.okensun.todayfeed.components.weather.data.source.CurrentDto
+import com.okensun.todayfeed.components.weather.data.source.DailyDto
+import com.okensun.todayfeed.components.weather.data.source.ForecastResponse
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

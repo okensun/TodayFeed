@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.data.network
+package com.okensun.todayfeed.components.articles.data.source
 
 import com.okensun.todayfeed.components.articles.data.toEntity
 import com.okensun.todayfeed.core.network.TodayFeedJson

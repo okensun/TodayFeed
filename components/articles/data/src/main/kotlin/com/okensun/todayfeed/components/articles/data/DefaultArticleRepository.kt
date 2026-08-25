@@ -8,7 +8,7 @@ import androidx.paging.map
 import com.okensun.todayfeed.components.articles.api.ArticleRepository
 import com.okensun.todayfeed.components.articles.api.models.Article
 import com.okensun.todayfeed.components.articles.data.database.ArticlesDatabase
-import com.okensun.todayfeed.components.articles.data.network.ArticlesService
+import com.okensun.todayfeed.components.articles.data.source.ArticlesService
 import com.okensun.todayfeed.core.freshness.Connectivity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map

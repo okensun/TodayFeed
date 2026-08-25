@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.weather.data
 
+import com.okensun.todayfeed.components.weather.data.source.FakeWeatherService
 import com.okensun.todayfeed.core.freshness.Connection
 import com.okensun.todayfeed.core.testing.FakeClock
 import com.okensun.todayfeed.core.testing.FakeConnectivity
