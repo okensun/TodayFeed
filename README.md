@@ -118,8 +118,59 @@ It does not:
 
 ## Plan and sequencing
 
-To be written in the final block, from `docs/ROADMAP.md`. It covers how the problem was
-broken into slices, the order they were built and why, and what was cut.
+The brief hides its hardest part in one bullet: a freshness policy for a feed that mixes sources
+which update at different speeds and still works offline. Feed, detail and save are ordinary
+work. So the order is risk first, not features first.
+
+| # | Change | Why here |
+|---|---|---|
+| 1 | `bootstrap-project-skeleton` | Nothing can be run or reviewed until a fresh copy builds. Drawing the module lines now is cheaper than drawing them after code has grown across a line nobody drew. |
+| 2 | `article-freshness-and-feed` | The heart of it. `:core:freshness` first with its tests, then one source wired through Room as the single source of truth. |
+| 3 | `save-articles` | The last must-have. It needs the article already stored, so it comes after slice 2. |
+
+Sixteen hours were planned across four evenings, one slice each and the documents in the last
+block. Two things did not go to plan, and both are worth stating:
+
+- **Slice 2 was estimated at four hours and took closer to eight.** The estimate was made against
+  a horizontal plan; rewriting it as five vertical passes, each ending with the app working, is
+  what kept the overrun from being visible to a reader. The pass order also carries its own cut
+  list, so running out of time removes the last pass rather than leaving something half-built.
+- **Two things thought finished were not.** The weather card drew a fixed value from the skeleton
+  until it was wired to Open-Meteo, and the article pictures were fetched and stored but never
+  drawn. Both were found by using the app rather than by a test, which is the point made at
+  length in `AI_USAGE.md`.
+
+### What was cut, and why
+
+- **The `serviceCard` component** (promotional cards). The heterogeneous feed needs articles plus
+  one more source; the weather card is that source, so cutting this leaves every must-have whole.
+- **Search and filter.** A nice-to-have needing debounce handling and its own empty-result state.
+  Not worth an hour and a half against the freshness policy.
+- **Animations and transitions.** Polish. First out.
+- **A metered connection changing behaviour.** The connection is read for real and the enum has a
+  `Metered` case, but nothing yet treats it differently from unmetered. The policy is written to
+  take it, so this is a value not yet used rather than a design that cannot.
+- **Location for the weather.** Fixed coordinates instead. A permission dialog on first launch
+  costs more than it buys against "clean checkout, one command".
+- **The `movie` component** (Studio Ghibli). Designed and left for time after the documents.
+
+## How I worked with AI
+
+Claude Code (Opus 5) wrote most of the code and most of the words. The process around it is the
+part worth describing, because it is what makes the output reviewable:
+
+- **OpenSpec** for every change. A proposal, a delta spec of observable behaviour, a design
+  document and a task list, all committed under `openspec/changes/`. The plan is reviewable next
+  to the code, and its revisions are in the history.
+- **A skill library** for brainstorming, plan writing, spikes and code review.
+- **Review by a subagent** that is given the diff and the requirements but **not** the session
+  history, so it cannot inherit the author's blind spots. Its findings are posted as inline
+  comments on the exact line. Every pull request after the first went through this.
+
+My role was to set the constraints, price the claims and decide. Almost every significant
+correction in this project came from a question rather than from spotting a bug: "why do some
+components have no `domain` module", "is CI running the view tests", "why is the star not
+filled". `AI_USAGE.md` is the short version of what that turned up.
 
 ## Known limitations
 

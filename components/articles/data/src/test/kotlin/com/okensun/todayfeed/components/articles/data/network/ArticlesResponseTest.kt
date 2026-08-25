@@ -1,5 +1,6 @@
-package com.okensun.todayfeed.components.articles.data
+package com.okensun.todayfeed.components.articles.data.network
 
+import com.okensun.todayfeed.components.articles.data.toEntity
 import com.okensun.todayfeed.core.network.TodayFeedJson
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

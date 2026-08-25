@@ -2,8 +2,8 @@ package com.okensun.todayfeed.components.articles.ui
 
 import android.database.sqlite.SQLiteException
 import androidx.paging.PagingData
-import com.okensun.todayfeed.components.articles.api.Article
 import com.okensun.todayfeed.components.articles.api.ArticleRepository
+import com.okensun.todayfeed.components.articles.api.models.Article
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow

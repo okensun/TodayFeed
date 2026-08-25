@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.data
+package com.okensun.todayfeed.components.articles.data.database
 
 import androidx.paging.PagingSource
 import androidx.room.Room

@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.weather.api
+package com.okensun.todayfeed.components.weather.api.models
 
 data class Weather(
     val placeName: String,

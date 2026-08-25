@@ -1,6 +1,7 @@
 package com.okensun.todayfeed.components.articles.api
 
 import androidx.paging.PagingData
+import com.okensun.todayfeed.components.articles.api.models.Article
 import kotlinx.coroutines.flow.Flow
 
 /**

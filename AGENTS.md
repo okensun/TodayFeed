@@ -174,7 +174,11 @@ function, at most 15 functions per class. Config is in `config/detekt/detekt.yml
 `.editorconfig`.
 
 - Kotlin sources go in `src/main/kotlin`.
-- Packages are `com.okensun.todayfeed.<component>.<layer>`.
+- Packages are `com.okensun.todayfeed.<component>.<layer>`, and a layer may group below that.
+  Group by what changes together, not by what a file is: a screen sits with its view model
+  (`ui.detail`), and the data layer splits by where the data lives (`data.database`,
+  `data.network`) so that what is left at the top is what spans both. A folder that would hold
+  one or two files is a level without a grouping, so it is not made.
 - A repository or DAO method starts with a verb, and the verb says which kind of call it is:
   `observe` returns a `Flow`, `find` is a one-shot `suspend` that returns null when there is
   nothing. A bare noun says neither. Do not borrow another component's word either: an article

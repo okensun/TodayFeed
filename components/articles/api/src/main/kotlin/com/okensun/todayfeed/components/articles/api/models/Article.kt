@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.api
+package com.okensun.todayfeed.components.articles.api.models
 
 import java.time.Instant
 

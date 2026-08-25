@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.data
+package com.okensun.todayfeed.components.articles.data.network
 
 import retrofit2.Response
 

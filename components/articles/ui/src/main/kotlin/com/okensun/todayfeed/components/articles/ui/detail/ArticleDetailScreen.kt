@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.articles.ui
+package com.okensun.todayfeed.components.articles.ui.detail
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Column
@@ -22,7 +22,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.okensun.todayfeed.components.articles.api.Article
+import com.okensun.todayfeed.components.articles.api.models.Article
+import com.okensun.todayfeed.components.articles.ui.SaveControl
+import com.okensun.todayfeed.components.articles.ui.previewArticle
 import com.okensun.todayfeed.core.designsystem.ArticleImage
 import com.okensun.todayfeed.core.designsystem.BackArrow
 import com.okensun.todayfeed.core.designsystem.ContentState

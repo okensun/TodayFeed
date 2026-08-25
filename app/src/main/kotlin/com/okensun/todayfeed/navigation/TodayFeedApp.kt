@@ -19,8 +19,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.okensun.todayfeed.components.articles.ui.ArticleDetailScreen
-import com.okensun.todayfeed.components.articles.ui.SavedScreen
+import com.okensun.todayfeed.components.articles.ui.detail.ArticleDetailScreen
+import com.okensun.todayfeed.components.articles.ui.saved.SavedScreen
 import com.okensun.todayfeed.components.feed.ui.FeedScreen
 
 @Composable
