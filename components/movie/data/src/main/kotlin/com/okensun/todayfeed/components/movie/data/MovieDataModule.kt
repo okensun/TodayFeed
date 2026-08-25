@@ -1,6 +1,7 @@
 package com.okensun.todayfeed.components.movie.data
 
 import com.okensun.todayfeed.components.movie.api.FilmRepository
+import com.okensun.todayfeed.components.movie.data.source.FilmService
 import com.okensun.todayfeed.core.network.TodayFeedJson
 import dagger.Binds
 import dagger.Module

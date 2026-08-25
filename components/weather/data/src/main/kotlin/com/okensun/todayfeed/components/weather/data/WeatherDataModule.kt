@@ -1,6 +1,7 @@
 package com.okensun.todayfeed.components.weather.data
 
 import com.okensun.todayfeed.components.weather.api.WeatherRepository
+import com.okensun.todayfeed.components.weather.data.source.WeatherService
 import com.okensun.todayfeed.core.network.TodayFeedJson
 import dagger.Binds
 import dagger.Module

@@ -16,6 +16,20 @@ function count. Do not spend review effort on those.
 - `api` and `domain` modules are plain Kotlin. If you need an Android class there, the
   design is wrong, not the rule.
 
+## Architecture rules the build cannot enforce, so they are easy to get wrong
+
+- A component is `api`, `domain`, `data`, `ui`. That is the shape it takes, not a checklist to
+  fill: a layer with nothing to put in it is not created, and a module nothing is taken from is
+  not depended on.
+- Inside `data`, a file goes by whose data it is. `database/` is ours: entities, DAOs,
+  migrations. `source/` is somebody else's: the service and the shapes it answers with. What
+  translates between the two stays at the top of `data` — the mapping, the repository, the Hilt
+  module. This holds in every component, even where `source/` has one file in it.
+- Never call that folder `network`. `:core:network` already means the shared client, the JSON
+  and the connectivity reader, and one word for both makes a reader guess.
+- Model classes live in a `models` folder in the layer that owns them, such as `api/models`.
+- A `ui` module groups by screen, so a screen sits with its view model: `ui/detail`, `ui/saved`.
+
 ## Writing
 
 - Plain, general English. A reader below high-school English level must follow it. Short

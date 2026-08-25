@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.movie.data
 
+import com.okensun.todayfeed.components.movie.data.source.FilmDto
 import com.okensun.todayfeed.core.network.TodayFeedJson
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals

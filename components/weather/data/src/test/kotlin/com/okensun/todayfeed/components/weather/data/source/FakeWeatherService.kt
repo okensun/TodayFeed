@@ -1,4 +1,4 @@
-package com.okensun.todayfeed.components.weather.data
+package com.okensun.todayfeed.components.weather.data.source
 
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.ResponseBody.Companion.toResponseBody

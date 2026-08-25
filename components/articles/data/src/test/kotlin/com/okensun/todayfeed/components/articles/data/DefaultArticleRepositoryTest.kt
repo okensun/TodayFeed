@@ -3,7 +3,7 @@ package com.okensun.todayfeed.components.articles.data
 import androidx.room.Room
 import com.okensun.todayfeed.components.articles.data.database.ArticleEntity
 import com.okensun.todayfeed.components.articles.data.database.ArticlesDatabase
-import com.okensun.todayfeed.components.articles.data.network.FakeArticlesService
+import com.okensun.todayfeed.components.articles.data.source.FakeArticlesService
 import com.okensun.todayfeed.core.testing.FakeClock
 import com.okensun.todayfeed.core.testing.FakeConnectivity
 import kotlinx.coroutines.flow.first
