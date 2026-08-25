@@ -26,13 +26,17 @@ To put it on a device: `./gradlew installDebug`.
 
 | Screen | Shows |
 |---|---|
-| Reading | the feed: a weather hero card above a paginated list of articles |
+| Reading | the feed: a weather card, a row of films best rated first, then a paginated list of articles |
 | Detail | one article, readable offline once saved |
 | Saved | the articles you kept |
 
 Data comes from three free APIs that need no key: [Spaceflight
-News](https://api.spaceflightnewsapi.net/v4/articles/) for articles and
-[Open-Meteo](https://api.open-meteo.com/v1/forecast) for weather.
+News](https://api.spaceflightnewsapi.net/v4/articles/) for articles,
+[Open-Meteo](https://api.open-meteo.com/v1/forecast) for weather and the [Studio Ghibli
+API](https://ghibliapi.vercel.app/films) for films.
+
+Each band of the feed carries its name, so one kind of content cannot be taken for another. The
+films are ordered by review score, best first; the articles by when they were published.
 
 ## How it is built
 
@@ -54,6 +58,7 @@ carry the design, and the build enforces both:
 :core:testing                     FakeClock and shared fakes
 :components:articles:{api,data,ui}
 :components:weather:{api,data,ui}
+:components:movie:{api,data,ui}
 :components:feed:{domain,ui}
 ```
 
@@ -84,6 +89,10 @@ Spaceflight News states its own: `cache-control: max-age=600`, which is ten minu
 2026-08-24. That figure wins, because a number the source states is a fact while ours is a
 judgement. Our own figure is used only when a source states none. Spaceflight News always states one, so
 ours never applies there. Open-Meteo states none, so ours is what holds for the weather.
+
+The film catalogue is the third answer. It says `cache-control: no-cache`, which states no age
+at all, so ours applies: half a day. The twenty-two films look permanent, but each one carries a
+review score, and a score moves. They get an ordinary allowance like every other source.
 
 Open-Meteo states nothing, so our own figure is the one that counts there: fifteen minutes,
 which is how often the source says it re-reads. It reports that as `interval` in its own answer.
@@ -152,7 +161,6 @@ block. Two things did not go to plan, and both are worth stating:
   take it, so this is a value not yet used rather than a design that cannot.
 - **Location for the weather.** Fixed coordinates instead. A permission dialog on first launch
   costs more than it buys against "clean checkout, one command".
-- **The `movie` component** (Studio Ghibli). Designed and left for time after the documents.
 
 ## How I worked with AI
 

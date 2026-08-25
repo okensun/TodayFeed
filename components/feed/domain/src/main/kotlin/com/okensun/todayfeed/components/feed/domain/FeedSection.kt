@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.feed.domain
 
+import com.okensun.todayfeed.components.movie.api.models.Film
 import com.okensun.todayfeed.components.weather.api.models.Weather
 
 /**
@@ -12,5 +13,9 @@ import com.okensun.todayfeed.components.weather.api.models.Weather
 sealed interface FeedSection {
     data class WeatherHero(
         val weather: Weather,
+    ) : FeedSection
+
+    data class Films(
+        val films: List<Film>,
     ) : FeedSection
 }

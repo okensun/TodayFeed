@@ -34,12 +34,14 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.okensun.todayfeed.components.articles.api.models.Article
 import com.okensun.todayfeed.components.articles.ui.ArticleRowCard
 import com.okensun.todayfeed.components.feed.domain.FeedSection
+import com.okensun.todayfeed.components.movie.ui.FilmCarouselCard
 import com.okensun.todayfeed.components.weather.ui.WeatherHeroCard
 import com.okensun.todayfeed.core.designsystem.ContentState
 import com.okensun.todayfeed.core.designsystem.EmptyState
 import com.okensun.todayfeed.core.designsystem.ErrorState
 import com.okensun.todayfeed.core.designsystem.LoadingState
 import com.okensun.todayfeed.core.designsystem.OfflineState
+import com.okensun.todayfeed.core.designsystem.SectionTitle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -121,6 +123,9 @@ internal fun FeedScreen(
                     LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
                         sections.forEach { section ->
                             item(key = section.key()) { Section(section) }
+                        }
+                        if (paged.itemCount > 0) {
+                            item(key = ARTICLES) { SectionTitle(ARTICLES) }
                         }
                         // Keyed on the article's own id. Without a key LazyColumn keys by index, so a
                         // refresh that upserts newer articles would move every row and throw the reader's
@@ -246,6 +251,10 @@ private const val APPEND_FAILED = "append failed"
 private const val OUT_OF_DATE = "You are offline. These articles may be out of date."
 private const val COULD_NOT_LOAD_MORE = "More articles could not be loaded."
 
+// Every band of the feed is named the same way, so one kind of content cannot be taken for
+// another.
+private const val ARTICLES = "Articles"
+
 // The same word as the full screen error, so one action does not have two names.
 private const val TRY_AGAIN = "Try again"
 
@@ -267,9 +276,11 @@ private fun LazyListScope.appendState(
 private fun Section(section: FeedSection) =
     when (section) {
         is FeedSection.WeatherHero -> WeatherHeroCard(section.weather)
+        is FeedSection.Films -> FilmCarouselCard(section.films)
     }
 
 private fun FeedSection.key(): String =
     when (this) {
         is FeedSection.WeatherHero -> "weather"
+        is FeedSection.Films -> "films"
     }

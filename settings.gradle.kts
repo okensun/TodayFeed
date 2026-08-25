@@ -33,6 +33,10 @@ include(":components:articles:api")
 include(":components:articles:data")
 include(":components:articles:ui")
 
+include(":components:movie:api")
+include(":components:movie:data")
+include(":components:movie:ui")
+
 include(":components:weather:api")
 include(":components:weather:data")
 include(":components:weather:ui")

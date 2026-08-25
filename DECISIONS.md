@@ -213,6 +213,35 @@ warnings, all to show the same rectangle of poster art. Removing it means `./gra
 assembleDebug` on a fresh copy cannot fail for a setup reason, because there is no setup, and CI
 proves that again on every push.
 
+### The films get an ordinary allowance, not "forever" — decided
+
+**Picked.** Twelve hours, the same shape of number as every other source.
+
+**Considered instead.** Treating the catalogue as permanent: fetch once and never again. That was
+the plan when the source was chosen, and this file said so: a source whose correct time-to-live
+is "effectively forever" is the sharpest illustration that the policy is per-source.
+
+**Trade-off.** The illustration was worth less than the honesty, and it was not even true. Every
+film carries `rt_score`, a review score, and a review score moves. "Never changes" was a claim
+about the title, the year and the director, made while the source was serving a fourth field
+that does. A film added, a name corrected or a score revised would leave the app wrong for as
+long as it is installed, and nothing in the code would explain why. Half a day lands a correction
+for a reader who opens the app in the morning and again after work, and still asks at most once a
+session, and it keeps the policy uniform: no branch anywhere means "this one is special".
+
+Two comparable keyless catalogues state an age for themselves and both state a day:
+`itunes.apple.com/search` and `api.tvmaze.com/shows` each send `max-age=86400`, measured on
+2026-08-25. Ours is half of that, because the films are held in memory and nothing is
+revalidated, so being early costs one 32 KB request and being late shows a wrong score.
+
+The source states `cache-control: no-cache`, which read literally means ask every time. Our
+parser reads `max-age` and finds none, so ours applies — and that is right here, because
+`no-cache` on a catalogue that gains a film every few years is a statement about a CDN, not about
+the content. The rule that a source's stated age beats ours is about a source that has thought
+about how fast its content moves. Measured on 2026-08-25: 22 films, 32 KB, with an `ETag`, so
+revalidating would cost almost nothing. Using that needs an `OkHttp` cache the project does not
+configure, and is written down rather than done.
+
 ### Studio Ghibli for the film carousel, not TVMaze — decided
 
 **Picked.** `https://ghibliapi.vercel.app/films`. 22 films, keyless, with a poster and a wide
@@ -223,9 +252,10 @@ fourth update speed to the freshness policy.
 
 **Trade-off.** TVMaze serves TV shows, not films, so a component named `movie` holding TV
 schedule data would be a name that lies about its contents. I took honest naming over a richer
-freshness story. The static film list turns out to be useful anyway: its correct time-to-live is
-"effectively forever", which is only expressible if the policy holds a value per source rather
-than one number for the whole app.
+freshness story. The static film list turns out to be useful anyway, though not in the way this entry first
+claimed: "effectively forever" was wrong, and the entry above says why. What survives is the
+point it was making, that the policy has to hold a value per source rather than one number for
+the whole app.
 
 The known weakness: the host is a community deployment on Vercel, not an official API, so it is
 the least reliable of the four. Because the data is static and small, one successful fetch is

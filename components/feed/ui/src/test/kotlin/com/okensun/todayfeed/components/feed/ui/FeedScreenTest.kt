@@ -49,6 +49,25 @@ class FeedScreenTest {
         assertTrue("section at ${section.top}, article at ${first.top}", section.top < first.top)
     }
 
+    /** Every band of the feed is named, so a reader can tell one kind of content from another. */
+    @Test
+    fun `the articles are under a heading of their own`() {
+        show(articles = listOf(article("a1", "Article one")), sections = listOf(hero))
+
+        val heading = compose.onNodeWithText(ARTICLES).getBoundsInRoot()
+        val first = compose.onNodeWithText("Article one").getBoundsInRoot()
+
+        assertTrue("heading at ${heading.top}, article at ${first.top}", heading.top < first.top)
+    }
+
+    /** A heading over nothing is worse than no heading. */
+    @Test
+    fun `with no articles there is no articles heading`() {
+        show(articles = emptyList(), sections = listOf(hero))
+
+        compose.onNodeWithText(ARTICLES).assertDoesNotExist()
+    }
+
     @Test
     fun `loading says so and shows no articles`() {
         show(articles = emptyList(), refresh = LoadState.Loading)
@@ -358,6 +377,7 @@ class FeedScreenTest {
 
     private companion object {
         const val APPENDING = "Loading more"
+        const val ARTICLES = "Articles"
         const val OUT_OF_DATE = "You are offline. These articles may be out of date."
 
         val hero =

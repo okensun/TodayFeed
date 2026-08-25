@@ -1,5 +1,6 @@
 package com.okensun.todayfeed.components.feed.domain
 
+import com.okensun.todayfeed.components.movie.api.FilmRepository
 import com.okensun.todayfeed.components.weather.api.WeatherRepository
 import javax.inject.Inject
 
@@ -11,6 +12,10 @@ class RefreshSections
     @Inject
     constructor(
         private val weather: WeatherRepository,
+        private val films: FilmRepository,
     ) {
-        suspend operator fun invoke() = weather.refresh()
+        suspend operator fun invoke() {
+            weather.refresh()
+            films.refresh()
+        }
     }
