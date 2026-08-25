@@ -137,19 +137,18 @@ plain function in `:core:freshness`, and it has five answers:
 
 ### The allowance, and where the number comes from
 
-Spaceflight News states its own: `cache-control: max-age=600`, which is ten minutes. Measured on
-2026-08-24. That figure wins, because a number the source states is a fact while ours is a
-judgement. Our own figure is used only when a source states none, and Spaceflight News always
-states one, so ours never applies there.
+| Source | Allowance | Set by | Why that number |
+|---|---|---|---|
+| Articles | 10 minutes | the source | It sends `cache-control: max-age=600` |
+| Weather | 15 minutes | us | The source states no age, and re-reads its own data every fifteen minutes. It says so, as `interval`, in every answer |
+| Films | 12 hours | us | The source states no age. The catalogue looks permanent, but each film carries a review score, and a score moves |
 
-Open-Meteo states nothing, so our own figure is the one that counts there: fifteen minutes,
-which is how often the source says it re-reads. It reports that as `interval` in its own answer.
-The weather is held in memory and not in a database. A cold start with no network therefore
-shows the feed without the card, instead of showing yesterday's weather as if it were now.
+One rule produces all three: a number the source states beats ours, because a stated number is a
+fact and ours is a judgement. Ours applies only where a source states none. All three headers
+were read off the wire with `curl` rather than recalled.
 
-The film catalogue states no age either: it says `cache-control: no-cache`, so ours holds there
-too, at half a day. The twenty-two films look permanent, but each one carries a review score, and
-a score moves. They get an ordinary allowance like every other source.
+The weather is held in memory and not in a database, so a cold start with no network shows the
+feed without the card, instead of showing yesterday's weather as if it were now.
 
 ### What the reader keeps is not what the policy decides
 
